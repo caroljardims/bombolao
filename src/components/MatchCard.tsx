@@ -1,115 +1,93 @@
 import { apostasAbertas, partidaAoVivo, partidaEncerrada, temPlacar } from '../lib/scoring'
 import { formatDataCurta, isHoje } from '../lib/dates'
 import type { Partida } from '../lib/types'
+import { Icon, Pill, TeamBadge } from './ui'
 
 interface MatchCardProps {
   partida: Partida
-  compact?: boolean
 }
 
-export function MatchCard({ partida, compact = false }: MatchCardProps) {
+export function MatchCard({ partida }: MatchCardProps) {
   const encerrada = partidaEncerrada(partida)
   const aoVivo = partidaAoVivo(partida)
   const comPlacar = temPlacar(partida)
   const abertas = apostasAbertas(partida)
   const hoje = isHoje(partida.data)
 
-  return (
-    <div
-      className={`rounded-2xl border bg-pitch-card p-4 ${
-        hoje ? 'border-gold/40 ring-1 ring-gold/20' : 'border-white/10'
-      }`}
-    >
-      {!compact && (
-        <div className="mb-2 flex items-center justify-between text-xs text-white/50">
-          <span>{partida.fase}</span>
-          <div className="flex items-center gap-2">
-            {aoVivo && (
-              <span className="flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 font-medium text-red-400">
-                <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-                Ao vivo
-              </span>
-            )}
-            {hoje && (
-              <span className="rounded-full bg-gold/20 px-2 py-0.5 font-medium text-gold">
-                Hoje
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+  const homeWin = comPlacar && partida.gols_casa! > partida.gols_fora!
+  const awayWin = comPlacar && partida.gols_fora! > partida.gols_casa!
 
-      <div className="flex items-center justify-between gap-2">
-        <TeamBlock
-          name={partida.time_casa}
-          score={comPlacar ? partida.gols_casa : null}
-        />
-        <div className="shrink-0 text-center">
-          {encerrada ? (
-            <span className="text-xs text-white/40">FT</span>
-          ) : comPlacar && aoVivo ? (
-            <span className="text-xs font-medium text-red-400">AO VIVO</span>
+  return (
+    <article className="card match-card">
+      <div className="match-top">
+        <span className="phase">{partida.fase}</span>
+        <div className="match-tags">
+          {aoVivo && (
+            <Pill tone="live" dot>
+              Ao vivo
+            </Pill>
+          )}
+          {hoje ? (
+            <Pill tone="gold-soft">Hoje</Pill>
           ) : (
-            <span className="text-sm font-medium text-white/70">{partida.hora}</span>
+            <Pill tone="muted">{formatDataCurta(partida.data)}</Pill>
           )}
         </div>
-        <TeamBlock
-          name={partida.time_fora}
-          score={comPlacar ? partida.gols_fora : null}
-          align="right"
-        />
       </div>
 
-      {!encerrada && !compact && (
-        <div className="mt-3">
-          <StatusBadge abertas={abertas} />
+      <div className="match-teams">
+        <div className={`mt-row${comPlacar && !homeWin ? ' dim' : ''}`}>
+          <TeamBadge name={partida.time_casa} size={34} />
+          <span className="mt-name">{partida.time_casa}</span>
+          {comPlacar ? (
+            <span className={`mt-score${aoVivo ? ' live' : ''}`}>{partida.gols_casa}</span>
+          ) : (
+            <span className="mt-kick">{partida.hora}</span>
+          )}
         </div>
-      )}
+        <div className={`mt-row${comPlacar && !awayWin ? ' dim' : ''}`}>
+          <TeamBadge name={partida.time_fora} size={34} />
+          <span className="mt-name">{partida.time_fora}</span>
+          {comPlacar ? (
+            <span className={`mt-score${aoVivo ? ' live' : ''}`}>{partida.gols_fora}</span>
+          ) : (
+            <span className="mt-kick muted">&nbsp;</span>
+          )}
+        </div>
+      </div>
 
-      {encerrada && (
-        <div className="mt-2 text-center text-lg">✅</div>
-      )}
-    </div>
+      <div className="match-status">
+        {aoVivo ? (
+          <span className="ms-live">
+            <i className="live-dot" /> Ao vivo
+          </span>
+        ) : encerrada ? (
+          <span className="ms-ft">Encerrado</span>
+        ) : (
+          <span className="ms-sched">
+            {hoje ? 'Hoje' : formatDataCurta(partida.data)} · começa {partida.hora}
+          </span>
+        )}
+      </div>
+
+      <div className="match-foot">
+        {encerrada && (
+          <span className="settled">
+            <Icon.check s={15} /> Resultado computado
+          </span>
+        )}
+        {!encerrada && !abertas && <Pill tone="danger-soft">Apostas encerradas</Pill>}
+        {!encerrada && abertas && <Pill tone="ok-soft">Apostas abertas</Pill>}
+      </div>
+    </article>
   )
 }
 
-function TeamBlock({
-  name,
-  score,
-  align = 'left',
-}: {
-  name: string
-  score: number | null
-  align?: 'left' | 'right'
-}) {
+export function MatchGroupHeader({ data, count }: { data: string; count: number }) {
   return (
-    <div className={`flex-1 ${align === 'right' ? 'text-right' : 'text-left'}`}>
-      <p className="text-sm font-medium leading-tight">{name}</p>
-      {score !== null && (
-        <p className="mt-1 text-3xl font-bold tabular-nums text-gold">{score}</p>
-      )}
-    </div>
-  )
-}
-
-function StatusBadge({ abertas }: { abertas: boolean }) {
-  return (
-    <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-        abertas
-          ? 'bg-green-500/20 text-green-400'
-          : 'bg-red-400/20 text-red-300'
-      }`}
-    >
-      {abertas ? 'Apostas abertas' : 'Apostas encerradas'}
-    </span>
-  )
-}
-
-export function MatchGroupHeader({ data }: { data: string }) {
-  return (
-    <h2 className="sticky top-14 z-10 bg-pitch/95 py-2 text-sm font-semibold uppercase tracking-wide text-white/60 backdrop-blur">
-      {formatDataCurta(data)}
-    </h2>
+    <h3 className="day-label">
+      <span>{formatDataCurta(data)}</span>
+      <span className="count">{count}</span>
+    </h3>
   )
 }

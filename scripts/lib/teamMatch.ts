@@ -22,12 +22,19 @@ function apiTeamNames(api: { name: string; shortName?: string; tla?: string }): 
 function matchesAlias(localName: string, apiName: string): boolean {
   const local = normalizeTeam(localName)
   const api = normalizeTeam(apiName)
-  if (local === api || local.includes(api) || api.includes(local)) return true
+  if (local === api) return true
+
+  // Evita falsos positivos (ex.: AUS contém US)
+  if (local.length >= 4 && api.length >= 4) {
+    if (local.includes(api) || api.includes(local)) return true
+  }
 
   const variants = aliases[local] ?? []
   return variants.some((variant) => {
     const v = normalizeTeam(variant)
-    return v === api || api.includes(v) || v.includes(api)
+    if (v === api) return true
+    if (v.length >= 4 && api.length >= 4 && (api.includes(v) || v.includes(api))) return true
+    return false
   })
 }
 

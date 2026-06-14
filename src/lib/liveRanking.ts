@@ -89,7 +89,8 @@ export function classificarAcertoLive(palpite: Palpite, partida: Partida): Acert
   if (!encerrada) return 'nada'
   const pts = getPontosLive(palpite, partida) ?? 0
   if (pts === 9) return 'mosca'
-  if (pts >= 4) return 'resultado'
+  if (pts === 6) return 'resultado_gol'
+  if (pts === 4) return 'resultado'
   if (pts === 1) return 'gol'
   return 'nada'
 }

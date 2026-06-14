@@ -1,4 +1,4 @@
-export type AcertoTipo = 'mosca' | 'resultado' | 'gol' | 'nada' | 'sem_aposta'
+export type AcertoTipo = 'mosca' | 'resultado' | 'resultado_gol' | 'gol' | 'nada' | 'sem_aposta'
 export type Papel = 'admin' | 'membro'
 export type AcessoBolao = 'convite' | 'aberto'
 
@@ -43,6 +43,7 @@ export interface Participante {
   id: string
   nome: string
   email: string
+  photoURL?: string | null
   total_pontos: number
   na_mosca: number
   acerto_resultado: number

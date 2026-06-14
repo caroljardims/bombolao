@@ -5,6 +5,7 @@ import { useBolao } from '../contexts/BolaoContext'
 import { apostasAbertas } from '../lib/scoring'
 import { palpiteDoc } from '../lib/paths'
 import type { Partida } from '../lib/types'
+import { Icon } from './ui'
 
 interface PalpiteInputProps {
   partida: Partida
@@ -12,6 +13,42 @@ interface PalpiteInputProps {
   palpiteCasa: number | null
   palpiteFora: number | null
   readOnly?: boolean
+}
+
+function Stepper({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number | null
+  onChange: (v: number) => void
+  disabled?: boolean
+}) {
+  const show = value == null ? '–' : value
+
+  return (
+    <div className={`stepper${disabled ? ' disabled' : ''}`}>
+      <button
+        type="button"
+        className="step-btn"
+        disabled={disabled}
+        onClick={() => onChange(Math.max(0, (value ?? 0) - 1))}
+        aria-label="menos"
+      >
+        –
+      </button>
+      <span className="step-val">{show}</span>
+      <button
+        type="button"
+        className="step-btn"
+        disabled={disabled}
+        onClick={() => onChange((value ?? -1) + 1)}
+        aria-label="mais"
+      >
+        +
+      </button>
+    </div>
+  )
 }
 
 export function PalpiteInput({
@@ -22,14 +59,14 @@ export function PalpiteInput({
   readOnly = false,
 }: PalpiteInputProps) {
   const { bolaoId } = useBolao()
-  const [casa, setCasa] = useState<string>(palpiteCasa?.toString() ?? '')
-  const [fora, setFora] = useState<string>(palpiteFora?.toString() ?? '')
+  const [casa, setCasa] = useState<number | null>(palpiteCasa)
+  const [fora, setFora] = useState<number | null>(palpiteFora)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    setCasa(palpiteCasa?.toString() ?? '')
-    setFora(palpiteFora?.toString() ?? '')
+    setCasa(palpiteCasa)
+    setFora(palpiteFora)
   }, [palpiteCasa, palpiteFora])
 
   useEffect(() => {
@@ -38,30 +75,18 @@ export function PalpiteInput({
     return () => clearTimeout(timer)
   }, [saved])
 
-  function handleCasaChange(value: string) {
-    setCasa(value)
-    setSaved(false)
-  }
-
-  function handleForaChange(value: string) {
-    setFora(value)
-    setSaved(false)
-  }
-
   const abertas = apostasAbertas(partida)
   const disabled = readOnly || !abertas || saving
+  const filled = casa !== null && fora !== null
 
-  async function save() {
+  async function save(casaNum: number | null, foraNum: number | null) {
     if (disabled) return
 
-    const casaNum = casa === '' ? null : parseInt(casa, 10)
-    const foraNum = fora === '' ? null : parseInt(fora, 10)
-
-    if (casaNum !== null && (isNaN(casaNum) || casaNum < 0 || casaNum > 20)) {
+    if (casaNum !== null && (casaNum < 0 || casaNum > 20)) {
       toast.error('Placar casa inválido (0–20)')
       return
     }
-    if (foraNum !== null && (isNaN(foraNum) || foraNum < 0 || foraNum > 20)) {
+    if (foraNum !== null && (foraNum < 0 || foraNum > 20)) {
       toast.error('Placar fora inválido (0–20)')
       return
     }
@@ -92,74 +117,53 @@ export function PalpiteInput({
     }
   }
 
+  function setScore(side: 'casa' | 'fora', value: number) {
+    const nextCasa = side === 'casa' ? value : casa
+    const nextFora = side === 'fora' ? value : fora
+    setCasa(nextCasa)
+    setFora(nextFora)
+    setSaved(false)
+  }
+
   if (readOnly) {
     return (
-      <div className="flex items-center justify-center gap-3">
-        <ScoreDisplay value={palpiteCasa} />
-        <span className="text-white/40">×</span>
-        <ScoreDisplay value={palpiteFora} />
+      <div className="palpite-controls">
+        <div className="guess-block">
+          <Stepper value={palpiteCasa} onChange={() => {}} disabled />
+          <i className="guess-x">×</i>
+          <Stepper value={palpiteFora} onChange={() => {}} disabled />
+        </div>
+        <span className="guess-note">Palpite registrado</span>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={20}
-          value={casa}
-          onChange={(e) => handleCasaChange(e.target.value)}
-          disabled={disabled}
-          placeholder="–"
-          className={`h-14 w-16 rounded-xl border bg-black/30 text-center text-2xl font-bold tabular-nums focus:outline-none disabled:opacity-50 ${
-            saved ? 'border-green-500/50' : 'border-white/20 focus:border-gold'
-          }`}
-          aria-label={`Palpite ${partida.time_casa}`}
-        />
-        <span className="text-white/40">×</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={20}
-          value={fora}
-          onChange={(e) => handleForaChange(e.target.value)}
-          disabled={disabled}
-          placeholder="–"
-          className={`h-14 w-16 rounded-xl border bg-black/30 text-center text-2xl font-bold tabular-nums focus:outline-none disabled:opacity-50 ${
-            saved ? 'border-green-500/50' : 'border-white/20 focus:border-gold'
-          }`}
-          aria-label={`Palpite ${partida.time_fora}`}
-        />
+    <div className="palpite-controls">
+      <div className="guess-block">
+        <Stepper value={casa} onChange={(v) => setScore('casa', v)} disabled={disabled} />
+        <i className="guess-x">×</i>
+        <Stepper value={fora} onChange={(v) => setScore('fora', v)} disabled={disabled} />
+      </div>
+      {abertas && (
         <button
           type="button"
-          onClick={save}
-          disabled={disabled}
-          className={`ml-1 flex h-14 min-w-[72px] items-center justify-center rounded-xl px-4 text-sm font-semibold text-white active:opacity-90 disabled:opacity-40 ${
-            saved ? 'bg-green-600' : 'bg-grass-light active:bg-grass'
-          }`}
+          onClick={() => save(casa, fora)}
+          disabled={disabled || !filled}
+          className={`btn btn-save${saved ? ' done' : ''}`}
         >
-          {saving ? '…' : saved ? '✓' : 'Salvar'}
+          {saved ? (
+            <>
+              <Icon.check s={16} /> Salvo
+            </>
+          ) : saving ? (
+            '…'
+          ) : (
+            'Salvar palpite'
+          )}
         </button>
-      </div>
-
-      {saved && (
-        <p className="flex items-center justify-center gap-2 rounded-xl border border-green-500/30 bg-green-500/15 py-2.5 text-sm font-medium text-green-400">
-          <span>✅</span>
-          Palpite enviado!
-        </p>
       )}
+      {!abertas && <span className="guess-note">Apostas encerradas</span>}
     </div>
-  )
-}
-
-function ScoreDisplay({ value }: { value: number | null }) {
-  return (
-    <span className="flex h-14 w-16 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-2xl font-bold tabular-nums">
-      {value ?? '–'}
-    </span>
   )
 }

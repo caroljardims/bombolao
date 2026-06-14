@@ -1,68 +1,58 @@
+import { LoadingState } from '../components/LoadingState'
 import { MatchCard, MatchGroupHeader } from '../components/MatchCard'
 import { useBolao } from '../contexts/BolaoContext'
 import { usePartidas } from '../hooks/usePartidas'
+import { isHoje } from '../lib/dates'
 
 export function PartidasPage() {
   const { bolao } = useBolao()
   const { grouped, partidasHoje, competicao, loading, error } = usePartidas()
 
-  if (loading) return <LoadingState />
-  if (error) return <ErrorState message={error} />
+  if (loading) return <LoadingState message="Carregando partidas…" />
+  if (error) {
+    return <div className="alert-error">Erro ao carregar partidas: {error}</div>
+  }
 
   const ultimaSync = bolao?.ultimaSyncApi
     ? new Date(bolao.ultimaSyncApi).toLocaleString('pt-BR')
     : null
 
+  const futureGroups = Array.from(grouped.entries()).filter(([data]) => !isHoje(data))
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold">Partidas</h2>
-        <p className="text-sm text-white/50">
-          {competicao || 'Partidas'} · placares via sync automático
-        </p>
-        {ultimaSync && (
-          <p className="mt-1 text-xs text-white/30">Último sync: {ultimaSync}</p>
-        )}
-      </div>
+    <div className="screen jogos-screen">
+      <header className="section-head plain">
+        <div>
+          <h2>Partidas</h2>
+          <p className="sub">{competicao || 'Partidas'} · placares via sync automático</p>
+          {ultimaSync && <p className="sub tiny">Último sync: {ultimaSync}</p>}
+        </div>
+      </header>
 
       {partidasHoje.length > 0 && (
-        <section>
-          <h3 className="mb-2 text-sm font-semibold text-gold">Jogos de hoje</h3>
-          <div className="space-y-3">
+        <div className="day-group">
+          <h3 className="day-label">
+            <span className="gold-text">Jogos de hoje</span>
+            <span className="count">{partidasHoje.length}</span>
+          </h3>
+          <div className="match-list">
             {partidasHoje.map((p) => (
               <MatchCard key={p.id} partida={p} />
             ))}
           </div>
-        </section>
+        </div>
       )}
 
-      {Array.from(grouped.entries()).map(([data, partidas]) => (
-        <section key={data}>
-          <MatchGroupHeader data={data} />
-          <div className="space-y-3">
+      {futureGroups.map(([data, partidas]) => (
+        <div className="day-group" key={data}>
+          <MatchGroupHeader data={data} count={partidas.length} />
+          <div className="match-list">
             {partidas.map((p) => (
-              <MatchCard key={p.id} partida={p} compact />
+              <MatchCard key={p.id} partida={p} />
             ))}
           </div>
-        </section>
+        </div>
       ))}
-    </div>
-  )
-}
-
-function LoadingState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-white/50">
-      <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
-      Carregando partidas…
-    </div>
-  )
-}
-
-function ErrorState({ message }: { message: string }) {
-  return (
-    <div className="rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-red-300">
-      Erro ao carregar partidas: {message}
     </div>
   )
 }

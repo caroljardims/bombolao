@@ -32,6 +32,35 @@ export async function findLegacyParticipantes(
     .map((d) => ({ id: d.id, ...d.data() }) as Participante)
 }
 
+/** Docs de participante a atualizar (uid + legado por e-mail). */
+export async function participanteDocsForUser(
+  bolaoId: string,
+  uid: string,
+  email: string | null | undefined,
+) {
+  const refs: ReturnType<typeof participanteDoc>[] = []
+  const seen = new Set<string>()
+
+  function add(id: string) {
+    if (seen.has(id)) return
+    seen.add(id)
+    refs.push(participanteDoc(bolaoId, id))
+  }
+
+  const uidSnap = await getDoc(participanteDoc(bolaoId, uid))
+  if (uidSnap.exists()) add(uid)
+
+  if (email) {
+    const snap = await getDocs(
+      query(participantesRef(bolaoId), where('email', '==', normalizeEmail(email))),
+    )
+    for (const d of snap.docs) add(d.id)
+  }
+
+  if (refs.length === 0) add(uid)
+  return refs
+}
+
 /**
  * Vincula participante legado (slug do seed/migração) à conta Firebase do mesmo e-mail.
  * Transfere palpites, preserva nome/pontuação e remove o doc duplicado.

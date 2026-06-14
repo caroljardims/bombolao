@@ -1,11 +1,16 @@
 import { Link, Navigate } from 'react-router-dom'
+import { useMemo } from 'react'
+import { LoadingState } from '../components/LoadingState'
+import { PalpitesDaySection } from '../components/PalpitesDaySection'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
 import { usePalpites } from '../hooks/usePalpites'
 import { usePartidas } from '../hooks/usePartidas'
 import { PalpiteInput } from '../components/PalpiteInput'
 import { AcertoBadge } from '../components/AcertoBadge'
-import { apostasAbertas, partidaEncerrada } from '../lib/scoring'
+import { Pill, TeamBadge } from '../components/ui'
+import { getHoje, groupPartidasByDay } from '../lib/dates'
+import { apostasAbertas, partidaEncerrada, temPalpite } from '../lib/scoring'
 import { getPontosLive, classificarAcertoLive } from '../lib/liveRanking'
 import { bolaoPath } from '../lib/paths'
 import type { Palpite, Partida } from '../lib/types'
@@ -20,19 +25,21 @@ export function PalpitesPage() {
   if (!user) return <Navigate to="/conta" replace state={{ returnTo: bolaoPath(bolaoId, 'palpites') }} />
   if (!isMember || !participante) {
     return (
-      <div className="space-y-4 rounded-2xl border border-gold/30 bg-gold/10 p-6 text-center">
-        <p className="text-gold">Você ainda não faz parte deste bolão.</p>
-        <Link to="/" className="text-sm hover:underline">← Voltar ao lobby</Link>
+      <div className="alert-gold" style={{ textAlign: 'center' }}>
+        <p>Você ainda não faz parte deste bolão.</p>
+        <Link to="/" className="link-gold center-link">
+          ← Voltar ao lobby
+        </Link>
       </div>
     )
   }
 
-  if (partidasLoading || palpitesLoading) return <LoadingState />
+  if (partidasLoading || palpitesLoading) return <LoadingState message="Carregando palpites…" />
 
   return (
     <PalpitesList
-      title="Meus Palpites"
-      subtitle={participante.nome}
+      title="Palpites"
+      subtitle="Mande seu placar antes do apito inicial de cada jogo"
       participanteId={participante.id}
       partidas={partidas}
       palpitesMap={palpitesMap}
@@ -50,6 +57,60 @@ interface PalpitesListProps {
   readOnly: boolean
 }
 
+interface PalpiteCardProps {
+  partida: Partida
+  participanteId: string
+  palpite: Palpite | undefined
+  readOnly: boolean
+}
+
+function PalpiteCard({ partida, participanteId, palpite, readOnly }: PalpiteCardProps) {
+  const encerrada = partidaEncerrada(partida)
+  const abertas = apostasAbertas(partida)
+  const tipo = palpite
+    ? classificarAcertoLive(palpite, partida)
+    : encerrada
+      ? 'sem_aposta'
+      : 'nada'
+  const pontosLive = palpite ? getPontosLive(palpite, partida) : null
+  const state = encerrada ? 'result' : abertas ? 'open' : 'closed'
+
+  return (
+    <article className={`card palpite-card state-${state}`}>
+      <div className="palpite-top">
+        <div className="palpite-when">
+          <span className="date">{partida.hora}</span>
+          <h4 className="palpite-teams">
+            <TeamBadge name={partida.time_casa} size={26} /> {partida.time_casa}
+            <i className="vs">×</i>
+            {partida.time_fora} <TeamBadge name={partida.time_fora} size={26} />
+          </h4>
+          {encerrada && (
+            <span className="real-score">
+              Placar oficial{' '}
+              <b>
+                {partida.gols_casa} × {partida.gols_fora}
+              </b>
+            </span>
+          )}
+        </div>
+        {encerrada && palpite && <AcertoBadge tipo={tipo} pontos={pontosLive} />}
+        {!encerrada && !readOnly && (
+          <Pill tone={abertas ? 'ok-soft' : 'danger-soft'}>{abertas ? 'Aberto' : 'Fechado'}</Pill>
+        )}
+      </div>
+
+      <PalpiteInput
+        partida={partida}
+        participanteId={participanteId}
+        palpiteCasa={palpite?.palpite_casa ?? null}
+        palpiteFora={palpite?.palpite_fora ?? null}
+        readOnly={readOnly || !abertas}
+      />
+    </article>
+  )
+}
+
 export function PalpitesList({
   title,
   subtitle,
@@ -58,76 +119,44 @@ export function PalpitesList({
   palpitesMap,
   readOnly,
 }: PalpitesListProps) {
+  const hoje = getHoje()
+  const days = useMemo(() => groupPartidasByDay(partidas), [partidas])
+
+  const pending = partidas.filter((p) => {
+    const palpite = palpitesMap.get(p.id)
+    return apostasAbertas(p) && (!palpite || !temPalpite(palpite))
+  }).length
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold">{title}</h2>
-        <p className="text-sm text-white/50">{subtitle}</p>
-      </div>
+    <div className="screen palpites-screen">
+      <header className="section-head plain">
+        <div>
+          <h2>{title}</h2>
+          <p className="sub">{subtitle}</p>
+        </div>
+        {pending > 0 && <Pill tone="gold-soft">{pending} sem palpite</Pill>}
+      </header>
 
-      <div className="space-y-3">
-        {partidas.map((partida) => {
-          const palpite = palpitesMap.get(partida.id)
-          const encerrada = partidaEncerrada(partida)
-          const abertas = apostasAbertas(partida)
-          const tipo = palpite
-            ? classificarAcertoLive(palpite, partida)
-            : encerrada
-              ? 'sem_aposta'
-              : 'nada'
-          const pontosLive = palpite ? getPontosLive(palpite, partida) : null
-
-          return (
-            <div
-              key={partida.id}
-              className="rounded-2xl border border-white/10 bg-pitch-card p-4"
-            >
-              <div className="mb-3 flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs text-white/50">{partida.data} · {partida.hora}</p>
-                  <p className="font-medium">
-                    {partida.time_casa} × {partida.time_fora}
-                  </p>
-                  {encerrada && (
-                    <p className="mt-1 text-sm text-gold">
-                      Placar: {partida.gols_casa} × {partida.gols_fora}
-                    </p>
-                  )}
-                </div>
-                {encerrada && palpite && (
-                  <AcertoBadge tipo={tipo} pontos={pontosLive} />
-                )}
-                {!encerrada && !readOnly && (
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      abertas ? 'bg-green-500/20 text-green-400' : 'bg-red-400/20 text-red-300'
-                    }`}
-                  >
-                    {abertas ? 'Aberto' : 'Fechado'}
-                  </span>
-                )}
-              </div>
-
-              <PalpiteInput
+      <div className="palpite-days">
+        {days.map(([data, partidasDoDia]) => (
+          <PalpitesDaySection
+            key={data}
+            data={data}
+            count={partidasDoDia.length}
+            defaultOpen={data >= hoje}
+          >
+            {partidasDoDia.map((partida) => (
+              <PalpiteCard
+                key={partida.id}
                 partida={partida}
                 participanteId={participanteId}
-                palpiteCasa={palpite?.palpite_casa ?? null}
-                palpiteFora={palpite?.palpite_fora ?? null}
-                readOnly={readOnly || !abertas}
+                palpite={palpitesMap.get(partida.id)}
+                readOnly={readOnly}
               />
-            </div>
-          )
-        })}
+            ))}
+          </PalpitesDaySection>
+        ))}
       </div>
-    </div>
-  )
-}
-
-function LoadingState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-white/50">
-      <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
-      Carregando palpites…
     </div>
   )
 }

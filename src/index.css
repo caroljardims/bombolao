@@ -1,19 +1,5 @@
-@import "tailwindcss";
-
-@theme {
-  --color-grass: #1B5E20;
-  --color-grass-light: #2E7D32;
-  --color-gold: #FFD700;
-  --color-gold-dark: #F9A825;
-  --color-pitch: #0D2818;
-  --color-pitch-card: #143D24;
-}
-
-body {
-  @apply bg-pitch text-white antialiased;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  min-height: 100dvh;
-}
+@import "./styles/design-base.css";
+@import "./styles/design-screens.css";
 
 #root {
   min-height: 100dvh;
@@ -29,6 +15,243 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-.input-field {
-  @apply w-full rounded-xl border border-white/20 bg-black/30 px-4 py-3 text-base focus:border-gold focus:outline-none;
+a.rank-row,
+a.admin-tile,
+a.lobby-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-item {
+  text-decoration: none;
+}
+
+.loading-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--t-low);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 12px;
+  border: 2px solid var(--gold-line);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.alert-error {
+  border-radius: var(--r-card);
+  border: 1px solid rgba(255, 122, 107, 0.35);
+  background: var(--danger-soft);
+  padding: 16px 18px;
+  color: var(--danger);
+}
+
+.alert-gold {
+  border-radius: var(--r-card);
+  border: 1px solid var(--gold-line);
+  background: var(--gold-soft);
+  padding: 16px 18px;
+  color: var(--gold-2);
+}
+
+.lobby-card {
+  display: block;
+  padding: 18px 20px;
+  transition: transform 0.12s, border-color 0.15s;
+}
+
+.lobby-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-line);
+}
+
+.lobby-card.joined {
+  background: linear-gradient(
+    120deg,
+    rgba(244, 198, 61, 0.18),
+    rgba(244, 198, 61, 0.05) 60%,
+    rgba(244, 198, 61, 0.02)
+  );
+  border-color: var(--gold-line);
+}
+
+.lobby-card-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--gold-2);
+}
+
+.lobby-card-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--t-mid);
+}
+
+.invite-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.invite-row .input {
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.empty-state {
+  border: 1px dashed var(--line);
+  border-radius: var(--r-card);
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--t-mid);
+}
+
+.empty-state p + p {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--t-low);
+}
+
+.login-hero {
+  text-align: center;
+  padding-top: 24px;
+}
+
+.login-hero-icon {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.mode-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--t-low);
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-tab.active {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+.btn-google {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-btn);
+  background: #fff;
+  color: #333;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.btn-google:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.header-avatar-mono {
+  display: flex;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.12);
+  font-weight: 800;
+  font-size: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.conta-photo-btn {
+  position: relative;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.conta-photo-placeholder {
+  display: flex;
+  width: 108px;
+  height: 108px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 3px solid var(--gold-line);
+  background: var(--surface-2);
+  font-size: 40px;
+}
+
+.convite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.convite-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.convite-code {
+  font-family: ui-monospace, monospace;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+}
+
+.step-progress {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.step-progress-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.step-progress-bar.active {
+  background: var(--gold);
+}
+
+.hidden {
+  display: none;
 }

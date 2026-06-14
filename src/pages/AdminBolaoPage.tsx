@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { getDocs, query, where } from 'firebase/firestore'
+import { Icon } from '../components/ui'
 import { useBolao } from '../contexts/BolaoContext'
 import { useAuth } from '../hooks/useAuth'
 import { criarConvite } from '../lib/joinBolao'
@@ -18,9 +19,7 @@ export function AdminBolaoPage() {
 
   useEffect(() => {
     async function load() {
-      const snap = await getDocs(
-        query(convitesRef(), where('bolaoId', '==', bolaoId)),
-      )
+      const snap = await getDocs(query(convitesRef(), where('bolaoId', '==', bolaoId)))
       setConvites(snap.docs.map((d) => ({ code: d.id, ...d.data() }) as Convite))
       setLoading(false)
     }
@@ -30,11 +29,7 @@ export function AdminBolaoPage() {
   const newCode = (location.state as { newInviteCode?: string } | null)?.newInviteCode
 
   if (!isAdmin) {
-    return (
-      <div className="rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-red-300">
-        Apenas administradores podem acessar esta página.
-      </div>
-    )
+    return <div className="alert-error">Apenas administradores podem acessar esta página.</div>
   }
 
   async function handleNewInvite() {
@@ -69,67 +64,93 @@ export function AdminBolaoPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold">Administração</h2>
-        <p className="text-sm text-white/50">{bolao?.nome}</p>
-      </div>
+    <div className="screen admin-screen">
+      <header className="section-head plain">
+        <div>
+          <h2>Administração</h2>
+          <p className="sub">Gerencie convites e membros do bolão · {bolao?.nome}</p>
+        </div>
+      </header>
 
       {newCode && (
-        <div className="rounded-2xl border border-gold/40 bg-gold/10 p-4">
-          <p className="text-sm font-medium text-gold">Bolão criado! Compartilhe o convite:</p>
-          <button
-            type="button"
-            onClick={() => copyLink(newCode)}
-            className="mt-2 w-full rounded-xl bg-gold py-3 font-semibold text-pitch"
-          >
+        <div className="alert-gold" style={{ marginBottom: 16 }}>
+          <p style={{ fontWeight: 700 }}>Bolão criado! Compartilhe o convite:</p>
+          <button type="button" className="btn btn-gold full" style={{ marginTop: 12 }} onClick={() => copyLink(newCode)}>
             Copiar link de convite
           </button>
         </div>
       )}
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Convites</h3>
-          <button
-            type="button"
-            onClick={handleNewInvite}
-            disabled={busy}
-            className="rounded-lg bg-grass-light px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
-          >
-            + Novo
-          </button>
-        </div>
+      <div className="admin-grid">
+        <button type="button" className="admin-tile card" onClick={handleNewInvite} disabled={busy}>
+          <span className="admin-tile-ic">
+            <Icon.user s={22} />
+          </span>
+          <span className="admin-tile-txt">
+            <b>Novo convite</b>
+            <em>Gere link para novos membros entrarem no bolão</em>
+          </span>
+          <Icon.arrow s={16} />
+        </button>
+        <Link to={`/b/${bolaoId}/partidas`} className="admin-tile card">
+          <span className="admin-tile-ic">
+            <Icon.ball s={22} />
+          </span>
+          <span className="admin-tile-txt">
+            <b>Ver jogos</b>
+            <em>Partidas e placares sincronizados</em>
+          </span>
+          <Icon.arrow s={16} />
+        </Link>
+        <Link to={`/b/${bolaoId}/palpites`} className="admin-tile card">
+          <span className="admin-tile-ic">
+            <Icon.pencil s={22} />
+          </span>
+          <span className="admin-tile-txt">
+            <b>Meus palpites</b>
+            <em>Confira e envie seus placares</em>
+          </span>
+          <Icon.arrow s={16} />
+        </Link>
+        <Link to={`/b/${bolaoId}`} className="admin-tile card">
+          <span className="admin-tile-ic">
+            <Icon.trophy s={22} />
+          </span>
+          <span className="admin-tile-txt">
+            <b>Ranking</b>
+            <em>Classificação ao vivo do bolão</em>
+          </span>
+          <Icon.arrow s={16} />
+        </Link>
+      </div>
 
-        {loading ? (
-          <p className="text-sm text-white/50">Carregando…</p>
-        ) : convites.length === 0 ? (
-          <p className="text-sm text-white/50">Nenhum convite ainda.</p>
-        ) : (
-          convites.map((c) => (
-            <div
-              key={c.code}
-              className="rounded-xl border border-white/10 bg-pitch-card p-4"
-            >
-              <p className="font-mono text-lg font-bold tracking-widest text-gold">{c.code}</p>
-              <p className="mt-1 text-xs text-white/40">
-                {c.usos}/{c.maxUsos} usos · {c.ativo ? 'Ativo' : 'Inativo'}
-              </p>
-              <button
-                type="button"
-                onClick={() => copyLink(c.code)}
-                className="mt-3 text-sm font-medium text-gold hover:underline"
-              >
+      <header className="section-head plain" style={{ paddingTop: 28 }}>
+        <div>
+          <h2 style={{ fontSize: 20 }}>Convites ativos</h2>
+        </div>
+      </header>
+
+      {loading ? (
+        <p className="sub">Carregando…</p>
+      ) : convites.length === 0 ? (
+        <p className="sub">Nenhum convite ainda.</p>
+      ) : (
+        <div className="convite-list">
+          {convites.map((c) => (
+            <div key={c.code} className="convite-item card">
+              <div>
+                <p className="convite-code">{c.code}</p>
+                <p className="sub tiny">
+                  {c.usos}/{c.maxUsos} usos · {c.ativo ? 'Ativo' : 'Inativo'}
+                </p>
+              </div>
+              <button type="button" className="btn btn-ghost-gold" onClick={() => copyLink(c.code)}>
                 Copiar link
               </button>
             </div>
-          ))
-        )}
-      </section>
-
-      <Link to={`/b/${bolaoId}`} className="text-sm text-gold hover:underline">
-        ← Voltar ao ranking
-      </Link>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

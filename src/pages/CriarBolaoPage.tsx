@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { useAuth } from '../hooks/useAuth'
+import { LoadingState } from '../components/LoadingState'
 import { PartidaEditor } from '../components/PartidaEditor'
+import { useAuth } from '../hooks/useAuth'
 import { criarBolao } from '../lib/criarBolao'
 import { DEFAULT_REGRAS } from '../lib/regras'
 import { bolaoPath } from '../lib/paths'
@@ -26,9 +27,9 @@ export function CriarBolaoPage() {
   if (loading) return <LoadingState />
   if (!user) {
     return (
-      <div className="space-y-4 pt-8 text-center">
-        <p className="text-white/60">Faça login para criar um bolão.</p>
-        <Link to="/conta" className="inline-block rounded-xl bg-grass-light px-6 py-3 font-semibold">
+      <div className="screen" style={{ paddingTop: 24, textAlign: 'center' }}>
+        <p className="sub">Faça login para criar um bolão.</p>
+        <Link to="/conta" className="btn btn-gold full" style={{ marginTop: 16, maxWidth: 360, marginInline: 'auto', display: 'flex' }}>
           Entrar
         </Link>
       </div>
@@ -81,77 +82,54 @@ export function CriarBolaoPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link to="/" className="text-sm text-gold hover:underline">← Voltar ao lobby</Link>
-        <h2 className="mt-2 text-xl font-bold">Criar bolão</h2>
-        <p className="text-sm text-white/50">Passo {step} de 3</p>
-      </div>
+    <div className="screen">
+      <header className="section-head plain">
+        <div>
+          <Link to="/" className="link-gold" style={{ marginBottom: 8, display: 'inline-flex' }}>
+            ← Voltar ao lobby
+          </Link>
+          <h2>Criar bolão</h2>
+          <p className="sub">Passo {step} de 3</p>
+        </div>
+      </header>
 
-      <div className="flex gap-2">
+      <div className="step-progress">
         {[1, 2, 3].map((s) => (
-          <div
-            key={s}
-            className={`h-1 flex-1 rounded-full ${s <= step ? 'bg-gold' : 'bg-white/10'}`}
-          />
+          <div key={s} className={`step-progress-bar${s <= step ? ' active' : ''}`} />
         ))}
       </div>
 
       {step === 1 && (
-        <div className="space-y-4">
+        <div className="form-stack" style={{ marginTop: 20 }}>
           <Field label="Nome do bolão">
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Bolão da firma"
-              className="input-field"
-            />
+            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Bolão da firma" className="input" />
           </Field>
           <Field label="Competição">
-            <input
-              value={competicao}
-              onChange={(e) => setCompeticao(e.target.value)}
-              placeholder="Copa do Mundo 2026"
-              className="input-field"
-            />
+            <input value={competicao} onChange={(e) => setCompeticao(e.target.value)} placeholder="Copa do Mundo 2026" className="input" />
           </Field>
           <Field label="Quem pode entrar?">
-            <select
-              value={acesso}
-              onChange={(e) => setAcesso(e.target.value as AcessoBolao)}
-              className="input-field"
-            >
+            <select value={acesso} onChange={(e) => setAcesso(e.target.value as AcessoBolao)} className="input">
               <option value="convite">Somente com convite</option>
               <option value="aberto">Qualquer pessoa com o link</option>
             </select>
           </Field>
-          <button
-            type="button"
-            onClick={() => validateStep1() && setStep(2)}
-            className="w-full rounded-xl bg-grass-light py-4 font-semibold"
-          >
+          <button type="button" onClick={() => validateStep1() && setStep(2)} className="btn btn-save full">
             Próximo: partidas
           </button>
         </div>
       )}
 
       {step === 2 && (
-        <div className="space-y-4">
-          <p className="text-sm text-white/60">Cadastre as partidas do seu bolão.</p>
+        <div style={{ marginTop: 20 }}>
+          <p className="sub" style={{ marginBottom: 16 }}>
+            Cadastre as partidas do seu bolão.
+          </p>
           <PartidaEditor partidas={partidas} onChange={setPartidas} />
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="flex-1 rounded-xl border border-white/20 py-4 font-semibold"
-            >
+          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+            <button type="button" onClick={() => setStep(1)} className="btn btn-ghost-gold" style={{ flex: 1 }}>
               Voltar
             </button>
-            <button
-              type="button"
-              onClick={() => validateStep2() && setStep(3)}
-              className="flex-1 rounded-xl bg-grass-light py-4 font-semibold"
-            >
+            <button type="button" onClick={() => validateStep2() && setStep(3)} className="btn btn-save" style={{ flex: 1 }}>
               Revisar
             </button>
           </div>
@@ -159,27 +137,26 @@ export function CriarBolaoPage() {
       )}
 
       {step === 3 && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-pitch-card p-4 space-y-2">
-            <p><span className="text-white/50">Nome:</span> {nome}</p>
-            <p><span className="text-white/50">Competição:</span> {competicao}</p>
-            <p><span className="text-white/50">Acesso:</span> {acesso === 'convite' ? 'Convite' : 'Aberto'}</p>
-            <p><span className="text-white/50">Partidas:</span> {partidas.length}</p>
+        <div style={{ marginTop: 20 }}>
+          <div className="card" style={{ padding: '18px 20px' }}>
+            <p>
+              <span className="sub">Nome:</span> {nome}
+            </p>
+            <p style={{ marginTop: 8 }}>
+              <span className="sub">Competição:</span> {competicao}
+            </p>
+            <p style={{ marginTop: 8 }}>
+              <span className="sub">Acesso:</span> {acesso === 'convite' ? 'Convite' : 'Aberto'}
+            </p>
+            <p style={{ marginTop: 8 }}>
+              <span className="sub">Partidas:</span> {partidas.length}
+            </p>
           </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="flex-1 rounded-xl border border-white/20 py-4 font-semibold"
-            >
+          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+            <button type="button" onClick={() => setStep(2)} className="btn btn-ghost-gold" style={{ flex: 1 }}>
               Voltar
             </button>
-            <button
-              type="button"
-              onClick={handlePublish}
-              disabled={busy}
-              className="flex-1 rounded-xl bg-gold py-4 font-semibold text-pitch disabled:opacity-50"
-            >
+            <button type="button" onClick={handlePublish} disabled={busy} className="btn btn-gold" style={{ flex: 1 }}>
               {busy ? 'Criando…' : 'Publicar bolão'}
             </button>
           </div>
@@ -191,18 +168,9 @@ export function CriarBolaoPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1.5">
-      <span className="text-sm font-medium text-white/70">{label}</span>
+    <label className="field" style={{ marginTop: 0 }}>
+      <span className="field-label">{label}</span>
       {children}
     </label>
-  )
-}
-
-function LoadingState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-white/50">
-      <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
-      Carregando…
-    </div>
   )
 }

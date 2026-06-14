@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore'
 import { useBolao } from '../contexts/BolaoContext'
 import { buildLiveRanking, countPartidasAoVivo } from '../lib/liveRanking'
-import { findProximaPartida, type ApostaProximoJogo } from '../lib/nextPartida'
+import { findProximaPartida, resolveJogosDoDia } from '../lib/nextPartida'
 import { participantesRef, partidasRef, palpitesRef } from '../lib/paths'
 import type { Palpite, Partida, Participante } from '../lib/types'
 
@@ -20,6 +20,7 @@ export function useLiveRanking() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+  const [now, setNow] = useState(() => new Date())
 
   const fetchFromServer = useCallback(async () => {
     const [participantesSnap, partidasSnap, palpitesSnap] = await Promise.all([
@@ -56,6 +57,11 @@ export function useLiveRanking() {
       setLoading(false)
     }
   }, [fetchFromServer])
+
+  useEffect(() => {
+    const tick = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(tick)
+  }, [])
 
   useEffect(() => {
     if (!bolaoId) return
@@ -129,20 +135,12 @@ export function useLiveRanking() {
     [partidas],
   )
 
-  const proximaPartida = useMemo(() => findProximaPartida(partidas), [partidas])
+  const proximaPartida = useMemo(() => findProximaPartida(partidas, now), [partidas, now])
 
-  const apostasProximoJogo = useMemo((): ApostaProximoJogo[] => {
-    if (!proximaPartida) return []
-
-    return buildLiveRanking(participantes, palpites, partidas).map((participante) => ({
-      participante,
-      palpite:
-        palpites.find(
-          (p) =>
-            p.participante_id === participante.id && p.partida_id === proximaPartida.id,
-        ) ?? null,
-    }))
-  }, [participantes, palpites, partidas, proximaPartida])
+  const jogosDoDia = useMemo(
+    () => resolveJogosDoDia(partidas, now),
+    [partidas, now],
+  )
 
   return {
     ranking,
@@ -154,7 +152,9 @@ export function useLiveRanking() {
     encerradas,
     total: partidas.length,
     proximaPartida,
-    apostasProximoJogo,
+    jogosDoDia,
+    participantes,
+    palpites,
     refresh,
   }
 }

@@ -1,19 +1,22 @@
-# Bolão Colorados do Inter — Copa 2026
+# Bombolão
 
-App web de bolão da Copa do Mundo 2026 com React, Firebase (Firestore + Auth) e ranking em tempo real.
+Plataforma web de bolões entre amigos — React, Firebase (Auth, Firestore, Storage, Hosting) e ranking em tempo real.
+
+App publicado: **https://bombolao-9ea22.web.app**
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env   # preencher com credenciais Firebase
+cp .env.example .env   # preencher VITE_FIREBASE_* e, opcionalmente, FOOTBALL_DATA_TOKEN
 ```
 
-Preencha os e-mails em `src/data/participant-emails.json` e rode o seed:
+Para scripts Node (seed, sync, import), coloque a service account na raiz (`*-firebase-adminsdk-*.json`) ou use `firebase login`.
+
+**Firebase Storage** precisa estar ativado no console para upload de foto de perfil. Depois:
 
 ```bash
-# Requer service account ou firebase login + GOOGLE_APPLICATION_CREDENTIALS
-npm run seed
+firebase deploy --only storage
 ```
 
 ## Desenvolvimento
@@ -25,47 +28,56 @@ npm run dev
 ## Deploy
 
 ```bash
-npm run deploy
+npm run deploy              # hosting + firestore rules/indexes + auth
+firebase deploy --only storage   # regras de avatar (após ativar Storage)
+npm run deploy:functions    # Cloud Functions (plano Blaze)
 ```
 
-App publicado em: **https://bombolao-9ea22.web.app**
+## Scripts úteis
 
-### Cloud Functions (opcional)
+| Comando | Descrição |
+|---------|-----------|
+| `npm run seed` | Popula Firestore a partir de `src/data/seed.json` |
+| `npm run sync-scores` | Busca placares na API + atualiza Firestore + ranking |
+| `npm run sync-scores:recalc` | Recalcula pontos com placares já no Firestore |
+| `npm run import-partidas` | Importa partidas da Copa via football-data.org |
+| `npm run sync-participant-photos` | Copia `photoURL` do Auth para docs de participante |
+| `npm run link-participante` | Vincula participante legado ao Firebase Auth por e-mail |
 
-O recálculo automático de pontos usa Cloud Functions, que exige o plano **Blaze** (pay-as-you-go):
+## Estrutura do app
 
-1. Ative em: https://console.firebase.google.com/project/bombolao-9ea22/usage/details
-2. Depois rode: `npm run deploy:functions`
+### Rotas globais
 
-### Sincronizar placares (opcional)
+- **`/`** — Lobby (meus bolões)
+- **`/criar`** — Criar bolão
+- **`/convite/:code`** — Entrar por convite
+- **`/conta`** — Login (Google / e-mail) e edição de perfil (nome + foto)
 
-Com token da [football-data.org](https://www.football-data.org/) no `.env`:
+### Rotas por bolão (`/b/:bolaoId/...`)
 
-```bash
-npm run sync-scores          # busca API + atualiza Firestore + ranking
-npm run sync-scores:recalc   # só recalcula com placares já no Firestore
-```
-
-Rode a cada 5 min durante os jogos (cron ou manual). O app recalcula o ranking **em tempo real** no navegador via `onSnapshot` — basta os placares estarem no Firestore.
-
-Sem API, atualize placares no Firebase Console e rode `npm run sync-scores:recalc`.
-
-## Estrutura
-
-- **Ranking** (`/`) — classificação em tempo real
-- **Partidas** (`/partidas`) — jogos agrupados por data
-- **Palpites** (`/palpites`) — apostas do usuário logado
-- **Login** (`/login`) — Google Auth vinculado por e-mail
+- **Ranking** — classificação ao vivo + carrossel “Jogos do dia” com apostas
+- **Jogos** — partidas agrupadas por data
+- **Palpites** — apostas do usuário, agrupadas por dia (colapsável)
+- **Admin** — convites e gestão (só admin do bolão)
 
 ## Regras de pontuação
 
 | Acerto | Pontos |
 |--------|--------|
-| Na mosca | 9 |
+| Na mosca (placar exato) | 9 |
 | Vencedor + gol | 6 |
 | Empate | 6 |
 | Vencedor | 4 |
 | Gol | 1 |
 | Nada | 0 |
 
-Prazo: 15 min antes do jogo (horário de Brasília).
+Prazo: **15 minutos** antes do kickoff (horário de Brasília).
+
+## Automação (GitHub Actions)
+
+- **`sync-scores.yml`** — placares a cada 5 min (com gate ao vivo)
+- **`import-partidas.yml`** — importação diária de partidas da Copa
+
+## Bolão principal
+
+O bolão **Colorados do Inter** (`colorados-do-inter`) usa dados em `src/data/seed.json` e e-mails em `src/data/participant-emails.json`.

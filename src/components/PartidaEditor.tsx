@@ -30,43 +30,26 @@ export function PartidaEditor({ partidas, onChange }: PartidaEditorProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {partidas.map((p, i) => (
-        <div
-          key={i}
-          className="rounded-2xl border border-white/10 bg-pitch-card p-4 space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-gold">Jogo {i + 1}</span>
+        <div key={i} className="card" style={{ padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <span className="gold-text" style={{ fontWeight: 700 }}>
+              Jogo {i + 1}
+            </span>
             {partidas.length > 1 && (
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="text-xs text-red-300 hover:underline"
-              >
+              <button type="button" onClick={() => remove(i)} className="link-muted" style={{ fontSize: 13 }}>
                 Remover
               </button>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="Data">
-              <input
-                type="date"
-                value={p.data}
-                onChange={(e) => update(i, 'data', e.target.value)}
-                className="input-field"
-                required
-              />
+              <input type="date" value={p.data} onChange={(e) => update(i, 'data', e.target.value)} className="input" required />
             </Field>
             <Field label="Hora">
-              <input
-                type="time"
-                value={p.hora}
-                onChange={(e) => update(i, 'hora', e.target.value)}
-                className="input-field"
-                required
-              />
+              <input type="time" value={p.hora} onChange={(e) => update(i, 'hora', e.target.value)} className="input" required />
             </Field>
           </div>
 
@@ -76,18 +59,18 @@ export function PartidaEditor({ partidas, onChange }: PartidaEditorProps) {
               value={p.fase}
               onChange={(e) => update(i, 'fase', e.target.value)}
               placeholder="Fase de grupos"
-              className="input-field"
+              className="input"
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="Time casa">
               <input
                 type="text"
                 value={p.time_casa}
                 onChange={(e) => update(i, 'time_casa', e.target.value)}
                 placeholder="Brasil"
-                className="input-field"
+                className="input"
                 required
               />
             </Field>
@@ -97,7 +80,7 @@ export function PartidaEditor({ partidas, onChange }: PartidaEditorProps) {
                 value={p.time_fora}
                 onChange={(e) => update(i, 'time_fora', e.target.value)}
                 placeholder="Argentina"
-                className="input-field"
+                className="input"
                 required
               />
             </Field>
@@ -105,11 +88,7 @@ export function PartidaEditor({ partidas, onChange }: PartidaEditorProps) {
         </div>
       ))}
 
-      <button
-        type="button"
-        onClick={add}
-        className="w-full rounded-xl border border-dashed border-gold/40 py-3 text-sm font-semibold text-gold hover:bg-gold/10"
-      >
+      <button type="button" onClick={add} className="btn btn-ghost-gold full">
         + Adicionar partida
       </button>
     </div>
@@ -118,8 +97,10 @@ export function PartidaEditor({ partidas, onChange }: PartidaEditorProps) {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1">
-      <span className="text-xs text-white/50">{label}</span>
+    <label className="field" style={{ marginTop: 12 }}>
+      <span className="field-label" style={{ fontSize: 13 }}>
+        {label}
+      </span>
       {children}
     </label>
   )

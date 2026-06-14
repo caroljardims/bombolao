@@ -33,6 +33,17 @@ export function isHoje(data: string, now: Date = new Date()): boolean {
   return data === today
 }
 
-export function getHoje(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE })
+export function getHoje(now: Date = new Date()): string {
+  return now.toLocaleDateString('en-CA', { timeZone: TIMEZONE })
+}
+
+/** Agrupa partidas por data (YYYY-MM-DD), ordenadas cronologicamente. */
+export function groupPartidasByDay(partidas: Partida[]): [string, Partida[]][] {
+  const groups = new Map<string, Partida[]>()
+  for (const p of partidas) {
+    const list = groups.get(p.data) ?? []
+    list.push(p)
+    groups.set(p.data, list)
+  }
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b))
 }

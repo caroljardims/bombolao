@@ -1,4 +1,6 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { LoadingState } from '../components/LoadingState'
+import { Icon } from '../components/ui'
 import { PalpitesList } from './PalpitesPage'
 import { useParticipante, usePalpites } from '../hooks/usePalpites'
 import { usePartidas } from '../hooks/usePartidas'
@@ -15,18 +17,13 @@ export function ParticipantePalpitesPage() {
   if (!participanteId) return <Navigate to={bolaoPath(bolaoId)} replace />
 
   if (partidasLoading || palpitesLoading || nomeLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-white/50">
-        <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
-        Carregando palpites…
-      </div>
-    )
+    return <LoadingState message="Carregando palpites…" />
   }
 
   return (
-    <div>
-      <Link to={bolaoPath(bolaoId)} className="mb-4 inline-flex text-sm text-gold hover:underline">
-        ← Voltar ao ranking
+    <div className="screen">
+      <Link to={bolaoPath(bolaoId)} className="link-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+        <Icon.back s={14} /> Voltar ao ranking
       </Link>
       <PalpitesList
         title={`Palpites de ${nome}`}

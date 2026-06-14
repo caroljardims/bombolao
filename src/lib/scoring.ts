@@ -61,7 +61,8 @@ export function classificarAcerto(
   }
   if (pontos === null || !partidaEncerradaFlag) return 'nada'
   if (pontos === 9) return 'mosca'
-  if (pontos >= 4) return 'resultado'
+  if (pontos === 6) return 'resultado_gol'
+  if (pontos === 4) return 'resultado'
   if (pontos === 1) return 'gol'
   return 'nada'
 }
@@ -78,7 +79,8 @@ export function classificarAcertoPalpite(
   if (!encerrada) return 'nada'
   const pts = palpite.pontos ?? 0
   if (pts === 9) return 'mosca'
-  if (pts >= 4) return 'resultado'
+  if (pts === 6) return 'resultado_gol'
+  if (pts === 4) return 'resultado'
   if (pts === 1) return 'gol'
   return 'nada'
 }
@@ -137,6 +139,11 @@ export function apostasAbertas(partida: Partida, now: Date = new Date()): boolea
 export const ACERTO_STYLES: Record<AcertoTipo, { label: string; emoji: string; className: string }> = {
   mosca: { label: 'Na mosca', emoji: '🎯', className: 'bg-gold/20 text-gold border-gold/40' },
   resultado: { label: 'Resultado', emoji: '✅', className: 'bg-green-500/20 text-green-400 border-green-500/40' },
+  resultado_gol: {
+    label: 'Resultado + Gol',
+    emoji: '✅',
+    className: 'bg-green-500/20 text-green-400 border-green-500/40',
+  },
   gol: { label: 'Gol', emoji: '⚽', className: 'bg-sky-400/20 text-sky-300 border-sky-400/40' },
   nada: { label: 'Nada', emoji: '❌', className: 'bg-gray-500/20 text-gray-400 border-gray-500/40' },
   sem_aposta: { label: 'Sem aposta', emoji: '⬜', className: 'bg-red-400/20 text-red-300 border-red-400/40' },

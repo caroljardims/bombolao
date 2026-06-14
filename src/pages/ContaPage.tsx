@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { FirebaseError } from 'firebase/app'
+import { LoadingState } from '../components/LoadingState'
+import { Icon } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useMembrosias } from '../hooks/useMembrosias'
 import {
@@ -49,12 +51,15 @@ export function ContaPage() {
   const returnTo = (location.state as { returnTo?: string } | null)?.returnTo ?? '/'
   const [mode, setMode] = useState<LoginMode>('google')
   const [busy, setBusy] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nome, setNome] = useState('')
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [removePhoto, setRemovePhoto] = useState(false)
+  const [saved, setSaved] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -63,7 +68,7 @@ export function ContaPage() {
     setPhotoPreview(null)
     setPhotoFile(null)
     setRemovePhoto(false)
-  }, [user?.uid, user?.displayName, user?.photoURL])
+  }, [user?.uid])
 
   useEffect(() => {
     return () => {
@@ -71,14 +76,7 @@ export function ContaPage() {
     }
   }, [photoPreview])
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-white/50">
-        <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
-        Carregando…
-      </div>
-    )
-  }
+  if (loading) return <LoadingState />
 
   async function handleGoogleSignIn() {
     setBusy(true)
@@ -122,22 +120,25 @@ export function ContaPage() {
   }
 
   async function handleSignOut() {
-    setBusy(true)
+    setSigningOut(true)
     try {
       await signOut()
       toast.success('Logout realizado')
     } catch {
       toast.error('Erro ao sair')
     } finally {
-      setBusy(false)
+      setSigningOut(false)
     }
   }
 
   function handlePhotoSelect(file: File | null) {
     if (!file) return
+    if (photoPreview) URL.revokeObjectURL(photoPreview)
     setPhotoFile(file)
     setRemovePhoto(false)
     setPhotoPreview(URL.createObjectURL(file))
+    setSaved(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   async function handleSaveProfile(e: React.FormEvent) {
@@ -151,22 +152,25 @@ export function ContaPage() {
       return
     }
 
-    setBusy(true)
+    setSaving(true)
     try {
-      await updateUserProfile({
+      const updated = await updateUserProfile({
         displayName: nomeMudou ? nomeTrim : undefined,
         photoFile: photoFile ?? undefined,
         removePhoto,
       })
       await refreshUser()
+      if (photoPreview) URL.revokeObjectURL(photoPreview)
       setPhotoFile(null)
       setPhotoPreview(null)
       setRemovePhoto(false)
+      if (updated.displayName !== undefined) setNome(updated.displayName)
+      setSaved(true)
       toast.success('Perfil atualizado!')
     } catch (err) {
       toast.error(err instanceof ProfileError ? err.message : 'Erro ao salvar perfil')
     } finally {
-      setBusy(false)
+      setSaving(false)
     }
   }
 
@@ -174,148 +178,135 @@ export function ContaPage() {
     const avatarSrc = removePhoto ? null : (photoPreview ?? user.photoURL)
     const profileDirty =
       nome.trim() !== (user.displayName ?? '').trim() || !!photoFile || removePhoto
+    const formLocked = saving || signingOut
 
     return (
-      <div className="mx-auto max-w-sm space-y-6 pt-4">
-        <div>
-          <h2 className="text-xl font-bold">Minha conta</h2>
-          <p className="text-sm text-white/50">Edite seu nome e foto de perfil</p>
-        </div>
+      <div className="screen conta-screen">
+        <header className="section-head plain center">
+          <div>
+            <h2>Minha conta</h2>
+            <p className="sub">Edite seu nome e foto de perfil</p>
+          </div>
+        </header>
 
-        <form
-          onSubmit={handleSaveProfile}
-          className="rounded-2xl border border-white/10 bg-pitch-card p-5"
-        >
-          <div className="text-center">
+        <form onSubmit={handleSaveProfile} className="conta-card card">
+          <div className="conta-avatar">
             <button
               type="button"
+              className="conta-photo-btn"
               onClick={() => fileInputRef.current?.click()}
-              disabled={busy}
-              className="group relative mx-auto block disabled:opacity-60"
+              disabled={formLocked}
             >
               {avatarSrc ? (
-                <img
-                  src={avatarSrc}
-                  alt=""
-                  className="h-24 w-24 rounded-full border-2 border-gold/50 object-cover"
-                />
+                <img src={avatarSrc} alt="" className="conta-photo" referrerPolicy="no-referrer" />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold/50 bg-grass-light/30 text-4xl">
-                  👤
-                </div>
+                <span className="conta-photo-placeholder">👤</span>
               )}
-              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
-                Alterar foto
-              </span>
             </button>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
+              style={{ display: 'none' }}
               onChange={(e) => handlePhotoSelect(e.target.files?.[0] ?? null)}
             />
-
-            <div className="mt-3 flex justify-center gap-3 text-xs">
+            <div className="conta-photo-actions">
               <button
                 type="button"
+                className="link-gold"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={busy}
-                className="font-medium text-gold hover:underline disabled:opacity-60"
+                disabled={formLocked}
               >
                 Escolher foto
               </button>
               {user.photoURL && !removePhoto && !photoFile && (
                 <button
                   type="button"
+                  className="link-muted"
                   onClick={() => {
+                    if (photoPreview) URL.revokeObjectURL(photoPreview)
                     setRemovePhoto(true)
                     setPhotoFile(null)
                     setPhotoPreview(null)
+                    setSaved(false)
                   }}
-                  disabled={busy}
-                  className="text-white/40 hover:text-white/70 disabled:opacity-60"
+                  disabled={formLocked}
                 >
                   Remover foto
-                </button>
-              )}
-              {(photoFile || removePhoto) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPhotoFile(null)
-                    setPhotoPreview(null)
-                    setRemovePhoto(false)
-                  }}
-                  disabled={busy}
-                  className="text-white/40 hover:text-white/70 disabled:opacity-60"
-                >
-                  Desfazer foto
                 </button>
               )}
             </div>
           </div>
 
-          <label className="mt-5 block">
-            <span className="mb-1.5 block text-sm font-medium text-white/70">Nome de exibição</span>
+          <label className="field">
+            <span className="field-label">Nome de exibição</span>
             <input
+              className="input"
               type="text"
               value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              onChange={(e) => {
+                setNome(e.target.value)
+                setSaved(false)
+              }}
               maxLength={40}
               placeholder="Seu nome"
-              className="input-field"
             />
+            <span className="field-hint">Também aparece no ranking dos bolões em que você participa.</span>
           </label>
 
-          <p className="mt-2 text-xs text-white/35">
-            O nome também aparece no ranking dos bolões em que você participa.
-          </p>
-
-          <p className="mt-4 text-center text-sm text-white/50">{user.email}</p>
-          <p className="mt-1 text-center text-sm text-white/40">
-            {membrosias.length} {membrosias.length === 1 ? 'bolão' : 'bolões'}
-          </p>
+          <div className="conta-meta">
+            <span>{user.email}</span>
+            <span className="dotsep">·</span>
+            <span>
+              {membrosias.length} {membrosias.length === 1 ? 'bolão' : 'bolões'}
+            </span>
+          </div>
 
           <button
             type="submit"
-            disabled={busy || !profileDirty || !nome.trim()}
-            className="mt-5 w-full rounded-xl bg-gold py-3.5 text-sm font-semibold text-pitch disabled:opacity-50"
+            disabled={formLocked || !profileDirty || !nome.trim()}
+            className={`btn btn-gold full${saved ? ' done' : ''}`}
           >
-            {busy ? 'Salvando…' : 'Salvar alterações'}
+            {saved ? (
+              <>
+                <Icon.check s={16} /> Alterações salvas
+              </>
+            ) : saving ? (
+              'Salvando…'
+            ) : (
+              'Salvar alterações'
+            )}
           </button>
 
-          <Link
-            to="/"
-            className="mt-4 block text-center text-sm font-medium text-gold hover:underline"
-          >
-            Ver meus bolões →
+          <Link to="/" className="link-gold center-link">
+            Ver meus bolões <Icon.arrow s={15} />
           </Link>
         </form>
 
         <button
           type="button"
           onClick={handleSignOut}
-          disabled={busy}
-          className="w-full rounded-xl border border-red-400/30 bg-red-400/10 py-4 text-base font-semibold text-red-300 disabled:opacity-60"
+          disabled={formLocked}
+          className="btn btn-danger full wide-out"
         >
-          {busy ? 'Saindo…' : 'Sair da conta'}
+          {signingOut ? 'Saindo…' : 'Sair da conta'}
         </button>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 pt-6">
-      <div className="text-center">
-        <div className="text-6xl">⚽</div>
-        <h2 className="mt-4 text-2xl font-bold">Entrar no Bombolão</h2>
-        <p className="mt-2 text-sm text-white/60">
+    <div className="screen conta-screen">
+      <div className="login-hero">
+        <div className="login-hero-icon">⚽</div>
+        <h2 style={{ marginTop: 16, fontSize: 27, fontWeight: 800 }}>Entrar no Bombolão</h2>
+        <p className="sub" style={{ marginTop: 8 }}>
           Crie bolões, entre com convite e faça seus palpites.
         </p>
       </div>
 
-      <div className="flex rounded-xl border border-white/10 bg-pitch-card p-1">
+      <div className="mode-tabs" style={{ marginTop: 24 }}>
         <ModeButton active={mode === 'google'} onClick={() => setMode('google')}>
           Google
         </ModeButton>
@@ -324,60 +315,52 @@ export function ContaPage() {
         </ModeButton>
       </div>
 
-      {mode === 'google' ? (
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={busy}
-            className="flex w-full items-center justify-center gap-3 rounded-xl bg-white py-4 text-base font-semibold text-gray-800 disabled:opacity-60"
-          >
+      <div style={{ marginTop: 20 }}>
+        {mode === 'google' ? (
+          <button type="button" onClick={handleGoogleSignIn} disabled={busy} className="btn-google">
             <GoogleIcon />
             {busy ? 'Entrando…' : 'Entrar com Google'}
           </button>
-        </div>
-      ) : (
-        <form onSubmit={handleEmailSignIn} className="space-y-4">
-          <input
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="seu@email.com"
-            required
-            className="input-field"
-          />
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Senha"
-            className="input-field"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-xl bg-grass-light py-4 text-base font-semibold text-white disabled:opacity-60"
-          >
-            {busy ? 'Entrando…' : 'Entrar'}
-          </button>
-          <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4 text-center">
-            <p className="text-sm font-medium text-gold">Primeiro acesso?</p>
-            <button
-              type="button"
-              onClick={handleSendPasswordEmail}
-              disabled={busy}
-              className="mt-3 text-sm font-semibold text-gold underline-offset-2 hover:underline disabled:opacity-60"
-            >
-              Enviar e-mail para criar senha
+        ) : (
+          <form onSubmit={handleEmailSignIn} className="form-stack">
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu@email.com"
+              required
+              className="input"
+            />
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Senha"
+              className="input"
+            />
+            <button type="submit" disabled={busy} className="btn btn-save full">
+              {busy ? 'Entrando…' : 'Entrar'}
             </button>
-          </div>
-        </form>
-      )}
+            <div className="alert-gold" style={{ textAlign: 'center' }}>
+              <p style={{ fontWeight: 700 }}>Primeiro acesso?</p>
+              <button
+                type="button"
+                onClick={handleSendPasswordEmail}
+                disabled={busy}
+                className="link-gold"
+                style={{ marginTop: 12 }}
+              >
+                Enviar e-mail para criar senha
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
 
-      <Link to={returnTo} className="block text-center text-sm text-white/50 hover:text-gold">
+      <Link to={returnTo} className="link-muted center-link" style={{ marginTop: 20 }}>
         ← Voltar
       </Link>
     </div>
@@ -394,13 +377,7 @@ function ModeButton({
   children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition ${
-        active ? 'bg-grass-light text-white' : 'text-white/50 hover:text-white/80'
-      }`}
-    >
+    <button type="button" onClick={onClick} className={`mode-tab${active ? ' active' : ''}`}>
       {children}
     </button>
   )
@@ -408,7 +385,7 @@ function ModeButton({
 
 function GoogleIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="h-5 w-5" width={20} height={20} viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />

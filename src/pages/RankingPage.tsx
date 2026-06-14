@@ -1,7 +1,9 @@
 import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
+import { LoadingState } from '../components/LoadingState'
 import { NextGameBets } from '../components/NextGameBets'
 import { RankingCard } from '../components/RankingCard'
+import { Icon, Pill } from '../components/ui'
 import { useBolao } from '../contexts/BolaoContext'
 import { useLiveRanking } from '../hooks/useLiveRanking'
 import { bolaoPath } from '../lib/paths'
@@ -18,7 +20,9 @@ export function RankingPage() {
     encerradas,
     total,
     proximaPartida,
-    apostasProximoJogo,
+    jogosDoDia,
+    participantes,
+    palpites,
     refresh,
   } = useLiveRanking()
 
@@ -32,25 +36,35 @@ export function RankingPage() {
   }
 
   if (loading && ranking.length === 0) {
-    return <LoadingState />
+    return <LoadingState message="Carregando ranking…" />
   }
 
   if (error && ranking.length === 0) {
-    return <ErrorState message={error} onRetry={handleRefresh} />
+    return (
+      <div className="alert-error">
+        <p>Erro ao carregar ranking: {error}</p>
+        <button type="button" className="btn btn-ghost-gold" style={{ marginTop: 12 }} onClick={handleRefresh}>
+          Tentar novamente
+        </button>
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <aside className="order-2 lg:order-1 lg:w-72 lg:shrink-0">
-        <NextGameBets partida={proximaPartida} apostas={apostasProximoJogo} />
-      </aside>
+    <div className="screen ranking-screen">
+      <div className="rank-grid">
+        <NextGameBets
+          jogosDoDia={jogosDoDia.jogos}
+          proximaPartida={proximaPartida}
+          participantes={participantes}
+          palpites={palpites}
+        />
 
-      <div className="order-1 min-w-0 flex-1 space-y-2 lg:order-2">
-        <div className="mb-2">
-          <div className="flex items-start justify-between gap-3">
+        <section className="rank-main">
+          <header className="section-head">
             <div>
-              <h2 className="text-xl font-bold">Ranking</h2>
-              <p className="text-sm text-white/50">
+              <h2>Ranking</h2>
+              <p className="sub">
                 {encerradas}/{total} jogos com placar
               </p>
             </div>
@@ -58,68 +72,45 @@ export function RankingPage() {
               type="button"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-sm font-semibold text-gold disabled:opacity-50"
+              className={`btn btn-ghost-gold${refreshing ? ' spinning' : ''}`}
             >
-              <span className={refreshing ? 'animate-spin' : ''}>↻</span>
-              {refreshing ? 'Atualizando…' : 'Atualizar'}
+              <Icon.refresh /> {refreshing ? 'Atualizando…' : 'Atualizar'}
             </button>
+          </header>
+
+          <div className="rank-statusbar">
+            {aoVivo > 0 && (
+              <Pill tone="live" dot>
+                {aoVivo} jogo{aoVivo > 1 ? 's' : ''} ao vivo agora
+              </Pill>
+            )}
+            <span className="upd">Atualizado {lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+            {isAdmin && (
+              <Link to={bolaoPath(bolaoId, 'admin')} className="admin-link">
+                Administração <Icon.arrow s={14} />
+              </Link>
+            )}
           </div>
 
-          {aoVivo > 0 && (
-            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-400">
-              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-red-500" />
-              {aoVivo} jogo{aoVivo > 1 ? 's' : ''} ao vivo agora
-            </p>
-          )}
-          <p className="mt-1 text-xs text-white/30">
-            Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
-          </p>
-          {isAdmin && (
-            <Link
-              to={bolaoPath(bolaoId, 'admin')}
-              className="mt-2 inline-block text-xs text-gold hover:underline"
-            >
-              Administração →
-            </Link>
-          )}
-        </div>
+          <div className="rank-legend">
+            <span>
+              <i className="s-e">●</i> Na Mosca
+            </span>
+            <span>
+              <i className="s-p">●</i> Resultados
+            </span>
+            <span>
+              <i className="s-x">●</i> Sem aposta
+            </span>
+          </div>
 
-        <div className="space-y-1.5">
-          {ranking.map((p) => (
-            <RankingCard key={p.id} participante={p} compact />
-          ))}
-        </div>
+          <div className="rank-list">
+            {ranking.map((p) => (
+              <RankingCard key={p.id} participante={p} />
+            ))}
+          </div>
+        </section>
       </div>
-    </div>
-  )
-}
-
-function LoadingState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-white/50">
-      <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
-      Carregando ranking…
-    </div>
-  )
-}
-
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string
-  onRetry: () => void
-}) {
-  return (
-    <div className="space-y-3 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-red-300">
-      <p>Erro ao carregar ranking: {message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="rounded-xl bg-red-400/20 px-4 py-2 text-sm font-semibold text-red-200"
-      >
-        Tentar novamente
-      </button>
     </div>
   )
 }
