@@ -2,12 +2,31 @@ name: Sync placares
 
 on:
   schedule:
-    # GitHub ignora intervalos < 5 min — */3 nunca dispara
-    - cron: '*/5 * * * *'
+    # ~12h–01h BRT (15h–04h UTC) — horário típico de jogos da Copa
+    # GitHub ignora intervalos < 5 min
+    - cron: '*/5 15-23,0-4 * 6,7 *'
   workflow_dispatch:
 
 jobs:
+  check:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      should_sync: ${{ steps.check.outputs.should_sync }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar se há jogo ao vivo
+        id: check
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          FOOTBALL_DATA_COMPETITION: WC
+        run: node scripts/should-sync-scores.mjs
+
   sync:
+    needs: check
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check.outputs.should_sync == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
