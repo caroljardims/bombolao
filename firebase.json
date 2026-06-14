@@ -1,19 +1,39 @@
 {
   "hosting": {
     "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
   },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "functions": [
     {
       "source": "functions",
       "codebase": "default",
-      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"],
-      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
     }
   ],
   "auth": {
@@ -22,7 +42,11 @@
       "googleSignIn": {
         "oAuthBrandDisplayName": "Bolão Colorados do Inter",
         "supportEmail": "caroljardims@gmail.com",
-        "authorizedDomains": ["localhost", "bombolao-9ea22.web.app", "bombolao-9ea22.firebaseapp.com"]
+        "authorizedDomains": [
+          "localhost",
+          "bombolao-9ea22.web.app",
+          "bombolao-9ea22.firebaseapp.com"
+        ]
       }
     }
   }

@@ -94,12 +94,19 @@ export function LobbyPage() {
             <Link
               key={m.bolaoId}
               to={bolaoPath(m.bolaoId)}
-              className="block rounded-2xl border border-white/10 bg-pitch-card p-4 transition active:scale-[0.98] hover:border-gold/40"
+              className="group block rounded-2xl border border-gold/50 bg-gradient-to-br from-gold/20 via-gold/10 to-pitch-card p-4 shadow-lg shadow-gold/10 transition active:scale-[0.98] hover:border-gold hover:from-gold/25"
             >
-              <p className="font-semibold">{m.nome}</p>
-              <p className="text-xs text-white/40">
-                {m.papel === 'admin' ? 'Administrador' : 'Membro'}
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-gold">{m.nome}</p>
+                  <p className="mt-0.5 text-xs text-white/50">
+                    {m.papel === 'admin' ? 'Administrador' : 'Membro'}
+                  </p>
+                </div>
+                <span className="shrink-0 text-lg text-gold/80 transition group-hover:translate-x-0.5 group-hover:text-gold">
+                  →
+                </span>
+              </div>
             </Link>
           ))}
         </div>

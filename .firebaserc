@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "bombolao-9ea22"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

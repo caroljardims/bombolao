@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { FirebaseError } from 'firebase/app'
@@ -11,6 +11,7 @@ import {
   signOut,
   AuthError,
 } from '../lib/auth'
+import { ProfileError, updateUserProfile } from '../lib/profile'
 
 type LoginMode = 'google' | 'email'
 
@@ -42,7 +43,7 @@ function getLoginErrorMessage(err: unknown): string {
 }
 
 export function ContaPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, refreshUser } = useAuth()
   const { membrosias } = useMembrosias()
   const location = useLocation()
   const returnTo = (location.state as { returnTo?: string } | null)?.returnTo ?? '/'
@@ -50,6 +51,25 @@ export function ContaPage() {
   const [busy, setBusy] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [nome, setNome] = useState('')
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [removePhoto, setRemovePhoto] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!user) return
+    setNome(user.displayName ?? '')
+    setPhotoPreview(null)
+    setPhotoFile(null)
+    setRemovePhoto(false)
+  }, [user?.uid, user?.displayName, user?.photoURL])
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview)
+    }
+  }, [photoPreview])
 
   if (loading) {
     return (
@@ -113,38 +133,165 @@ export function ContaPage() {
     }
   }
 
+  function handlePhotoSelect(file: File | null) {
+    if (!file) return
+    setPhotoFile(file)
+    setRemovePhoto(false)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault()
+    const nomeTrim = nome.trim()
+    const nomeMudou = nomeTrim !== (user?.displayName ?? '').trim()
+    const fotoMudou = !!photoFile || removePhoto
+
+    if (!nomeMudou && !fotoMudou) {
+      toast.error('Nenhuma alteração para salvar.')
+      return
+    }
+
+    setBusy(true)
+    try {
+      await updateUserProfile({
+        displayName: nomeMudou ? nomeTrim : undefined,
+        photoFile: photoFile ?? undefined,
+        removePhoto,
+      })
+      await refreshUser()
+      setPhotoFile(null)
+      setPhotoPreview(null)
+      setRemovePhoto(false)
+      toast.success('Perfil atualizado!')
+    } catch (err) {
+      toast.error(err instanceof ProfileError ? err.message : 'Erro ao salvar perfil')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (user) {
+    const avatarSrc = removePhoto ? null : (photoPreview ?? user.photoURL)
+    const profileDirty =
+      nome.trim() !== (user.displayName ?? '').trim() || !!photoFile || removePhoto
+
     return (
       <div className="mx-auto max-w-sm space-y-6 pt-4">
         <div>
           <h2 className="text-xl font-bold">Minha conta</h2>
-          <p className="text-sm text-white/50">Gerencie seu acesso à plataforma</p>
+          <p className="text-sm text-white/50">Edite seu nome e foto de perfil</p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-pitch-card p-5 text-center">
-          {user.photoURL ? (
-            <img
-              src={user.photoURL}
-              alt=""
-              className="mx-auto mb-4 h-20 w-20 rounded-full border-2 border-gold/40"
+        <form
+          onSubmit={handleSaveProfile}
+          className="rounded-2xl border border-white/10 bg-pitch-card p-5"
+        >
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy}
+              className="group relative mx-auto block disabled:opacity-60"
+            >
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt=""
+                  className="h-24 w-24 rounded-full border-2 border-gold/50 object-cover"
+                />
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold/50 bg-grass-light/30 text-4xl">
+                  👤
+                </div>
+              )}
+              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
+                Alterar foto
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => handlePhotoSelect(e.target.files?.[0] ?? null)}
             />
-          ) : (
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-gold/40 bg-grass-light/30 text-3xl">
-              👤
+
+            <div className="mt-3 flex justify-center gap-3 text-xs">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={busy}
+                className="font-medium text-gold hover:underline disabled:opacity-60"
+              >
+                Escolher foto
+              </button>
+              {user.photoURL && !removePhoto && !photoFile && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRemovePhoto(true)
+                    setPhotoFile(null)
+                    setPhotoPreview(null)
+                  }}
+                  disabled={busy}
+                  className="text-white/40 hover:text-white/70 disabled:opacity-60"
+                >
+                  Remover foto
+                </button>
+              )}
+              {(photoFile || removePhoto) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhotoFile(null)
+                    setPhotoPreview(null)
+                    setRemovePhoto(false)
+                  }}
+                  disabled={busy}
+                  className="text-white/40 hover:text-white/70 disabled:opacity-60"
+                >
+                  Desfazer foto
+                </button>
+              )}
             </div>
-          )}
-          <p className="text-xl font-bold">{user.displayName ?? 'Usuário'}</p>
-          <p className="mt-1 text-sm text-white/50">{user.email}</p>
-          <p className="mt-3 text-sm text-white/40">
+          </div>
+
+          <label className="mt-5 block">
+            <span className="mb-1.5 block text-sm font-medium text-white/70">Nome de exibição</span>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              maxLength={40}
+              placeholder="Seu nome"
+              className="input-field"
+            />
+          </label>
+
+          <p className="mt-2 text-xs text-white/35">
+            O nome também aparece no ranking dos bolões em que você participa.
+          </p>
+
+          <p className="mt-4 text-center text-sm text-white/50">{user.email}</p>
+          <p className="mt-1 text-center text-sm text-white/40">
             {membrosias.length} bolão{membrosias.length !== 1 ? 'ões' : ''}
           </p>
+
+          <button
+            type="submit"
+            disabled={busy || !profileDirty || !nome.trim()}
+            className="mt-5 w-full rounded-xl bg-gold py-3.5 text-sm font-semibold text-pitch disabled:opacity-50"
+          >
+            {busy ? 'Salvando…' : 'Salvar alterações'}
+          </button>
+
           <Link
             to="/"
-            className="mt-4 inline-block text-sm font-medium text-gold hover:underline"
+            className="mt-4 block text-center text-sm font-medium text-gold hover:underline"
           >
             Ver meus bolões →
           </Link>
-        </div>
+        </form>
 
         <button
           type="button"

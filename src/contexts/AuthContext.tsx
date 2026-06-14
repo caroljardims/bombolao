@@ -5,15 +5,17 @@ import { auth } from '../lib/firebase'
 interface AuthState {
   user: User | null
   loading: boolean
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState>({
   user: null,
   loading: true,
+  refreshUser: async () => {},
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>({
+  const [state, setState] = useState<Omit<AuthState, 'refreshUser'>>({
     user: null,
     loading: true,
   })
@@ -25,7 +27,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe
   }, [])
 
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>
+  async function refreshUser() {
+    const current = auth.currentUser
+    if (!current) return
+    await current.reload()
+    setState({ user: auth.currentUser, loading: false })
+  }
+
+  return (
+    <AuthContext.Provider value={{ ...state, refreshUser }}>{children}</AuthContext.Provider>
+  )
 }
 
 export function useAuth(): AuthState {
