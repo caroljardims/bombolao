@@ -36,6 +36,10 @@ jobs:
           node-version: '20'
           cache: npm
 
+      - name: Instalar dependências
+        if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.should_sync == 'true'
+        run: npm ci
+
       - name: Validar secrets
         if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.should_sync == 'true'
         env:
