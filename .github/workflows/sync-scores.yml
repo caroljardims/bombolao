@@ -2,7 +2,8 @@ name: Sync placares
 
 on:
   schedule:
-    - cron: '*/3 * * * *'
+    # GitHub ignora intervalos < 5 min — */3 nunca dispara
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
