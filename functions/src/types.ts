@@ -12,6 +12,7 @@ export interface Partida {
   time_fora: string
   gols_casa: number | null
   gols_fora: number | null
+  status_api?: string | null
 }
 
 export interface Palpite {

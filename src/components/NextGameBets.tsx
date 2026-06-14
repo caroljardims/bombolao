@@ -33,6 +33,9 @@ export function NextGameBets({ partida, apostas }: NextGameBetsProps) {
         <p className="mt-1 text-xs text-white/30">
           {comAposta}/{apostas.length} apostaram
         </p>
+        <p className="mt-0.5 text-[10px] text-white/25">
+          {partida.time_casa} (casa) × {partida.time_fora} (fora)
+        </p>
       </div>
 
       <ul className="space-y-1">
@@ -47,7 +50,7 @@ export function NextGameBets({ partida, apostas }: NextGameBetsProps) {
               </span>
               <span className="truncate text-sm">{participante.nome}</span>
             </div>
-            <PalpiteBadge palpite={palpite} />
+            <PalpiteBadge palpite={palpite} partida={partida} />
           </li>
         ))}
       </ul>
@@ -55,13 +58,16 @@ export function NextGameBets({ partida, apostas }: NextGameBetsProps) {
   )
 }
 
-function PalpiteBadge({ palpite }: { palpite: Palpite | null }) {
+function PalpiteBadge({ palpite, partida }: { palpite: Palpite | null; partida: Partida }) {
   if (!palpite || !temPalpite(palpite)) {
     return <span className="shrink-0 text-xs text-white/25">—</span>
   }
 
   return (
-    <span className="shrink-0 rounded-md bg-black/30 px-2 py-0.5 font-mono text-sm font-semibold tabular-nums text-gold">
+    <span
+      className="shrink-0 rounded-md bg-black/30 px-2 py-0.5 font-mono text-sm font-semibold tabular-nums text-gold"
+      title={`${partida.time_casa} ${palpite.palpite_casa} × ${partida.time_fora} ${palpite.palpite_fora}`}
+    >
       {palpite.palpite_casa}×{palpite.palpite_fora}
     </span>
   )

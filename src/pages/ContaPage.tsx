@@ -274,7 +274,7 @@ export function ContaPage() {
 
           <p className="mt-4 text-center text-sm text-white/50">{user.email}</p>
           <p className="mt-1 text-center text-sm text-white/40">
-            {membrosias.length} bolão{membrosias.length !== 1 ? 'ões' : ''}
+            {membrosias.length} {membrosias.length === 1 ? 'bolão' : 'bolões'}
           </p>
 
           <button

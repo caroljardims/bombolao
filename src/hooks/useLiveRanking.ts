@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   getDocsFromServer,
   onSnapshot,
@@ -7,30 +7,19 @@ import {
 } from 'firebase/firestore'
 import { useBolao } from '../contexts/BolaoContext'
 import { buildLiveRanking, countPartidasAoVivo } from '../lib/liveRanking'
-import { mergePartidasWithLiveScores, countLiveFromApi } from '../lib/mergeScores'
 import { findProximaPartida, type ApostaProximoJogo } from '../lib/nextPartida'
 import { participantesRef, partidasRef, palpitesRef } from '../lib/paths'
-import { useLiveScores } from './useLiveScores'
 import type { Palpite, Partida, Participante } from '../lib/types'
 
 export function useLiveRanking() {
   const { bolaoId } = useBolao()
   const [participantes, setParticipantes] = useState<Participante[]>([])
-  const [partidasFirestore, setPartidasFirestore] = useState<Partida[]>([])
+  const [partidas, setPartidas] = useState<Partida[]>([])
   const [palpites, setPalpites] = useState<Palpite[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
-
-  const { scores, lastSync, sync } = useLiveScores(partidasFirestore)
-  const syncRef = useRef(sync)
-  syncRef.current = sync
-
-  const partidas = useMemo(
-    () => mergePartidasWithLiveScores(partidasFirestore, scores),
-    [partidasFirestore, scores],
-  )
 
   const fetchFromServer = useCallback(async () => {
     const [participantesSnap, partidasSnap, palpitesSnap] = await Promise.all([
@@ -45,21 +34,20 @@ export function useLiveRanking() {
       participantes: participantesSnap.docs.map(
         (d) => ({ id: d.id, ...d.data() }) as Participante,
       ),
-      partidasFirestore: partidasSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Partida),
+      partidas: partidasSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Partida),
       palpites: palpitesSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Palpite),
     }
   }, [bolaoId])
 
-  const refreshFirestore = useCallback(async () => {
+  const refresh = useCallback(async () => {
     setRefreshing(true)
     try {
       const data = await fetchFromServer()
       setParticipantes(data.participantes)
-      setPartidasFirestore(data.partidasFirestore)
+      setPartidas(data.partidas)
       setPalpites(data.palpites)
       setLastUpdate(new Date())
       setError(null)
-      await syncRef.current()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar')
       throw err
@@ -97,7 +85,7 @@ export function useLiveRanking() {
     const unsubPartidas = onSnapshot(
       query(partidasRef(bolaoId), orderBy('data', 'asc'), orderBy('hora', 'asc')),
       (snap) => {
-        setPartidasFirestore(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Partida))
+        setPartidas(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Partida))
         loaded.partidas = true
         setLastUpdate(new Date())
         checkLoaded()
@@ -134,11 +122,7 @@ export function useLiveRanking() {
     [participantes, palpites, partidas],
   )
 
-  const aoVivo = useMemo(() => {
-    const fromApi = countLiveFromApi(partidas, scores)
-    if (fromApi > 0) return fromApi
-    return countPartidasAoVivo(partidas)
-  }, [partidas, scores])
+  const aoVivo = useMemo(() => countPartidasAoVivo(partidas), [partidas])
 
   const encerradas = useMemo(
     () => partidas.filter((p) => p.gols_casa !== null && p.gols_fora !== null).length,
@@ -160,16 +144,12 @@ export function useLiveRanking() {
     }))
   }, [participantes, palpites, partidas, proximaPartida])
 
-  const refresh = useCallback(async () => {
-    await refreshFirestore()
-  }, [refreshFirestore])
-
   return {
     ranking,
     loading,
-    refreshing: refreshing,
+    refreshing,
     error,
-    lastUpdate: lastSync ?? lastUpdate,
+    lastUpdate,
     aoVivo,
     encerradas,
     total: partidas.length,

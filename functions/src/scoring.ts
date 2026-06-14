@@ -18,8 +18,12 @@ export function calcularPontos(placar: Placar, palpite: Placar): number {
   return 0
 }
 
+const FINAL_STATUSES = new Set(['FINISHED', 'AWARDED'])
+
 export function partidaEncerrada(partida: Partida): boolean {
-  return partida.gols_casa !== null && partida.gols_fora !== null
+  if (partida.gols_casa === null || partida.gols_fora === null) return false
+  if (partida.status_api) return FINAL_STATUSES.has(partida.status_api)
+  return true
 }
 
 export function temPalpite(palpite: Pick<Palpite, 'palpite_casa' | 'palpite_fora'>): boolean {
