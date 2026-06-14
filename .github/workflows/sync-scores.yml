@@ -2,44 +2,41 @@ name: Sync placares
 
 on:
   schedule:
-    # ~12h–01h BRT (15h–04h UTC) — horário típico de jogos da Copa
-    # GitHub ignora intervalos < 5 min
-    - cron: '*/5 15-23,0-4 * 6,7 *'
+    # ~12h–01h BRT (15h–04h UTC) — jun/jul, a cada 5 min (mínimo do GitHub)
+    - cron: '*/5 15-23 * 6,7 *'
+    - cron: '*/5 0-4 * 6,7 *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  check:
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      should_sync: ${{ steps.check.outputs.should_sync }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Verificar se há jogo ao vivo
-        id: check
-        env:
-          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
-          FOOTBALL_DATA_COMPETITION: WC
-        run: node scripts/should-sync-scores.mjs
-
   sync:
-    needs: check
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.check.outputs.should_sync == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verificar se há jogo ao vivo
+        if: github.event_name == 'schedule'
+        id: gate
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          FOOTBALL_DATA_COMPETITION: WC
+        run: node scripts/should-sync-scores.mjs
+
+      - name: Sem jogo ao vivo — encerrar
+        if: github.event_name == 'schedule' && steps.gate.outputs.should_sync != 'true'
+        run: echo "Sync dispensado (nenhum jogo na janela)."
+
       - uses: actions/setup-node@v4
+        if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.should_sync == 'true'
         with:
           node-version: '20'
           cache: npm
 
-      - run: npm ci
-
       - name: Validar secrets
+        if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.should_sync == 'true'
         env:
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
@@ -54,6 +51,7 @@ jobs:
           fi
 
       - name: Configurar credenciais Firebase
+        if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.should_sync == 'true'
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: |
@@ -61,6 +59,7 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-sa.json" >> "$GITHUB_ENV"
 
       - name: Sincronizar placares
+        if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.should_sync == 'true'
         env:
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
           FOOTBALL_DATA_COMPETITION: WC
