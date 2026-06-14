@@ -14,6 +14,7 @@
     "import-palpites": "tsx scripts/import-web-bolao-palpites.ts",
     "update-partidas": "tsx scripts/update-partidas-from-seed.ts",
     "merge-participante": "tsx scripts/merge-participante.ts",
+    "link-participante": "tsx scripts/link-participante.ts",
     "sync-scores": "tsx scripts/sync-scores.ts",
     "sync-scores:all": "tsx scripts/sync-scores.ts -- --all",
     "sync-scores:recalc": "tsx scripts/sync-scores.ts -- --bolao-id colorados-do-inter --recalc-only",

@@ -1,13 +1,15 @@
 import {
+  collectionGroup,
   getDoc,
   getDocs,
   query,
+  setDoc,
   where,
   writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { participanteDoc, participantesRef, palpitesRef } from './paths'
-import type { Participante } from './types'
+import { bolaoDoc, membrosiaDoc, participanteDoc, participantesRef, palpitesRef } from './paths'
+import type { Bolao, Participante } from './types'
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
@@ -94,5 +96,58 @@ export async function claimLegacyParticipante(
   }
 
   await batch.commit()
+  await ensureMembrosia(bolaoId, uid, {
+    papel: legacies.some((l) => l.papel === 'admin') ? 'admin' : (primary.papel ?? 'membro'),
+  })
   return true
+}
+
+/** Cria membrosia no lobby se o usuário ainda não tiver entrada para o bolão. */
+export async function ensureMembrosia(
+  bolaoId: string,
+  uid: string,
+  opts?: { papel?: 'admin' | 'membro' },
+): Promise<void> {
+  const mRef = membrosiaDoc(uid, bolaoId)
+  const existing = await getDoc(mRef)
+  if (existing.exists()) return
+
+  const bolaoSnap = await getDoc(bolaoDoc(bolaoId))
+  const bolao = bolaoSnap.exists() ? ({ id: bolaoSnap.id, ...bolaoSnap.data() } as Bolao) : null
+
+  await setDoc(mRef, {
+    bolaoId,
+    nome: bolao?.nome ?? bolaoId,
+    papel: opts?.papel ?? 'membro',
+    entrouEm: new Date().toISOString(),
+  })
+}
+
+/**
+ * No login, vincula participantes legados (seed/migração) pelo e-mail
+ * e garante que o bolão apareça no lobby.
+ */
+export async function syncLegacyMemberships(
+  uid: string,
+  email: string,
+  nomeExibicao?: string,
+): Promise<void> {
+  const normalized = normalizeEmail(email)
+  if (!normalized) return
+
+  const snap = await getDocs(
+    query(collectionGroup(db, 'participantes'), where('email', '==', normalized)),
+  )
+
+  const bolaoIds = new Set<string>()
+  for (const doc of snap.docs) {
+    if (doc.id === uid) continue
+    const bolaoRef = doc.ref.parent.parent
+    if (!bolaoRef) continue
+    bolaoIds.add(bolaoRef.id)
+  }
+
+  for (const bolaoId of bolaoIds) {
+    await claimLegacyParticipante(bolaoId, uid, email, nomeExibicao)
+  }
 }

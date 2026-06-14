@@ -13,12 +13,8 @@ import { recalcAll } from './lib/recalcAll'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
 
-/** Placar do dia web.bolão (14/06 tarde/noite) */
-const WEB_BOLAO_PLACAR: Record<string, { gols_casa: number; gols_fora: number; status_api: string }> = {
-  '2026-06-14-NED-JPN': { gols_casa: 0, gols_fora: 0, status_api: 'FINISHED' },
-  '2026-06-14-CIV-ECU': { gols_casa: 0, gols_fora: 0, status_api: 'FINISHED' },
-  '2026-06-14-SWE-TUN': { gols_casa: 0, gols_fora: 0, status_api: 'FINISHED' },
-}
+/** Placar manual só quando a API ainda não tiver o jogo (evitar FINISHED antes do apito). */
+const WEB_BOLAO_PLACAR: Record<string, { gols_casa: number; gols_fora: number; status_api: string }> = {}
 
 function findServiceAccountPath(): string | null {
   for (const file of readdirSync(root)) {

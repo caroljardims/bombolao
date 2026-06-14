@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../contexts/AuthContext'
+import { syncLegacyMemberships } from '../lib/linkParticipante'
 import { membrosiasRef } from '../lib/paths'
 import type { Membrosia } from '../lib/types'
 
@@ -15,6 +16,12 @@ export function useMembrosias() {
       setMembrosias([])
       setLoading(false)
       return
+    }
+
+    if (user.email) {
+      syncLegacyMemberships(user.uid, user.email, user.displayName ?? undefined).catch(() => {
+        /* sem conta legada ou permissão */
+      })
     }
 
     const q = query(membrosiasRef(user.uid), orderBy('entrouEm', 'desc'))
