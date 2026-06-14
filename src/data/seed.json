@@ -78,7 +78,7 @@
       "time_casa": "Brasil",
       "time_fora": "Marrocos",
       "gols_casa": 1,
-      "gols_fora": 2
+      "gols_fora": 1
     },
     {
       "id": "2026-06-13-HAI-SCO",
@@ -341,7 +341,13 @@
         "partida_id": "2026-06-14-GER-CUR",
         "palpite_casa": 4,
         "palpite_fora": 0,
-        "pontos": 1
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 2,
+        "palpite_fora": 3,
+        "pontos": null
       }
     ],
     "André": [
@@ -397,7 +403,13 @@
         "partida_id": "2026-06-14-GER-CUR",
         "palpite_casa": 5,
         "palpite_fora": 0,
-        "pontos": 1
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": null
       }
     ],
     "Pedro": [
@@ -453,7 +465,13 @@
         "partida_id": "2026-06-14-GER-CUR",
         "palpite_casa": 6,
         "palpite_fora": 0,
-        "pontos": 1
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 3,
+        "palpite_fora": 1,
+        "pontos": null
       }
     ],
     "Cacá": [
@@ -509,7 +527,13 @@
         "partida_id": "2026-06-14-GER-CUR",
         "palpite_casa": 5,
         "palpite_fora": 0,
-        "pontos": 1
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": null
       }
     ],
     "Maria Hipotética": [
@@ -562,10 +586,16 @@
         "pontos": 0
       },
       {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": null
+      },
+      {
         "partida_id": "2026-06-14-GER-CUR",
         "palpite_casa": 5,
         "palpite_fora": 0,
-        "pontos": 1
+        "pontos": 4
       }
     ],
     "Jeanbiru": [
@@ -621,7 +651,13 @@
         "partida_id": "2026-06-14-GER-CUR",
         "palpite_casa": 4,
         "palpite_fora": 0,
-        "pontos": 1
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 1,
+        "palpite_fora": 0,
+        "pontos": null
       }
     ],
     "Camile": [
@@ -677,7 +713,13 @@
         "partida_id": "2026-06-14-GER-CUR",
         "palpite_casa": 7,
         "palpite_fora": 1,
-        "pontos": 0
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": null
       }
     ],
     "Michael": [
@@ -734,64 +776,70 @@
         "palpite_casa": null,
         "palpite_fora": null,
         "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-NED-JPN",
+        "palpite_casa": 3,
+        "palpite_fora": 1,
+        "pontos": null
       }
     ]
   },
   "ranking": [
     {
       "nome": "Felipe",
-      "total_pontos": 35,
+      "total_pontos": 38,
       "na_mosca": 3,
-      "acerto_resultado": 1,
+      "acerto_resultado": 2,
       "sem_aposta": 0,
       "posicao": 1
     },
     {
       "nome": "André",
-      "total_pontos": 29,
+      "total_pontos": 32,
       "na_mosca": 1,
-      "acerto_resultado": 3,
+      "acerto_resultado": 4,
       "sem_aposta": 0,
       "posicao": 2
     },
     {
       "nome": "Pedro",
-      "total_pontos": 24,
+      "total_pontos": 27,
       "na_mosca": 1,
-      "acerto_resultado": 2,
+      "acerto_resultado": 3,
       "sem_aposta": 0,
       "posicao": 3
     },
     {
       "nome": "Cacá",
-      "total_pontos": 24,
+      "total_pontos": 27,
       "na_mosca": 1,
-      "acerto_resultado": 2,
+      "acerto_resultado": 3,
       "sem_aposta": 0,
       "posicao": 4
     },
     {
       "nome": "Maria Hipotética",
-      "total_pontos": 20,
+      "total_pontos": 23,
       "na_mosca": 2,
-      "acerto_resultado": 0,
+      "acerto_resultado": 1,
       "sem_aposta": 3,
       "posicao": 5
     },
     {
-      "nome": "Jeanbiru",
-      "total_pontos": 16,
-      "na_mosca": 0,
-      "acerto_resultado": 2,
-      "sem_aposta": 0,
+      "nome": "Camile",
+      "total_pontos": 19,
+      "na_mosca": 2,
+      "acerto_resultado": 1,
+      "sem_aposta": 4,
       "posicao": 6
     },
     {
-      "nome": "Camile",
-      "total_pontos": 10,
-      "na_mosca": 1,
-      "acerto_resultado": 0,
-      "sem_aposta": 4,
+      "nome": "Jeanbiru",
+      "total_pontos": 19,
+      "na_mosca": 0,
+      "acerto_resultado": 3,
+      "sem_aposta": 0,
       "posicao": 7
     },
     {

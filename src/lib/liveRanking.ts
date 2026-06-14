@@ -9,7 +9,8 @@ import {
 import { isPastKickoff } from './dates'
 
 export function getPontosLive(palpite: Palpite, partida: Partida): number | null {
-  if (!partidaEncerrada(partida) || !temPalpite(palpite)) return null
+  const temPlacar = partida.gols_casa !== null && partida.gols_fora !== null
+  if ((!partidaEncerrada(partida) && !partidaAoVivo(partida)) || !temPlacar || !temPalpite(palpite)) return null
   return calcularPontos(
     { casa: partida.gols_casa!, fora: partida.gols_fora! },
     { casa: palpite.palpite_casa!, fora: palpite.palpite_fora! },
@@ -36,7 +37,8 @@ export function contarEstatisticasLive(
       continue
     }
 
-    if (partidaEncerrada(partida)) {
+    const temPlacar = partida.gols_casa !== null && partida.gols_fora !== null
+    if (temPlacar && (partidaEncerrada(partida) || partidaAoVivo(partida))) {
       const pts = getPontosLive(palpite, partida)!
       total_pontos += pts
       if (pts === 9) na_mosca += 1

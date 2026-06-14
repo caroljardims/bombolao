@@ -72,16 +72,22 @@ async function main() {
   }
 
   const competition = process.env.FOOTBALL_DATA_COMPETITION ?? 'WC'
-  const res = await fetch(`https://api.football-data.org/v4/competitions/${competition}/matches`, {
-    headers: { 'X-Auth-Token': token },
-  })
-
-  if (!res.ok) {
-    console.error(`API retornou ${res.status}`)
-    process.exit(1)
+  let data
+  try {
+    const res = await fetch(`https://api.football-data.org/v4/competitions/${competition}/matches`, {
+      headers: { 'X-Auth-Token': token },
+    })
+    if (!res.ok) {
+      console.warn(`API retornou ${res.status} — assumindo sync necessário.`)
+      writeOutput(true)
+      return
+    }
+    data = await res.json()
+  } catch (err) {
+    console.warn(`Erro ao chamar API: ${err.message} — assumindo sync necessário.`)
+    writeOutput(true)
+    return
   }
-
-  const data = await res.json()
   const now = Date.now()
   const matches = data.matches ?? []
   const relevant = matches.filter((m) => matchNeedsSync(m, now))
