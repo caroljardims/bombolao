@@ -65,13 +65,24 @@ function findServiceAccountPath(): string | null {
   return candidates.find((p) => existsSync(p)) ?? null
 }
 
+function parseServiceAccountJson(raw: string): Record<string, unknown> {
+  const trimmed = raw.trim()
+  try {
+    return JSON.parse(trimmed) as Record<string, unknown>
+  } catch {
+    throw new Error(
+      'FIREBASE_SERVICE_ACCOUNT_JSON inválido. Cole o JSON completo da service account (uma linha ou formatado).',
+    )
+  }
+}
+
 function initAdmin() {
   if (getApps().length > 0) return getFirestore()
 
   const jsonEnv = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
-  if (jsonEnv) {
+  if (jsonEnv?.trim()) {
     initializeApp({
-      credential: cert(JSON.parse(jsonEnv)),
+      credential: cert(parseServiceAccountJson(jsonEnv)),
       projectId: PROJECT_ID,
     })
     return getFirestore()
@@ -83,10 +94,12 @@ function initAdmin() {
       credential: cert(JSON.parse(readFileSync(credPath, 'utf-8'))),
       projectId: PROJECT_ID,
     })
-  } else {
-    initializeApp({ projectId: PROJECT_ID })
+    return getFirestore()
   }
-  return getFirestore()
+
+  throw new Error(
+    'Credenciais Firebase não encontradas. No GitHub Actions, configure o secret FIREBASE_SERVICE_ACCOUNT_JSON com o JSON da service account.',
+  )
 }
 
 function parsePartidaDate(utcDate: string): string {
