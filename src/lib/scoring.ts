@@ -22,6 +22,22 @@ export function calcularPontos(
   return 0
 }
 
+/** Distingue empate (+6) de vencedor+gol (+6) para labels na UI. */
+export function classificarTipoAcerto(
+  pontos: number,
+  placar: Placar,
+  palpite: Placar,
+): AcertoTipo {
+  if (pontos === 9) return 'mosca'
+  if (pontos === 6) {
+    if (placar.casa === placar.fora && palpite.casa === palpite.fora) return 'empate'
+    return 'resultado_gol'
+  }
+  if (pontos === 4) return 'resultado'
+  if (pontos === 1) return 'gol'
+  return 'nada'
+}
+
 const FINAL_STATUSES = new Set(['FINISHED', 'AWARDED'])
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE', 'EXTRA_TIME', 'PENALTY_SHOOTOUT'])
 
@@ -61,7 +77,10 @@ export function classificarAcerto(
   }
   if (pontos === null || !partidaEncerradaFlag) return 'nada'
   if (pontos === 9) return 'mosca'
-  if (pontos === 6) return 'resultado_gol'
+  if (pontos === 6) {
+    if (palpite.palpite_casa === palpite.palpite_fora) return 'empate'
+    return 'resultado_gol'
+  }
   if (pontos === 4) return 'resultado'
   if (pontos === 1) return 'gol'
   return 'nada'
@@ -77,12 +96,21 @@ export function classificarAcertoPalpite(
     return 'sem_aposta'
   }
   if (!encerrada) return 'nada'
-  const pts = palpite.pontos ?? 0
-  if (pts === 9) return 'mosca'
-  if (pts === 6) return 'resultado_gol'
-  if (pts === 4) return 'resultado'
-  if (pts === 1) return 'gol'
-  return 'nada'
+  const pts = palpite.pontos ?? getPontosFromPartida(palpite, partida)
+  if (pts === null) return 'nada'
+  return classificarTipoAcerto(
+    pts,
+    { casa: partida.gols_casa!, fora: partida.gols_fora! },
+    { casa: palpite.palpite_casa!, fora: palpite.palpite_fora! },
+  )
+}
+
+function getPontosFromPartida(palpite: Palpite, partida: Partida): number | null {
+  if (partida.gols_casa === null || partida.gols_fora === null) return palpite.pontos ?? 0
+  return calcularPontos(
+    { casa: partida.gols_casa, fora: partida.gols_fora },
+    { casa: palpite.palpite_casa!, fora: palpite.palpite_fora! },
+  )
 }
 
 export function contarEstatisticas(
@@ -138,6 +166,7 @@ export function apostasAbertas(partida: Partida, now: Date = new Date()): boolea
 
 export const ACERTO_STYLES: Record<AcertoTipo, { label: string; emoji: string; className: string }> = {
   mosca: { label: 'Na mosca', emoji: '🎯', className: 'bg-gold/20 text-gold border-gold/40' },
+  empate: { label: 'Empate', emoji: '🤝', className: 'bg-green-500/20 text-green-400 border-green-500/40' },
   resultado: { label: 'Resultado', emoji: '✅', className: 'bg-green-500/20 text-green-400 border-green-500/40' },
   resultado_gol: {
     label: 'Resultado + Gol',

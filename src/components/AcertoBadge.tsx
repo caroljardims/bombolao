@@ -11,7 +11,7 @@ function toneForTipo(tipo: AcertoTipo): 'ok-soft' | 'gold-soft' | 'danger-soft' 
   if (tipo === 'mosca') return 'gold-soft'
   if (tipo === 'sem_aposta' || tipo === 'nada') return 'danger-soft'
   if (tipo === 'gol') return 'muted'
-  return 'ok-soft'
+  return 'ok-soft' // empate, resultado, resultado_gol
 }
 
 export function AcertoBadge({ tipo, pontos }: AcertoBadgeProps) {

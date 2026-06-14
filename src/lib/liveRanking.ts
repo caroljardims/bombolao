@@ -2,6 +2,7 @@ import type { AcertoTipo, Participante, Palpite, Partida, ParticipanteStats } fr
 import {
   calcularPontos,
   calcularPosicoes,
+  classificarTipoAcerto,
   partidaAoVivo,
   partidaEncerrada,
   temPalpite,
@@ -87,10 +88,11 @@ export function classificarAcertoLive(palpite: Palpite, partida: Partida): Acert
     return 'sem_aposta'
   }
   if (!encerrada) return 'nada'
-  const pts = getPontosLive(palpite, partida) ?? 0
-  if (pts === 9) return 'mosca'
-  if (pts === 6) return 'resultado_gol'
-  if (pts === 4) return 'resultado'
-  if (pts === 1) return 'gol'
-  return 'nada'
+  const pts = getPontosLive(palpite, partida)
+  if (pts === null) return 'nada'
+  return classificarTipoAcerto(
+    pts,
+    { casa: partida.gols_casa!, fora: partida.gols_fora! },
+    { casa: palpite.palpite_casa!, fora: palpite.palpite_fora! },
+  )
 }

@@ -1,4 +1,4 @@
-export type AcertoTipo = 'mosca' | 'resultado' | 'resultado_gol' | 'gol' | 'nada' | 'sem_aposta'
+export type AcertoTipo = 'mosca' | 'empate' | 'resultado' | 'resultado_gol' | 'gol' | 'nada' | 'sem_aposta'
 export type Papel = 'admin' | 'membro'
 export type AcessoBolao = 'convite' | 'aberto'
 
