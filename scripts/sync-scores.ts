@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { cert, initializeApp, getApps } from 'firebase-admin/app'
 import { getFirestore, type Firestore } from 'firebase-admin/firestore'
 import type { Partida, Palpite } from '../src/lib/types'
+import { getKickoffDate, isPastKickoff } from '../src/lib/dates'
 import {
   calcularPontos,
   calcularPosicoes,
@@ -52,6 +53,11 @@ const UPDATABLE_STATUS = new Set([
   'EXTRA_TIME',
   'PENALTY_SHOOTOUT',
 ])
+
+const PENDING_API_STATUS = new Set(['TIMED', 'SCHEDULED'])
+
+/** Após o apito, inferir ao vivo por até ~2h30 se a API ainda não atualizou. */
+const LIVE_WINDOW_MS = 2.5 * 60 * 60 * 1000
 
 function findServiceAccountPath(): string | null {
   const fromEnv = process.env.GOOGLE_APPLICATION_CREDENTIALS
@@ -154,6 +160,54 @@ function findMatchingPartida(partidas: Partida[], apiMatch: ApiMatch): Partida |
   )
 }
 
+function isWithinLiveWindow(partida: Partida, now = new Date()): boolean {
+  const elapsed = now.getTime() - getKickoffDate(partida).getTime()
+  return elapsed >= 0 && elapsed <= LIVE_WINDOW_MS
+}
+
+function resolveStatusApi(partida: Partida, apiStatus: string, now = new Date()): string {
+  if (
+    PENDING_API_STATUS.has(apiStatus) &&
+    isPastKickoff(partida, now) &&
+    isWithinLiveWindow(partida, now) &&
+    !partidaEncerrada(partida)
+  ) {
+    return 'IN_PLAY'
+  }
+  return apiStatus
+}
+
+type PartidaPatch = {
+  gols_casa?: number
+  gols_fora?: number
+  status_api: string
+}
+
+function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date()): PartidaPatch | null {
+  const resolvedStatus = resolveStatusApi(partida, apiMatch.status, now)
+  const apiUpdatable = UPDATABLE_STATUS.has(apiMatch.status)
+  const inferredLive = resolvedStatus === 'IN_PLAY' && PENDING_API_STATUS.has(apiMatch.status)
+
+  if (!apiUpdatable && !inferredLive) return null
+
+  const score = extractScore(apiMatch)
+  const status_api = apiUpdatable ? apiMatch.status : 'IN_PLAY'
+
+  if (score) {
+    if (
+      partida.gols_casa === score.home &&
+      partida.gols_fora === score.away &&
+      partida.status_api === status_api
+    ) {
+      return null
+    }
+    return { gols_casa: score.home, gols_fora: score.away, status_api }
+  }
+
+  if (partida.status_api === status_api) return null
+  return { status_api }
+}
+
 async function recalcAll(db: Firestore, bolaoId: string) {
   const bolaoRef = db.collection('boloes').doc(bolaoId)
   const partidasSnap = await bolaoRef.collection('partidas').get()
@@ -246,28 +300,21 @@ async function syncBolao(db: Firestore, bolaoId: string, apiMatches: ApiMatch[],
     let atualizados = 0
 
     for (const apiMatch of apiMatches) {
-      if (!UPDATABLE_STATUS.has(apiMatch.status)) continue
-
       const partida = findMatchingPartida(partidas, apiMatch)
       if (!partida) continue
 
-      const score = extractScore(apiMatch)
-      if (!score) continue
+      const patch = buildPartidaPatch(partida, apiMatch)
+      if (!patch) continue
 
-      const sameScore =
-        partida.gols_casa === score.home &&
-        partida.gols_fora === score.away &&
-        partida.status_api === apiMatch.status
-      if (sameScore) continue
+      batch.update(bolaoRef.collection('partidas').doc(partida.id), patch)
 
-      batch.update(bolaoRef.collection('partidas').doc(partida.id), {
-        gols_casa: score.home,
-        gols_fora: score.away,
-        status_api: apiMatch.status,
-      })
-      console.log(
-        `  ↑ ${partida.time_casa} ${score.home}×${score.away} ${partida.time_fora} (${apiMatch.status})`,
-      )
+      if (patch.gols_casa !== undefined && patch.gols_fora !== undefined) {
+        console.log(
+          `  ↑ ${partida.time_casa} ${patch.gols_casa}×${patch.gols_fora} ${partida.time_fora} (${patch.status_api})`,
+        )
+      } else {
+        console.log(`  ↑ ${partida.time_casa} × ${partida.time_fora} (${patch.status_api})`)
+      }
       atualizados++
     }
 

@@ -1,5 +1,5 @@
 import { getKickoffDate, isPastKickoff } from './dates'
-import { partidaAoVivo, partidaEncerrada } from './scoring'
+import { partidaAoVivo, partidaEmCurso, partidaEncerrada } from './scoring'
 import type { Palpite, Partida, Participante } from './types'
 
 export interface ApostaProximoJogo {
@@ -7,7 +7,7 @@ export interface ApostaProximoJogo {
   palpite: Palpite | null
 }
 
-/** Próximo jogo para exibir apostas: ao vivo, ou próximo kickoff, ou pendente sem resultado final. */
+/** Próximo jogo para exibir apostas: ao vivo, em curso, próximo kickoff ou pendente. */
 export function findProximaPartida(partidas: Partida[], now = new Date()): Partida | null {
   if (partidas.length === 0) return null
 
@@ -17,6 +17,9 @@ export function findProximaPartida(partidas: Partida[], now = new Date()): Parti
 
   const aoVivo = sorted.find((p) => partidaAoVivo(p))
   if (aoVivo) return aoVivo
+
+  const emCurso = sorted.find((p) => partidaEmCurso(p, now))
+  if (emCurso) return emCurso
 
   const proximoKickoff = sorted.find((p) => !isPastKickoff(p, now))
   if (proximoKickoff) return proximoKickoff

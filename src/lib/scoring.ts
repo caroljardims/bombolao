@@ -33,6 +33,11 @@ export function partidaAoVivo(partida: Partida): boolean {
   return partida.status_api ? LIVE_STATUSES.has(partida.status_api) : false
 }
 
+/** Já começou (kickoff passou) mas ainda não tem resultado final. */
+export function partidaEmCurso(partida: Partida, now: Date = new Date()): boolean {
+  return isPastKickoff(partida, now) && !partidaEncerrada(partida)
+}
+
 export function partidaEncerrada(partida: Partida): boolean {
   if (!temPlacar(partida)) return false
   if (partida.status_api) return FINAL_STATUSES.has(partida.status_api)
