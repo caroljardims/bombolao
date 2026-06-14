@@ -1,0 +1,806 @@
+{
+  "bolao": {
+    "nome": "Colorados do Inter",
+    "competicao": "Copa do Mundo 2026",
+    "regras": {
+      "na_mosca": 9,
+      "vencedor_gol": 6,
+      "empate": 6,
+      "vencedor": 4,
+      "gol": 1,
+      "nada": 0,
+      "prazo_apostas_minutos": 15,
+      "jogos_prorrogacao": "placar_final_prorrogacao",
+      "desempate": [
+        "total_pontos",
+        "na_mosca",
+        "acerto_resultado",
+        "sem_aposta"
+      ]
+    }
+  },
+  "partidas": [
+    {
+      "id": "2026-06-11-MEX-RSA",
+      "data": "2026-06-11",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "México",
+      "time_fora": "África do Sul",
+      "gols_casa": 2,
+      "gols_fora": 0
+    },
+    {
+      "id": "2026-06-11-KOR-CZE",
+      "data": "2026-06-11",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Coreia do Sul",
+      "time_fora": "República Tcheca",
+      "gols_casa": 2,
+      "gols_fora": 1
+    },
+    {
+      "id": "2026-06-12-CAN-BIH",
+      "data": "2026-06-12",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Canadá",
+      "time_fora": "Bósnia-Herzegovina",
+      "gols_casa": 1,
+      "gols_fora": 1
+    },
+    {
+      "id": "2026-06-12-USA-PAR",
+      "data": "2026-06-12",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Estados Unidos",
+      "time_fora": "Paraguai",
+      "gols_casa": 4,
+      "gols_fora": 1
+    },
+    {
+      "id": "2026-06-13-QAT-SUI",
+      "data": "2026-06-13",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Catar",
+      "time_fora": "Suíça",
+      "gols_casa": 1,
+      "gols_fora": 1
+    },
+    {
+      "id": "2026-06-13-BRA-MAR",
+      "data": "2026-06-13",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Brasil",
+      "time_fora": "Marrocos",
+      "gols_casa": 1,
+      "gols_fora": 2
+    },
+    {
+      "id": "2026-06-13-HAI-SCO",
+      "data": "2026-06-13",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Haiti",
+      "time_fora": "Escócia",
+      "gols_casa": 0,
+      "gols_fora": 1
+    },
+    {
+      "id": "2026-06-14-AUS-TUR",
+      "data": "2026-06-14",
+      "hora": "01:00",
+      "fase": "Primeira fase",
+      "time_casa": "Austrália",
+      "time_fora": "Turquia",
+      "gols_casa": 2,
+      "gols_fora": 0
+    },
+    {
+      "id": "2026-06-14-GER-CUR",
+      "data": "2026-06-14",
+      "hora": "14:00",
+      "fase": "Primeira fase",
+      "time_casa": "Alemanha",
+      "time_fora": "Curaçao",
+      "gols_casa": 0,
+      "gols_fora": 0
+    },
+    {
+      "id": "2026-06-14-NED-JPN",
+      "data": "2026-06-14",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Holanda",
+      "time_fora": "Japão",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-14-CIV-ECU",
+      "data": "2026-06-14",
+      "hora": "20:00",
+      "fase": "Primeira fase",
+      "time_casa": "Costa do Marfim",
+      "time_fora": "Equador",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-14-SWE-TUN",
+      "data": "2026-06-14",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Suécia",
+      "time_fora": "Tunísia",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-15-ESP-CPV",
+      "data": "2026-06-15",
+      "hora": "13:00",
+      "fase": "Primeira fase",
+      "time_casa": "Espanha",
+      "time_fora": "Cabo Verde",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-15-BEL-EGY",
+      "data": "2026-06-15",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Bélgica",
+      "time_fora": "Egito",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-15-KSA-URU",
+      "data": "2026-06-15",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Arábia Saudita",
+      "time_fora": "Uruguai",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-15-IRN-NZL",
+      "data": "2026-06-15",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Irã",
+      "time_fora": "Nova Zelândia",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-16-FRA-SEN",
+      "data": "2026-06-16",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "França",
+      "time_fora": "Senegal",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-16-IRQ-NOR",
+      "data": "2026-06-16",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Iraque",
+      "time_fora": "Noruega",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-16-ARG-ALG",
+      "data": "2026-06-16",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Argentina",
+      "time_fora": "Argélia",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-17-AUT-JOR",
+      "data": "2026-06-17",
+      "hora": "01:00",
+      "fase": "Primeira fase",
+      "time_casa": "Áustria",
+      "time_fora": "Jordânia",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-17-POR-COD",
+      "data": "2026-06-17",
+      "hora": "14:00",
+      "fase": "Primeira fase",
+      "time_casa": "Portugal",
+      "time_fora": "Congo",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-17-ENG-CRO",
+      "data": "2026-06-17",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Inglaterra",
+      "time_fora": "Croácia",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-17-GHA-PAN",
+      "data": "2026-06-17",
+      "hora": "20:00",
+      "fase": "Primeira fase",
+      "time_casa": "Gana",
+      "time_fora": "Panamá",
+      "gols_casa": null,
+      "gols_fora": null
+    },
+    {
+      "id": "2026-06-17-UZB-COL",
+      "data": "2026-06-17",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Uzbequistão",
+      "time_fora": "Colômbia",
+      "gols_casa": null,
+      "gols_fora": null
+    }
+  ],
+  "participantes": [
+    {
+      "nome": "Felipe"
+    },
+    {
+      "nome": "André"
+    },
+    {
+      "nome": "Pedro"
+    },
+    {
+      "nome": "Cacá"
+    },
+    {
+      "nome": "Maria Hipotética"
+    },
+    {
+      "nome": "Jeanbiru"
+    },
+    {
+      "nome": "Camile"
+    },
+    {
+      "nome": "Michael"
+    }
+  ],
+  "palpites": {
+    "Felipe": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": 0,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 1,
+        "palpite_fora": 3,
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": 0,
+        "palpite_fora": 3,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": 4,
+        "palpite_fora": 0,
+        "pontos": 1
+      }
+    ],
+    "André": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": 1,
+        "palpite_fora": 0,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": 0,
+        "palpite_fora": 3,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 2,
+        "palpite_fora": 2,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 0,
+        "palpite_fora": 2,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": 1,
+        "palpite_fora": 3,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": 5,
+        "palpite_fora": 0,
+        "pontos": 1
+      }
+    ],
+    "Pedro": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": 1,
+        "palpite_fora": 0,
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": 0,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 0,
+        "palpite_fora": 2,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": 1,
+        "palpite_fora": 3,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": 6,
+        "palpite_fora": 0,
+        "pontos": 1
+      }
+    ],
+    "Cacá": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": 3,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": 2,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 2,
+        "palpite_fora": 2,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 0,
+        "palpite_fora": 2,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": 5,
+        "palpite_fora": 0,
+        "pontos": 1
+      }
+    ],
+    "Maria Hipotética": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": 0,
+        "palpite_fora": 3,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 0,
+        "palpite_fora": 1,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": 0,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": 5,
+        "palpite_fora": 0,
+        "pontos": 1
+      }
+    ],
+    "Jeanbiru": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": 1,
+        "palpite_fora": 0,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": 2,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": 0,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 0,
+        "palpite_fora": 3,
+        "pontos": 6
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": 1,
+        "palpite_fora": 3,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": 4,
+        "palpite_fora": 0,
+        "pontos": 1
+      }
+    ],
+    "Camile": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": 0,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 0,
+        "palpite_fora": 1,
+        "pontos": 9
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": 7,
+        "palpite_fora": 1,
+        "pontos": 0
+      }
+    ],
+    "Michael": [
+      {
+        "partida_id": "2026-06-11-MEX-RSA",
+        "palpite_casa": 3,
+        "palpite_fora": 1,
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-11-KOR-CZE",
+        "palpite_casa": 2,
+        "palpite_fora": 2,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-12-CAN-BIH",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-12-USA-PAR",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-13-QAT-SUI",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-BRA-MAR",
+        "palpite_casa": 3,
+        "palpite_fora": 0,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-13-HAI-SCO",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-14-AUS-TUR",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-GER-CUR",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": 0
+      }
+    ]
+  },
+  "ranking": [
+    {
+      "nome": "Felipe",
+      "total_pontos": 35,
+      "na_mosca": 3,
+      "acerto_resultado": 1,
+      "sem_aposta": 0,
+      "posicao": 1
+    },
+    {
+      "nome": "André",
+      "total_pontos": 29,
+      "na_mosca": 1,
+      "acerto_resultado": 3,
+      "sem_aposta": 0,
+      "posicao": 2
+    },
+    {
+      "nome": "Pedro",
+      "total_pontos": 24,
+      "na_mosca": 1,
+      "acerto_resultado": 2,
+      "sem_aposta": 0,
+      "posicao": 3
+    },
+    {
+      "nome": "Cacá",
+      "total_pontos": 24,
+      "na_mosca": 1,
+      "acerto_resultado": 2,
+      "sem_aposta": 0,
+      "posicao": 4
+    },
+    {
+      "nome": "Maria Hipotética",
+      "total_pontos": 20,
+      "na_mosca": 2,
+      "acerto_resultado": 0,
+      "sem_aposta": 3,
+      "posicao": 5
+    },
+    {
+      "nome": "Jeanbiru",
+      "total_pontos": 16,
+      "na_mosca": 0,
+      "acerto_resultado": 2,
+      "sem_aposta": 0,
+      "posicao": 6
+    },
+    {
+      "nome": "Camile",
+      "total_pontos": 10,
+      "na_mosca": 1,
+      "acerto_resultado": 0,
+      "sem_aposta": 4,
+      "posicao": 7
+    },
+    {
+      "nome": "Michael",
+      "total_pontos": 10,
+      "na_mosca": 0,
+      "acerto_resultado": 2,
+      "sem_aposta": 3,
+      "posicao": 8
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "bombolao",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "seed": "tsx scripts/seed.ts",
+    "migrate": "tsx scripts/migrate-to-multi-bolao.ts",
+    "grant-admin": "tsx scripts/grant-admin.ts",
+    "import-palpites": "tsx scripts/import-web-bolao-palpites.ts",
+    "update-partidas": "tsx scripts/update-partidas-from-seed.ts",
+    "merge-participante": "tsx scripts/merge-participante.ts",
+    "sync-scores": "tsx scripts/sync-scores.ts",
+    "sync-scores:all": "tsx scripts/sync-scores.ts -- --all",
+    "sync-scores:recalc": "tsx scripts/sync-scores.ts -- --bolao-id colorados-do-inter --recalc-only",
+    "functions:build": "cd functions && npm run build",
+    "deploy": "npm run build && firebase deploy --only hosting,firestore:rules,firestore:indexes,auth",
+    "deploy:functions": "npm run functions:build && firebase deploy --only functions"
+  },
+  "dependencies": {
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
+    "firebase": "^12.14.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.17.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.1",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "firebase-admin": "^14.0.0",
+    "globals": "^17.6.0",
+    "tailwindcss": "^4.3.1",
+    "tsx": "^4.22.4",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12"
+  }
+}

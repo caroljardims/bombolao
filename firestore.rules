@@ -1,0 +1,123 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(participanteId) {
+      return isSignedIn() && request.auth.uid == participanteId;
+    }
+
+    function validScore(val) {
+      return val == null || (val is int && val >= 0 && val <= 20);
+    }
+
+    function palpitePairValid() {
+      return (request.resource.data.palpite_casa == null && request.resource.data.palpite_fora == null)
+        || (request.resource.data.palpite_casa is int && request.resource.data.palpite_fora is int);
+    }
+
+    function statsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['total_pontos', 'na_mosca', 'acerto_resultado', 'sem_aposta', 'posicao', 'papel']);
+    }
+
+    function authEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function participanteEmail(bolaoId, participanteId) {
+      return get(/databases/$(database)/documents/boloes/$(bolaoId)/participantes/$(participanteId)).data.email.lower();
+    }
+
+    function ownsLegacyParticipante(bolaoId, participanteId) {
+      return isSignedIn()
+        && participanteId != request.auth.uid
+        && participanteEmail(bolaoId, participanteId) == authEmail();
+    }
+
+    // --- Bolões ---
+    match /boloes/{bolaoId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.resource.data.criadoPor == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.criadoPor == request.auth.uid;
+      allow delete: if false;
+
+      match /partidas/{partidaId} {
+        allow read: if true;
+        allow write: if false;
+      }
+
+      match /participantes/{participanteId} {
+        allow read: if true;
+        allow create: if isOwner(participanteId);
+        allow update: if isOwner(participanteId) && statsUnchanged();
+        allow delete: if ownsLegacyParticipante(bolaoId, participanteId);
+      }
+
+      match /palpites/{palpiteId} {
+        allow read: if true;
+        allow create: if isOwner(request.resource.data.participante_id)
+          && validScore(request.resource.data.palpite_casa)
+          && validScore(request.resource.data.palpite_fora)
+          && palpitePairValid();
+        allow update: if (
+          isOwner(resource.data.participante_id)
+          && request.resource.data.participante_id == resource.data.participante_id
+          && validScore(request.resource.data.palpite_casa)
+          && validScore(request.resource.data.palpite_fora)
+          && palpitePairValid()
+        ) || (
+          ownsLegacyParticipante(bolaoId, resource.data.participante_id)
+          && request.resource.data.participante_id == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participante_id'])
+        );
+        allow delete: if ownsLegacyParticipante(bolaoId, resource.data.participante_id);
+      }
+    }
+
+    // --- Convites ---
+    match /convites/{code} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.criadoPor == request.auth.uid;
+      allow update: if isSignedIn()
+        && request.resource.data.usos == resource.data.usos + 1
+        && resource.data.usos < resource.data.maxUsos
+        && resource.data.ativo == true;
+      allow delete: if false;
+    }
+
+    // --- Membrosias (lobby) ---
+    match /users/{uid}/membrosias/{bolaoId} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update, delete: if false;
+    }
+
+    // --- Legado: bloquear writes nas coleções root ---
+    match /bolao/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /partidas/{partidaId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /participantes/{participanteId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /palpites/{palpiteId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

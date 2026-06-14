@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --color-grass: #1B5E20;
+  --color-grass-light: #2E7D32;
+  --color-gold: #FFD700;
+  --color-gold-dark: #F9A825;
+  --color-pitch: #0D2818;
+  --color-pitch-card: #143D24;
+}
+
+body {
+  @apply bg-pitch text-white antialiased;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  min-height: 100dvh;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.input-field {
+  @apply w-full rounded-xl border border-white/20 bg-black/30 px-4 py-3 text-base focus:border-gold focus:outline-none;
+}
