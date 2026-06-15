@@ -23,11 +23,11 @@ jobs:
 
       - name: Validar secrets
         env:
-          WORLDCUP_API_KEY: ${{ secrets.WORLDCUP_API_KEY }}
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: |
-          if [ -z "$WORLDCUP_API_KEY" ]; then
-            echo "::error::Configure o secret WORLDCUP_API_KEY (worldcupapi.com)"
+          if [ -z "$FOOTBALL_DATA_TOKEN" ]; then
+            echo "::error::Configure o secret FOOTBALL_DATA_TOKEN (football-data.org)"
             exit 1
           fi
           if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
@@ -44,6 +44,7 @@ jobs:
 
       - name: Sincronizar placares
         env:
-          WORLDCUP_API_KEY: ${{ secrets.WORLDCUP_API_KEY }}
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          FOOTBALL_DATA_COMPETITION: WC
           BOLAO_IDS: colorados-do-inter
         run: npm run sync-scores -- --all

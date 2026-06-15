@@ -13,7 +13,6 @@ import {
   temPalpite,
 } from './lib/recalc'
 import { teamsMatch } from './lib/teamMatch'
-import { fetchWorldCupMatches, getWorldCupApiKey, type NormalizedMatch } from './lib/worldCupApi'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -30,6 +29,18 @@ function loadDotEnv() {
     const key = trimmed.slice(0, eq).trim()
     const value = trimmed.slice(eq + 1).trim()
     if (!process.env[key]) process.env[key] = value
+  }
+}
+
+interface ApiMatch {
+  utcDate: string
+  status: string
+  homeTeam: { name: string; shortName?: string; tla?: string }
+  awayTeam: { name: string; shortName?: string; tla?: string }
+  score: {
+    fullTime?: { home: number | null; away: number | null }
+    regularTime?: { home: number | null; away: number | null }
+    halfTime?: { home: number | null; away: number | null }
   }
 }
 
@@ -101,8 +112,8 @@ function parsePartidaDate(utcDate: string): string {
   return utcDate.slice(0, 10)
 }
 
-function extractScore(match: NormalizedMatch): { home: number; away: number } | null {
-  const blocks = [match.score.fullTime, match.score.halfTime]
+function extractScore(match: ApiMatch): { home: number; away: number } | null {
+  const blocks = [match.score.fullTime, match.score.regularTime, match.score.halfTime]
   for (const block of blocks) {
     if (
       block?.home !== null &&
@@ -116,24 +127,30 @@ function extractScore(match: NormalizedMatch): { home: number; away: number } | 
   return null
 }
 
-async function fetchApiMatches(): Promise<NormalizedMatch[]> {
-  const key = getWorldCupApiKey()
-  if (!key) {
-    console.log('⚠ WORLDCUP_API_KEY não definido — pulando fetch da API.')
+async function fetchApiMatches(): Promise<ApiMatch[]> {
+  const token = process.env.FOOTBALL_DATA_TOKEN
+  const competition = process.env.FOOTBALL_DATA_COMPETITION ?? 'WC'
+
+  if (!token) {
+    console.log('⚠ FOOTBALL_DATA_TOKEN não definido — pulando fetch da API.')
     return []
   }
 
-  try {
-    const matches = await fetchWorldCupMatches(key)
-    console.log(`  ${matches.length} jogo(s) retornados pela World Cup API`)
-    return matches
-  } catch (err) {
-    console.warn(`API World Cup falhou: ${err instanceof Error ? err.message : err}`)
+  const url = `https://api.football-data.org/v4/competitions/${competition}/matches`
+  const res = await fetch(url, {
+    headers: { 'X-Auth-Token': token },
+  })
+
+  if (!res.ok) {
+    console.warn(`API football-data retornou ${res.status}: ${await res.text()}`)
     return []
   }
+
+  const data = (await res.json()) as { matches: ApiMatch[] }
+  return data.matches ?? []
 }
 
-function findMatchingPartida(partidas: Partida[], apiMatch: NormalizedMatch): Partida | undefined {
+function findMatchingPartida(partidas: Partida[], apiMatch: ApiMatch): Partida | undefined {
   const apiDate = parsePartidaDate(apiMatch.utcDate)
   return partidas.find(
     (p) =>
@@ -166,7 +183,7 @@ type PartidaPatch = {
   status_api: string
 }
 
-function buildPartidaPatch(partida: Partida, apiMatch: NormalizedMatch, now = new Date()): PartidaPatch | null {
+function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date()): PartidaPatch | null {
   const resolvedStatus = resolveStatusApi(partida, apiMatch.status, now)
   const apiUpdatable = UPDATABLE_STATUS.has(apiMatch.status)
   const inferredLive = resolvedStatus === 'IN_PLAY' && PENDING_API_STATUS.has(apiMatch.status)
@@ -273,7 +290,7 @@ function getBolaoIds(db: Firestore): Promise<string[]> {
   return Promise.resolve([process.argv[idx + 1]])
 }
 
-async function syncBolao(db: Firestore, bolaoId: string, apiMatches: NormalizedMatch[], recalcOnly: boolean) {
+async function syncBolao(db: Firestore, bolaoId: string, apiMatches: ApiMatch[], recalcOnly: boolean) {
   const bolaoRef = db.collection('boloes').doc(bolaoId)
   const partidasSnap = await bolaoRef.collection('partidas').get()
   const partidas = partidasSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Partida)
@@ -321,9 +338,9 @@ async function syncScores() {
   const bolaoIds = await getBolaoIds(db)
   const recalcOnly = process.argv.includes('--recalc-only')
 
-  let apiMatches: NormalizedMatch[] = []
+  let apiMatches: ApiMatch[] = []
   if (!recalcOnly) {
-    console.log('Buscando placares na World Cup API…')
+    console.log('Buscando placares da API…')
     apiMatches = await fetchApiMatches()
   }
 

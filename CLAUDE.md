@@ -13,7 +13,7 @@ firebase deploy --only storage   # regras de avatar (Storage precisa estar ativo
 npm run deploy:functions # build functions + firebase deploy --only functions
 
 # Scripts de dados (requerem service account ou firebase login)
-npm run sync-scores            # busca World Cup API (worldcupapi.com) + atualiza Firestore + recalcula ranking
+npm run sync-scores            # busca API football-data.org + atualiza Firestore + recalcula ranking
 npm run sync-scores:all        # idem, força todos os bolões
 npm run sync-scores:recalc     # só recalcula pontos com placares já no Firestore
 npm run import-partidas        # importa partidas da Copa (football-data.org) para um bolão
@@ -114,7 +114,7 @@ Google Sign-In e e-mail/senha via Firebase Auth. Participantes legados vinculado
 
 ### Variáveis de ambiente
 
-`.env` (`VITE_FIREBASE_*`, `WORLDCUP_API_KEY` para sync de placares). Scripts Node: service account JSON na raiz ou `firebase login`.
+`.env` (`VITE_FIREBASE_*`, opcional `FOOTBALL_DATA_TOKEN`). Scripts Node: service account JSON na raiz ou `firebase login`.
 
 ## Regras de negócio importantes
 

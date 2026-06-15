@@ -1,10 +1,8 @@
 /**
  * Verifica se vale rodar o sync de placares (jogo ao vivo, prestes a começar ou acabou de encerrar).
- * Usa World Cup API: https://worldcupapi.com/documentation
  */
 import { appendFileSync } from 'node:fs'
 
-const API_BASE = 'https://api.worldcupapi.com'
 const WC_START = '2026-06-11'
 const WC_END = '2026-07-19'
 
@@ -24,66 +22,29 @@ function todayUtc() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function todaySaoPaulo() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
-}
-
 function isWcPeriod(date = todayUtc()) {
   return date >= WC_START && date <= WC_END
 }
 
-function normalizeStatus(status = '') {
-  return status.trim().toUpperCase().replace(/\s+/g, '_')
-}
+function matchNeedsSync(match, now) {
+  if (LIVE_STATUSES.has(match.status)) return true
 
-function unwrapMatches(body) {
-  if (Array.isArray(body)) return body
-  if (body && typeof body === 'object' && body.success !== false && Array.isArray(body.data)) {
-    return body.data
-  }
-  return []
-}
-
-async function fetchEndpoint(path, key, params = {}) {
-  const url = new URL(`${API_BASE}/${path}`)
-  url.searchParams.set('key', key)
-  for (const [k, v] of Object.entries(params)) {
-    if (v) url.searchParams.set(k, v)
-  }
-  const res = await fetch(url)
-  const body = await res.json()
-  if (!res.ok) throw new Error(body?.error ?? res.statusText)
-  return unwrapMatches(body)
-}
-
-function buildKickoffMs(match, fallbackDate) {
-  const date = match.date ?? fallbackDate
-  const clock = match.scheduled ?? (match.time?.includes(':') ? match.time : null)
-  if (!clock) return NaN
-  const hhmm = clock.slice(0, 5)
-  return new Date(`${date}T${hhmm}:00`).getTime()
-}
-
-function matchNeedsSync(match, now, fallbackDate) {
-  const status = normalizeStatus(match.status)
-  if (LIVE_STATUSES.has(status)) return true
-
-  const kickoff = buildKickoffMs(match, fallbackDate)
+  const kickoff = new Date(match.utcDate).getTime()
   if (!Number.isFinite(kickoff)) return false
 
   const untilKickoff = kickoff - now
   const sinceKickoff = now - kickoff
 
   if (
-    (status === 'TIMED' || status === 'SCHEDULED') &&
+    (match.status === 'TIMED' || match.status === 'SCHEDULED') &&
     untilKickoff <= PRE_KICKOFF_MS &&
     sinceKickoff <= LIVE_WINDOW_MS
   ) {
     return true
   }
 
-  if (status === 'FINISHED' && match.last_changed) {
-    const updated = new Date(match.last_changed.replace(' ', 'T') + 'Z').getTime()
+  if (match.status === 'FINISHED' && match.lastUpdated) {
+    const updated = new Date(match.lastUpdated).getTime()
     if (Number.isFinite(updated) && now - updated <= POST_FINISH_MS) return true
   }
 
@@ -98,9 +59,9 @@ function writeOutput(shouldSync) {
 }
 
 async function main() {
-  const key = process.env.WORLDCUP_API_KEY
-  if (!key) {
-    console.warn('WORLDCUP_API_KEY não definido — assumindo sync necessário.')
+  const token = process.env.FOOTBALL_DATA_TOKEN
+  if (!token) {
+    console.warn('FOOTBALL_DATA_TOKEN não definido — assumindo sync necessário.')
     writeOutput(true)
     return
   }
@@ -111,22 +72,26 @@ async function main() {
     return
   }
 
-  const today = todaySaoPaulo()
-  let matches = []
+  const competition = process.env.FOOTBALL_DATA_COMPETITION ?? 'WC'
+  let data
   try {
-    const [live, history] = await Promise.all([
-      fetchEndpoint('livescores', key),
-      fetchEndpoint('history', key, { date_from: today, date_to: today }),
-    ])
-    matches = [...live, ...history]
+    const res = await fetch(`https://api.football-data.org/v4/competitions/${competition}/matches`, {
+      headers: { 'X-Auth-Token': token },
+    })
+    if (!res.ok) {
+      console.warn(`API retornou ${res.status} — assumindo sync necessário.`)
+      writeOutput(true)
+      return
+    }
+    data = await res.json()
   } catch (err) {
-    console.warn(`Erro ao chamar World Cup API: ${err.message} — assumindo sync necessário.`)
+    console.warn(`Erro ao chamar API: ${err.message} — assumindo sync necessário.`)
     writeOutput(true)
     return
   }
-
   const now = Date.now()
-  const relevant = matches.filter((m) => matchNeedsSync(m, now, today))
+  const matches = data.matches ?? []
+  const relevant = matches.filter((m) => matchNeedsSync(m, now))
   const shouldSync = relevant.length > 0
 
   if (shouldSync) {
@@ -134,7 +99,7 @@ async function main() {
       `Sync necessário (${relevant.length} jogo(s)):`,
       relevant
         .slice(0, 3)
-        .map((m) => `${m.home?.name ?? '?'} x ${m.away?.name ?? '?'} [${m.status}]`)
+        .map((m) => `${m.homeTeam?.name ?? '?'} x ${m.awayTeam?.name ?? '?'} [${m.status}]`)
         .join(', '),
     )
   } else {
