@@ -1,12 +1,21 @@
+import { useMemo } from 'react'
 import { LoadingState } from '../components/LoadingState'
 import { MatchCard, MatchGroupHeader } from '../components/MatchCard'
+import { RankingEvolutionChart } from '../components/RankingEvolutionChart'
 import { useBolao } from '../contexts/BolaoContext'
 import { usePartidas } from '../hooks/usePartidas'
 import { isHoje } from '../lib/dates'
+import { buildRankingHistory } from '../lib/rankingHistory'
 
 export function PartidasPage() {
   const { bolao } = useBolao()
-  const { grouped, partidasHoje, pendentesIds, competicao, loading, error } = usePartidas()
+  const { partidas, grouped, partidasHoje, pendentesIds, participantes, palpites, competicao, loading, error } =
+    usePartidas()
+
+  const rankingHistory = useMemo(
+    () => buildRankingHistory(participantes, palpites, partidas),
+    [participantes, palpites, partidas],
+  )
 
   if (loading) return <LoadingState message="Carregando partidas…" />
   if (error) {
@@ -28,6 +37,8 @@ export function PartidasPage() {
           {ultimaSync && <p className="sub tiny">Último sync: {ultimaSync}</p>}
         </div>
       </header>
+
+      <RankingEvolutionChart steps={rankingHistory.steps} lines={rankingHistory.lines} />
 
       {partidasHoje.length > 0 && (
         <div className="day-group">

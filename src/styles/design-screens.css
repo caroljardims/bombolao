@@ -148,6 +148,19 @@
 .match-foot:empty{ display:none; }
 .settled{ display:inline-flex; align-items:center; gap:6px; color:var(--ok); font-size:13.5px; font-weight:700; }
 
+/* ---------- Evolução do ranking (gráfico) ---------- */
+.ranking-chart{ margin-bottom:22px; padding:18px 20px 14px; }
+.ranking-chart.empty{ padding:24px; text-align:center; }
+.ranking-chart-title{ font-size:17px; font-weight:800; margin-bottom:4px; }
+.ranking-chart-sub{ margin-bottom:12px; font-size:13px; }
+.ranking-chart-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.ranking-chart-svg{ width:100%; min-width:520px; height:auto; display:block; }
+.ranking-chart-grid{ stroke:var(--line-2); stroke-width:1; }
+.ranking-chart-ytick{ fill:var(--t-low); font-size:11px; font-weight:600; }
+.ranking-chart-xtick{ fill:var(--t-mid); font-size:10px; font-weight:600; }
+.ranking-chart-avatar-ring{ fill:var(--bg-2); stroke-width:2; }
+.ranking-chart-avatar-initials{ fill:#fff; font-size:9px; font-weight:800; pointer-events:none; }
+
 /* ---------- Palpites ---------- */
 .palpite-days{ display:flex; flex-direction:column; gap:12px; margin-top:8px; }
 .palpite-day{
