@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useBolao } from '../contexts/BolaoContext'
 import { getHoje } from '../lib/dates'
+import { jogosPendentesDiasAnteriores } from '../lib/nextPartida'
 import { partidasRef } from '../lib/paths'
 import type { Partida } from '../lib/types'
 
@@ -40,12 +41,18 @@ export function usePartidas() {
   }, [partidas])
 
   const hoje = getHoje()
-  const partidasHoje = partidas.filter((p) => p.data === hoje)
+  const pendentesAnteriores = jogosPendentesDiasAnteriores(partidas, hoje)
+  const partidasHoje = [
+    ...pendentesAnteriores,
+    ...partidas.filter((p) => p.data === hoje),
+  ]
+  const pendentesIds = new Set(pendentesAnteriores.map((p) => p.id))
 
   return {
     partidas,
     grouped,
     partidasHoje,
+    pendentesIds,
     competicao: bolao?.competicao ?? '',
     loading,
     error,

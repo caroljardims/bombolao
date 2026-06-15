@@ -6,7 +6,7 @@ import { isHoje } from '../lib/dates'
 
 export function PartidasPage() {
   const { bolao } = useBolao()
-  const { grouped, partidasHoje, competicao, loading, error } = usePartidas()
+  const { grouped, partidasHoje, pendentesIds, competicao, loading, error } = usePartidas()
 
   if (loading) return <LoadingState message="Carregando partidas…" />
   if (error) {
@@ -43,16 +43,20 @@ export function PartidasPage() {
         </div>
       )}
 
-      {futureGroups.map(([data, partidas]) => (
+      {futureGroups.map(([data, partidas]) => {
+        const lista = partidas.filter((p) => !pendentesIds.has(p.id))
+        if (lista.length === 0) return null
+        return (
         <div className="day-group" key={data}>
-          <MatchGroupHeader data={data} count={partidas.length} />
+          <MatchGroupHeader data={data} count={lista.length} />
           <div className="match-list">
-            {partidas.map((p) => (
+            {lista.map((p) => (
               <MatchCard key={p.id} partida={p} />
             ))}
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

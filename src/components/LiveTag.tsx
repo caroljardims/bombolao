@@ -16,7 +16,7 @@ export function LiveTag({ partida }: LiveTagProps) {
   if (!partidaAoVivo(partida)) return null
   const placar = formatPlacar(partida)
   return (
-    <Pill tone="live" dot>
+    <Pill tone="realtime" dot>
       Ao vivo{placar ? ` · ${placar}` : ''}
     </Pill>
   )

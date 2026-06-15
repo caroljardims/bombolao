@@ -1,4 +1,4 @@
-type PillTone = 'neutral' | 'muted' | 'gold-soft' | 'live' | 'ok-soft' | 'danger-soft'
+type PillTone = 'neutral' | 'muted' | 'gold-soft' | 'live' | 'realtime' | 'ok-soft' | 'danger-soft'
 
 interface PillProps {
   tone?: PillTone

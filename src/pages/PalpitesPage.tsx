@@ -12,6 +12,7 @@ import { AcertoBadge } from '../components/AcertoBadge'
 import { Pill, TeamBadge } from '../components/ui'
 import { getHoje, groupPartidasByDay } from '../lib/dates'
 import { apostasAbertas, palpitesAdversariosVisiveis, partidaAoVivo, partidaEncerrada, temPalpite } from '../lib/scoring'
+import { partidaJaPassou } from '../lib/nextPartida'
 import { getPontosLive, classificarAcertoLive } from '../lib/liveRanking'
 import { bolaoPath } from '../lib/paths'
 import { LiveTag } from '../components/LiveTag'
@@ -154,7 +155,7 @@ export function PalpitesList({
             key={data}
             data={data}
             count={partidasDoDia.length}
-            defaultOpen={data >= hoje}
+            defaultOpen={data >= hoje || partidasDoDia.some((p) => !partidaJaPassou(p))}
           >
             {partidasDoDia.map((partida) => (
               <PalpiteCard

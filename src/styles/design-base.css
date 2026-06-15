@@ -21,6 +21,8 @@
 
   --live:#ff6b5e;
   --live-soft:rgba(255,107,94,.14);
+  --realtime:#b794f6;
+  --realtime-soft:rgba(183,148,246,.16);
   --ok:#54cf86;
   --ok-soft:rgba(84,207,134,.14);
   --danger:#ff7a6b;
@@ -169,6 +171,7 @@ h1,h2,h3,h4,p{ margin:0; }
 .pill-muted{ background:rgba(255,255,255,.05); color:var(--t-low); }
 .pill-gold-soft{ background:var(--gold-soft); color:var(--gold-2); }
 .pill-live{ background:var(--live-soft); color:var(--live); }
+.pill-realtime{ background:var(--realtime-soft); color:var(--realtime); }
 .pill-ok-soft{ background:var(--ok-soft); color:var(--ok); }
 .pill-danger-soft{ background:var(--danger-soft); color:var(--danger); }
 

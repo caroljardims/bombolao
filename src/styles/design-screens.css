@@ -50,7 +50,7 @@
   color:var(--gold); background:var(--gold-soft); padding:2px 7px; border-radius:6px; }
 .rank-pts{ font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; }
 .rank-pts i{ font-style:normal; font-size:11px; font-weight:600; color:var(--t-low); margin-left:3px; }
-.rank-live-delta{ font-size:13px; font-weight:700; color:#6ee7a0; margin-left:6px; }
+.rank-live-delta{ font-size:13px; font-weight:700; color:var(--realtime); margin-left:6px; }
 
 .rank-row.leader{
   background:linear-gradient(120deg, rgba(244,198,61,.18), rgba(244,198,61,.05) 60%, rgba(244,198,61,.02));
@@ -61,7 +61,7 @@
   width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
 .rank-row.leader .rank-name{ color:var(--gold-2); font-weight:800; }
 .rank-row.leader .rank-pts{ color:var(--gold-2); }
-.rank-row.leader .rank-live-delta{ color:#b8f5c8; }
+.rank-row.leader .rank-live-delta{ color:#d4bfff; }
 
 /* próximo jogo card — fundo próprio (bronze/dourado escuro) p/ diferenciar do ranking */
 .next-card{

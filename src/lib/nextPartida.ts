@@ -47,6 +47,15 @@ export interface JogosDoDiaResult {
   jogos: Partida[]
 }
 
+/** Jogos de dias anteriores que ainda não terminaram (ex.: virou a meia-noite com jogo ao vivo). */
+export function jogosPendentesDiasAnteriores(
+  partidas: Partida[],
+  hoje: string,
+  now = new Date(),
+): Partida[] {
+  return partidas.filter((p) => p.data < hoje && !partidaJaPassou(p, now))
+}
+
 /** Lista de jogos do dia em exibição: hoje (incl. encerrados) ou amanhã se todos de hoje passaram. */
 export function resolveJogosDoDia(partidas: Partida[], now = new Date()): JogosDoDiaResult {
   const hoje = getHoje(now)
@@ -54,12 +63,13 @@ export function resolveJogosDoDia(partidas: Partida[], now = new Date()): JogosD
     (a, b) => getKickoffDate(a).getTime() - getKickoffDate(b).getTime(),
   )
 
+  const pendentesAnteriores = jogosPendentesDiasAnteriores(sorted, hoje, now)
   const jogosHoje = sorted.filter((p) => p.data === hoje)
-  if (jogosHoje.length > 0) {
-    const todosPassaram = jogosHoje.every((p) => partidaJaPassou(p, now))
-    if (!todosPassaram) {
-      return { data: hoje, jogos: jogosHoje }
-    }
+  const todosHojePassaram =
+    jogosHoje.length === 0 || jogosHoje.every((p) => partidaJaPassou(p, now))
+
+  if (pendentesAnteriores.length > 0 || (jogosHoje.length > 0 && !todosHojePassaram)) {
+    return { data: hoje, jogos: [...pendentesAnteriores, ...jogosHoje] }
   }
 
   const datas = [...new Set(sorted.map((p) => p.data))].sort()
