@@ -8,7 +8,7 @@ import { bolaoPath } from '../lib/paths'
 const NAV: { to: string; label: string; icon: IconName; end?: boolean; adminOnly?: boolean }[] = [
   { to: '', label: 'Ranking', icon: 'trophy', end: true },
   { to: 'partidas', label: 'Jogos', icon: 'ball' },
-  { to: 'palpites', label: 'Palpites', icon: 'pencil' },
+  { to: 'palpites', label: 'Palpites', icon: 'pencil', end: true },
   { to: 'admin', label: 'Admin', icon: 'gear', adminOnly: true },
   { to: '/conta', label: 'Conta', icon: 'user' },
 ]

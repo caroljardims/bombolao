@@ -44,7 +44,7 @@ export function PalpitesPage() {
       participanteId={participante.id}
       partidas={partidas}
       palpitesMap={palpitesMap}
-      readOnly={false}
+      viewOnly={false}
     />
   )
 }
@@ -55,23 +55,25 @@ interface PalpitesListProps {
   participanteId: string
   partidas: Partida[]
   palpitesMap: Map<string, Palpite>
-  readOnly: boolean
+  viewOnly?: boolean
 }
 
 interface PalpiteCardProps {
   partida: Partida
   participanteId: string
   palpite: Palpite | undefined
-  readOnly: boolean
+  viewOnly: boolean
 }
 
-function PalpiteCard({ partida, participanteId, palpite, readOnly }: PalpiteCardProps) {
+function PalpiteCard({ partida, participanteId, palpite, viewOnly }: PalpiteCardProps) {
   const { participante } = useBolao()
   const now = useNow()
   const encerrada = partidaEncerrada(partida)
   const abertas = apostasAbertas(partida, now)
   const isOwn = participanteId === participante?.id
-  const oculto = readOnly && !isOwn && !palpitesAdversariosVisiveis(partida, now)
+  const oculto = viewOnly && !isOwn && !palpitesAdversariosVisiveis(partida, now)
+  const canEdit = isOwn && abertas && !encerrada
+  const inputReadOnly = !canEdit
   const tipo = palpite
     ? classificarAcertoLive(palpite, partida)
     : encerrada
@@ -100,7 +102,7 @@ function PalpiteCard({ partida, participanteId, palpite, readOnly }: PalpiteCard
           )}
         </div>
         {encerrada && palpite && <AcertoBadge tipo={tipo} pontos={pontosLive} />}
-        {!encerrada && !readOnly && (
+        {!encerrada && canEdit && (
           <Pill tone={abertas ? 'ok-soft' : 'danger-soft'}>{abertas ? 'Aberto' : 'Fechado'}</Pill>
         )}
       </div>
@@ -110,7 +112,7 @@ function PalpiteCard({ partida, participanteId, palpite, readOnly }: PalpiteCard
         participanteId={participanteId}
         palpiteCasa={palpite?.palpite_casa ?? null}
         palpiteFora={palpite?.palpite_fora ?? null}
-        readOnly={readOnly || !abertas}
+        readOnly={inputReadOnly}
         oculto={oculto}
       />
     </article>
@@ -123,7 +125,7 @@ export function PalpitesList({
   participanteId,
   partidas,
   palpitesMap,
-  readOnly,
+  viewOnly = false,
 }: PalpitesListProps) {
   const hoje = getHoje()
   const days = useMemo(() => groupPartidasByDay(partidas), [partidas])
@@ -157,7 +159,7 @@ export function PalpitesList({
                 partida={partida}
                 participanteId={participanteId}
                 palpite={palpitesMap.get(partida.id)}
-                readOnly={readOnly}
+                viewOnly={viewOnly}
               />
             ))}
           </PalpitesDaySection>

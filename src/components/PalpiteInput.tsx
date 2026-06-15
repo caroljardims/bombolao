@@ -20,12 +20,21 @@ function Stepper({
   value,
   onChange,
   disabled,
+  label,
 }: {
   value: number | null
-  onChange: (v: number) => void
+  onChange: (v: number | null) => void
   disabled?: boolean
+  label: string
 }) {
-  const show = value == null ? '–' : value
+  function handleInput(raw: string) {
+    const digits = raw.replace(/\D/g, '').slice(0, 2)
+    if (digits === '') {
+      onChange(null)
+      return
+    }
+    onChange(Math.min(20, Number.parseInt(digits, 10)))
+  }
 
   return (
     <div className={`stepper${disabled ? ' disabled' : ''}`}>
@@ -34,17 +43,27 @@ function Stepper({
         className="step-btn"
         disabled={disabled}
         onClick={() => onChange(Math.max(0, (value ?? 0) - 1))}
-        aria-label="menos"
+        aria-label={`menos ${label}`}
       >
         –
       </button>
-      <span className="step-val">{show}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        className="step-val"
+        disabled={disabled}
+        value={value == null ? '' : String(value)}
+        onChange={(e) => handleInput(e.target.value)}
+        aria-label={label}
+        placeholder="–"
+      />
       <button
         type="button"
         className="step-btn"
         disabled={disabled}
-        onClick={() => onChange((value ?? -1) + 1)}
-        aria-label="mais"
+        onClick={() => onChange(Math.min(20, (value ?? -1) + 1))}
+        aria-label={`mais ${label}`}
       >
         +
       </button>
@@ -158,7 +177,7 @@ export function PalpiteInput({
     }
   }
 
-  function setScore(side: 'casa' | 'fora', value: number) {
+  function setScore(side: 'casa' | 'fora', value: number | null) {
     const nextCasa = side === 'casa' ? value : casa
     const nextFora = side === 'fora' ? value : fora
     setCasa(nextCasa)
@@ -184,9 +203,19 @@ export function PalpiteInput({
   return (
     <div className="palpite-controls">
       <div className="guess-block">
-        <Stepper value={casa} onChange={(v) => setScore('casa', v)} disabled={disabled} />
+        <Stepper
+          value={casa}
+          onChange={(v) => setScore('casa', v)}
+          disabled={disabled}
+          label="gols casa"
+        />
         <i className="guess-x">×</i>
-        <Stepper value={fora} onChange={(v) => setScore('fora', v)} disabled={disabled} />
+        <Stepper
+          value={fora}
+          onChange={(v) => setScore('fora', v)}
+          disabled={disabled}
+          label="gols fora"
+        />
       </div>
       {abertas && (
         <button

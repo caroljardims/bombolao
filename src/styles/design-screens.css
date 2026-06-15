@@ -193,8 +193,13 @@
   transition:background .12s; }
 .step-btn:hover{ background:rgba(244,198,61,.1); }
 .step-btn:disabled{ color:var(--t-low); cursor:not-allowed; }
-.step-val{ width:46px; height:54px; display:flex; align-items:center; justify-content:center;
-  font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; }
+.step-val{ width:46px; height:54px; display:block; border:none; background:transparent;
+  text-align:center; font-size:26px; font-weight:800; font-variant-numeric:tabular-nums;
+  color:var(--t-hi); padding:0; -moz-appearance:textfield; appearance:textfield; }
+.step-val::placeholder{ color:var(--t-low); font-weight:600; }
+.step-val:focus{ outline:none; box-shadow:inset 0 0 0 2px var(--gold-line); }
+.step-val:disabled{ color:var(--t-low); cursor:not-allowed; }
+.step-val::-webkit-outer-spin-button,.step-val::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .stepper.disabled{ opacity:.7; }
 .palpite-card.state-result .stepper{ border-color:var(--ok-soft); }
 .palpite-card.state-closed{ opacity:.92; }

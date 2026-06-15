@@ -9,12 +9,16 @@ import { bolaoPath } from '../lib/paths'
 
 export function ParticipantePalpitesPage() {
   const { participanteId } = useParams<{ participanteId: string }>()
-  const { bolaoId } = useBolao()
+  const { bolaoId, participante } = useBolao()
   const { partidas, loading: partidasLoading } = usePartidas()
   const { palpitesMap, loading: palpitesLoading } = usePalpites(participanteId, partidas)
   const { nome, loading: nomeLoading } = useParticipante(participanteId)
 
   if (!participanteId) return <Navigate to={bolaoPath(bolaoId)} replace />
+
+  if (participanteId === participante?.id) {
+    return <Navigate to={bolaoPath(bolaoId, 'palpites')} replace />
+  }
 
   if (partidasLoading || palpitesLoading || nomeLoading) {
     return <LoadingState message="Carregando palpites…" />
@@ -31,7 +35,7 @@ export function ParticipantePalpitesPage() {
         participanteId={participanteId}
         partidas={partidas}
         palpitesMap={palpitesMap}
-        readOnly
+        viewOnly
       />
     </div>
   )
