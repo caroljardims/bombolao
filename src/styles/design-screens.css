@@ -272,6 +272,14 @@
     align-items:stretch;
   }
   .jogos-screen .match-card{ height:100%; }
+
+  .palpites-screen .palpite-day-body{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:16px;
+    align-items:stretch;
+  }
+  .palpites-screen .palpite-card{ height:100%; }
 }
 @media (max-width:880px){
   .rank-grid{ grid-template-columns:1fr; gap:18px; }
