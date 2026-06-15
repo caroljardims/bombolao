@@ -172,6 +172,11 @@ h1,h2,h3,h4,p{ margin:0; }
 .pill-gold-soft{ background:var(--gold-soft); color:var(--gold-2); }
 .pill-live{ background:var(--live-soft); color:var(--live); }
 .pill-realtime{ background:var(--realtime-soft); color:var(--realtime); }
+.pill-realtime .pill-dot{ animation:realtime-pulse 1.4s ease-in-out infinite; }
+@keyframes realtime-pulse{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:.35; transform:scale(.85); }
+}
 .pill-ok-soft{ background:var(--ok-soft); color:var(--ok); }
 .pill-danger-soft{ background:var(--danger-soft); color:var(--danger); }
 
