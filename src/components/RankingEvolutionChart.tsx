@@ -104,14 +104,14 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
               <g key={step.partida.id} className="ranking-chart-match-label">
                 <title>{step.label}</title>
                 <image
-                  href={teamFlagUrl(step.partida.time_casa, 32)}
+                  href={teamFlagUrl(step.partida.time_casa)}
                   x={x0}
                   y={y}
                   width={FLAG_W}
                   height={FLAG_H}
                 />
                 <image
-                  href={teamFlagUrl(step.partida.time_fora, 32)}
+                  href={teamFlagUrl(step.partida.time_fora)}
                   x={x0 + FLAG_W + FLAG_GAP}
                   y={y}
                   width={FLAG_W}

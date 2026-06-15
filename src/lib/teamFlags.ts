@@ -1,4 +1,4 @@
-/** Códigos ISO para flagcdn.com (Inglaterra/Escócia usam subcódigos gb-*). */
+/** Códigos ISO → arquivos em public/flags/ (Inglaterra/Escócia: gb-eng, gb-sct). */
 const TEAM_CODES: Record<string, string> = {
   'México': 'mx',
   'África do Sul': 'za',
@@ -50,12 +50,69 @@ const TEAM_CODES: Record<string, string> = {
   'Colômbia': 'co',
 }
 
+const TEAM_EMOJI: Record<string, string> = {
+  'México': '🇲🇽',
+  'África do Sul': '🇿🇦',
+  'Coreia do Sul': '🇰🇷',
+  'República Tcheca': '🇨🇿',
+  'Canadá': '🇨🇦',
+  'Bósnia-Herzegovina': '🇧🇦',
+  'Estados Unidos': '🇺🇸',
+  'Paraguai': '🇵🇾',
+  'Catar': '🇶🇦',
+  'Suíça': '🇨🇭',
+  'Brasil': '🇧🇷',
+  'Marrocos': '🇲🇦',
+  'Haiti': '🇭🇹',
+  'Escócia': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'Austrália': '🇦🇺',
+  'Turquia': '🇹🇷',
+  'Alemanha': '🇩🇪',
+  'Curaçao': '🇨🇼',
+  'Holanda': '🇳🇱',
+  'Japão': '🇯🇵',
+  'Costa do Marfim': '🇨🇮',
+  'Equador': '🇪🇨',
+  'Suécia': '🇸🇪',
+  'Tunísia': '🇹🇳',
+  'Espanha': '🇪🇸',
+  'Cabo Verde': '🇨🇻',
+  'Bélgica': '🇧🇪',
+  'Egito': '🇪🇬',
+  'Arábia Saudita': '🇸🇦',
+  'Uruguai': '🇺🇾',
+  'Irã': '🇮🇷',
+  'Nova Zelândia': '🇳🇿',
+  'França': '🇫🇷',
+  'Senegal': '🇸🇳',
+  'Iraque': '🇮🇶',
+  'Noruega': '🇳🇴',
+  'Argentina': '🇦🇷',
+  'Argélia': '🇩🇿',
+  'Áustria': '🇦🇹',
+  'Jordânia': '🇯🇴',
+  'Portugal': '🇵🇹',
+  'Congo': '🇨🇩',
+  'Inglaterra': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  'Croácia': '🇭🇷',
+  'Gana': '🇬🇭',
+  'Panamá': '🇵🇦',
+  'Uzbequistão': '🇺🇿',
+  'Colômbia': '🇨🇴',
+}
+
 const DEFAULT_CODE = 'xx'
 
 export function teamFlagCode(name: string): string {
   return TEAM_CODES[name] ?? DEFAULT_CODE
 }
 
-export function teamFlagUrl(name: string, width = 40): string {
-  return `https://flagcdn.com/w${width}/${teamFlagCode(name)}.png`
+/** Bandeira hospedada no app (public/flags) — funciona em Mac, Windows e no SVG do gráfico. */
+export function teamFlagUrl(name: string): string {
+  return `${import.meta.env.BASE_URL}flags/${teamFlagCode(name)}.png`
+}
+
+/** Fallback visual quando a imagem não carrega (ex.: time novo sem PNG). */
+export function teamFlagEmoji(name: string): string {
+  return TEAM_EMOJI[name] ?? '🏳️'
 }
