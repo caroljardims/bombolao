@@ -61,8 +61,9 @@ function writeOutput(shouldSync) {
 async function main() {
   const token = process.env.FOOTBALL_DATA_TOKEN
   if (!token) {
-    console.error('FOOTBALL_DATA_TOKEN não definido')
-    process.exit(1)
+    console.warn('FOOTBALL_DATA_TOKEN não definido — assumindo sync necessário.')
+    writeOutput(true)
+    return
   }
 
   if (!isWcPeriod()) {
@@ -109,6 +110,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err)
-  process.exit(1)
+  console.warn(`Erro inesperado: ${err.message} — assumindo sync necessário.`)
+  writeOutput(true)
 })
