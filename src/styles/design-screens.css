@@ -100,17 +100,32 @@
 .next-meta .pill{ font-size:12px; padding:4px 10px; }
 
 .next-list{ display:flex; flex-direction:column; gap:2px; padding-top:10px; }
-.bet-row{ display:grid; grid-template-columns:20px 28px 1fr auto; align-items:center; gap:11px;
+.bet-row{ display:grid; grid-template-columns:20px 28px 1fr auto 36px; align-items:center; gap:11px;
   padding:8px 6px; border-radius:11px; }
 .bet-row:hover{ background:rgba(255,255,255,.03); }
 .bet-rank{ text-align:center; color:var(--t-low); font-size:13px; font-weight:600; }
 .bet-name{ font-size:14.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .bet-score{ font-weight:800; font-size:15px; color:var(--gold); font-variant-numeric:tabular-nums; }
+.bet-score.muted{ color:var(--t-low); font-weight:600; }
 .bet-score i{ font-style:normal; color:var(--t-low); font-weight:600; margin:0 3px; }
+.bet-points{ font-weight:800; font-size:14px; text-align:right; font-variant-numeric:tabular-nums; color:var(--gold-2); }
+.bet-points.muted,.bet-points.zero{ color:var(--t-low); font-weight:600; }
+.bet-points.live{ color:var(--realtime); }
 .bet-row.is-you{ background:var(--gold-soft); }
 .bet-row.is-you .bet-name{ color:var(--gold-2); font-weight:700; }
 
 /* ---------- Jogos ---------- */
+.jogos-days{ display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+.jogos-blocks{ display:flex; flex-direction:column; gap:20px; }
+.jogo-block{ display:flex; flex-direction:column; gap:12px; }
+.game-bets-card.embedded{
+  padding:16px; position:static;
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--line-2);
+  box-shadow:none;
+}
+.game-bets-card.embedded .next-head{ border-bottom-color:var(--line-2); }
+.game-bets-card .next-titlebar{ margin-bottom:4px; }
 .day-group{ margin-top:18px; }
 .day-label{ display:flex; align-items:center; gap:10px; font-size:15px; font-weight:700;
   margin:10px 2px 14px; }
@@ -272,6 +287,14 @@
     align-items:stretch;
   }
   .jogos-screen .match-card{ height:100%; }
+
+  .jogos-screen .jogos-blocks{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
+    gap:16px;
+    align-items:stretch;
+  }
+  .jogos-screen .jogo-block{ height:100%; }
 
   .palpites-screen .palpite-day-body{
     display:grid;

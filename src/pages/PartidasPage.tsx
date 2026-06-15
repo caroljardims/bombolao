@@ -1,21 +1,55 @@
 import { useMemo } from 'react'
 import { LoadingState } from '../components/LoadingState'
-import { MatchCard, MatchGroupHeader } from '../components/MatchCard'
+import { MatchCard } from '../components/MatchCard'
+import { MatchGameBets } from '../components/MatchGameBets'
+import { PalpitesDaySection } from '../components/PalpitesDaySection'
 import { RankingEvolutionChart } from '../components/RankingEvolutionChart'
 import { useBolao } from '../contexts/BolaoContext'
 import { usePartidas } from '../hooks/usePartidas'
-import { isHoje } from '../lib/dates'
+import { getHoje, getKickoffDate } from '../lib/dates'
+import { jogosPendentesDiasAnteriores, partidaJaPassou } from '../lib/nextPartida'
+import type { Partida } from '../lib/types'
 import { buildRankingHistory } from '../lib/rankingHistory'
+
+function groupPartidasForDisplay(partidas: Partida[]): [string, Partida[]][] {
+  const hoje = getHoje()
+  const pendentes = jogosPendentesDiasAnteriores(partidas, hoje)
+  const pendentesIds = new Set(pendentes.map((p) => p.id))
+
+  const groups = new Map<string, Partida[]>()
+  for (const p of partidas) {
+    if (pendentesIds.has(p.id)) continue
+    const list = groups.get(p.data) ?? []
+    list.push(p)
+    groups.set(p.data, list)
+  }
+
+  const hojeList = [...pendentes, ...(groups.get(hoje) ?? [])].sort(
+    (a, b) => getKickoffDate(a).getTime() - getKickoffDate(b).getTime(),
+  )
+  if (hojeList.length > 0) {
+    groups.set(hoje, hojeList)
+  }
+
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([data, list]) => [
+      data,
+      [...list].sort((a, b) => getKickoffDate(a).getTime() - getKickoffDate(b).getTime()),
+    ])
+}
 
 export function PartidasPage() {
   const { bolao } = useBolao()
-  const { partidas, grouped, partidasHoje, pendentesIds, participantes, palpites, competicao, loading, error } =
-    usePartidas()
+  const { partidas, participantes, palpites, competicao, loading, error } = usePartidas()
 
   const rankingHistory = useMemo(
     () => buildRankingHistory(participantes, palpites, partidas),
     [participantes, palpites, partidas],
   )
+
+  const dayGroups = useMemo(() => groupPartidasForDisplay(partidas), [partidas])
+  const hoje = getHoje()
 
   if (loading) return <LoadingState message="Carregando partidas…" />
   if (error) {
@@ -25,8 +59,6 @@ export function PartidasPage() {
   const ultimaSync = bolao?.ultimaSyncApi
     ? new Date(bolao.ultimaSyncApi).toLocaleString('pt-BR')
     : null
-
-  const futureGroups = Array.from(grouped.entries()).filter(([data]) => !isHoje(data))
 
   return (
     <div className="screen jogos-screen">
@@ -40,34 +72,30 @@ export function PartidasPage() {
 
       <RankingEvolutionChart steps={rankingHistory.steps} lines={rankingHistory.lines} />
 
-      {partidasHoje.length > 0 && (
-        <div className="day-group">
-          <h3 className="day-label">
-            <span className="gold-text">Jogos de hoje</span>
-            <span className="count">{partidasHoje.length}</span>
-          </h3>
-          <div className="match-list">
-            {partidasHoje.map((p) => (
-              <MatchCard key={p.id} partida={p} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {futureGroups.map(([data, partidas]) => {
-        const lista = partidas.filter((p) => !pendentesIds.has(p.id))
-        if (lista.length === 0) return null
-        return (
-        <div className="day-group" key={data}>
-          <MatchGroupHeader data={data} count={lista.length} />
-          <div className="match-list">
-            {lista.map((p) => (
-              <MatchCard key={p.id} partida={p} />
-            ))}
-          </div>
-        </div>
-        )
-      })}
+      <div className="jogos-days">
+        {dayGroups.map(([data, partidasDoDia]) => (
+          <PalpitesDaySection
+            key={data}
+            data={data}
+            count={partidasDoDia.length}
+            defaultOpen={data >= hoje || partidasDoDia.some((p) => !partidaJaPassou(p))}
+          >
+            <div className="jogos-blocks">
+              {partidasDoDia.map((partida) => (
+                <div key={partida.id} className="jogo-block">
+                  <MatchCard partida={partida} />
+                  <MatchGameBets
+                    partida={partida}
+                    participantes={participantes}
+                    palpites={palpites}
+                    embedded
+                  />
+                </div>
+              ))}
+            </div>
+          </PalpitesDaySection>
+        ))}
+      </div>
     </div>
   )
 }
