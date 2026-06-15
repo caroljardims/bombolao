@@ -246,6 +246,15 @@
 .app[data-density="compacto"] .match-body{ margin:12px 0 4px; }
 
 /* ---------- Responsive ---------- */
+@media (min-width:881px){
+  .jogos-screen .match-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:16px;
+    align-items:stretch;
+  }
+  .jogos-screen .match-card{ height:100%; }
+}
 @media (max-width:880px){
   .rank-grid{ grid-template-columns:1fr; gap:18px; }
   .next-card{ position:static; order:2; }
