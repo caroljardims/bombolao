@@ -8,12 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev              # servidor de desenvolvimento (Vite)
 npm run build            # tsc + vite build
 npm run lint             # ESLint
+npm test                 # testes do merge de status das APIs (mergeApiMatches)
 npm run deploy           # build + firebase deploy (hosting, rules, indexes, auth)
 firebase deploy --only storage   # regras de avatar (Storage precisa estar ativo no console)
 npm run deploy:functions # build functions + firebase deploy --only functions
 
 # Scripts de dados (requerem service account ou firebase login)
-npm run sync-scores            # busca WorldCup26 API (worldcup26.ir) + fallback football-data.org
+npm run sync-scores            # WorldCup26 + football-data.org → Firestore + ranking
 npm run sync-scores:all        # idem, força todos os bolões
 npm run sync-scores:recalc     # só recalcula pontos com placares já no Firestore
 npm run import-partidas        # importa partidas da Copa (football-data.org) para um bolão
@@ -60,13 +61,26 @@ Funções auxiliares em `src/lib/paths.ts` centralizam referências de doc/colle
 
 - **Persistido**: `participantes/{id}.total_pontos` etc. — Cloud Function (`functions/src/index.ts`) + `sync-scores`.
 - **Ao vivo** (`src/lib/liveRanking.ts`): calculado no navegador via `onSnapshot`. Usado no ranking e palpites durante jogos.
+- **`pontos_ao_vivo`**: pontos do jogo em andamento exibidos como `+X` roxo ao lado do total no ranking (`RankingCard`).
 
 ### Próximo jogo / Jogos do dia
 
 `src/lib/nextPartida.ts`:
-- `findProximaPartida` — próximo jogo para destaque (inclui inferência de fim quando `status_api` atrasa ~110 min)
-- `resolveJogosDoDia` — jogos do dia (incl. encerrados) ou primeiro dia futuro se todos de hoje passaram
+
+- `findProximaPartida` — próximo jogo para destaque
+- `resolveJogosDoDia` — jogos do dia; inclui jogos de dias anteriores ainda não encerrados (ex.: virou meia-noite com jogo ao vivo)
+- `jogosPendentesDiasAnteriores` — helper para partidas pendentes de dias passados
 - `NextGameBets` — carrossel com setas entre jogos do dia no ranking
+
+### Aba Jogos (`PartidasPage`)
+
+- **`RankingEvolutionChart`** (`src/components/RankingEvolutionChart.tsx`) — gráfico SVG de posição × jogo (ordem temporal); avatar no fim de cada linha. Dados em `src/lib/rankingHistory.ts`.
+- **Mosaico desktop** — `.jogos-screen .match-list` em grid (`min-width: 881px`).
+
+### UI ao vivo (dados em tempo real)
+
+- **`LiveTag`** — pill roxa (`tone="realtime"`) com placar; bolinha com animação irradiada.
+- Cores realtime: `--realtime` em `design-base.css`. Não confundir com `--live` (vermelho, legado).
 
 ### Perfil e fotos
 
@@ -76,7 +90,10 @@ Ranking/NextGameBets leem `participante.photoURL` do Firestore (visível para to
 
 ### Palpites por dia
 
-`PalpitesList` agrupa partidas com `groupPartidasByDay` (`src/lib/dates.ts`). `PalpitesDaySection` — `<details>` colapsável: dias passados fechados, hoje/futuro abertos.
+`PalpitesList` agrupa partidas com `groupPartidasByDay` (`src/lib/dates.ts`). `PalpitesDaySection` — `<details>` colapsável.
+
+- Palpites de adversários ocultos até `palpitesAdversariosVisiveis` (15 min antes do apito) — `src/lib/scoring.ts`.
+- `PalpiteInput` aceita digitação no teclado (0–20) além dos botões −/+.
 
 ### Lógica de pontuação
 
@@ -93,7 +110,7 @@ Ranking/NextGameBets leem `participante.photoURL` do Firestore (visível para to
 | Gol (só um placar) | 1 |
 | Nada | 0 |
 
-Badges no ranking: **Na Mosca** / **Resultados** / **Sem aposta** (`StatTrio`).
+Badges no ranking (`StatTrio`): **Cravou** / **Acertou o resultado** / **Não apostou**.
 
 #### Ordem de desempate
 
@@ -102,9 +119,23 @@ Badges no ranking: **Na Mosca** / **Resultados** / **Sem aposta** (`StatTrio`).
 3. `acerto_resultado`
 4. `sem_aposta` (menor é melhor)
 
+#### Status de partida (UI)
+
+- `partidaAoVivo` — `status_api` em `IN_PLAY`, `PAUSED`, `LIVE`, `EXTRA_TIME`, `PENALTY_SHOOTOUT`
+- `partidaEncerrada` — `status_api` em `FINISHED` ou `AWARDED` (com placar)
+- **Sem heurísticas de tempo ou ordem cronológica na UI** — confiar no `status_api` gravado pelo sync
+
 ### Sincronização de placares
 
 `scripts/sync-scores.ts` + GitHub Actions (`sync-scores.yml`, gate `should-sync-scores.mjs`).
+
+**Merge de APIs** (`scripts/lib/mergeApiMatches.ts`):
+
+- Combina WorldCup26 (`scripts/lib/worldcup26Api.ts`) e football-data.org
+- Se qualquer fonte reportar `FINISHED`/`AWARDED`, esse status vence `IN_PLAY`
+- Entre duas fontes ao vivo, prefere placar mais informativo
+- Testes: `scripts/lib/mergeApiMatches.test.ts` (`npm test`)
+- Matching de partida: data + times, ou kickoff ±3h (fuso Brasília vs UTC)
 
 Importação de partidas: `scripts/import-partidas-from-api.ts` + workflow `import-partidas.yml` (1×/dia).
 
@@ -120,7 +151,7 @@ Google Sign-In e e-mail/senha via Firebase Auth. Participantes legados vinculado
 
 - **Prazo para palpites:** 15 min antes do kickoff (BRT). Sem aposta = 0 pontos.
 - **Prorrogação:** vale placar ao final da prorrogação.
-- **Status de partida:** `partidaEncerrada` só para `FINISHED`/`AWARDED`; ao vivo usa placar parcial.
+- **Status de partida:** UI lê apenas `status_api` do Firestore; sync é responsável por gravar status correto das APIs.
 - **Scores:** inteiros 0–20.
 - **Cloud Functions** exigem plano Blaze.
 - **Storage** deve estar ativado no console Firebase antes do deploy de `storage.rules`.

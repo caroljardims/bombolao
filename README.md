@@ -23,6 +23,7 @@ firebase deploy --only storage
 
 ```bash
 npm run dev
+npm test    # testes do merge de status das APIs de placar
 ```
 
 ## Deploy
@@ -37,8 +38,9 @@ npm run deploy:functions    # Cloud Functions (plano Blaze)
 
 | Comando | Descrição |
 |---------|-----------|
+| `npm test` | Testa merge de status/placar entre WorldCup26 e football-data.org |
 | `npm run seed` | Popula Firestore a partir de `src/data/seed.json` |
-| `npm run sync-scores` | Busca placares na [WorldCup26 API](https://worldcup26.ir) (gratuita) + Firestore + ranking |
+| `npm run sync-scores` | Busca placares (WorldCup26 + football-data.org), atualiza Firestore e ranking |
 | `npm run sync-scores:recalc` | Recalcula pontos com placares já no Firestore |
 | `npm run import-partidas` | Importa partidas da Copa via football-data.org |
 | `npm run sync-participant-photos` | Copia `photoURL` do Auth para docs de participante |
@@ -55,9 +57,9 @@ npm run deploy:functions    # Cloud Functions (plano Blaze)
 
 ### Rotas por bolão (`/b/:bolaoId/...`)
 
-- **Ranking** — classificação ao vivo + carrossel “Jogos do dia” com apostas
-- **Jogos** — partidas agrupadas por data
-- **Palpites** — apostas do usuário, agrupadas por dia (colapsável)
+- **Ranking** — classificação ao vivo, carrossel “Jogos do dia” com apostas, `+X` roxo com pontos do jogo em andamento
+- **Jogos** — gráfico de evolução do ranking + partidas em mosaico (desktop)
+- **Palpites** — apostas do usuário, agrupadas por dia (colapsável); palpites de adversários ocultos até 15 min antes do apito
 - **Admin** — convites e gestão (só admin do bolão)
 
 ## Regras de pontuação
@@ -72,6 +74,17 @@ npm run deploy:functions    # Cloud Functions (plano Blaze)
 | Nada | 0 |
 
 Prazo: **15 minutos** antes do kickoff (horário de Brasília).
+
+Legenda do ranking: **Cravou** (verde) · **Acertou o resultado** (amarelo) · **Não apostou** (vermelho).
+
+## Sync de placares
+
+O sync combina duas fontes:
+
+1. **[WorldCup26 API](https://worldcup26.ir)** (gratuita, primária)
+2. **[football-data.org](https://www.football-data.org)** (fallback, requer `FOOTBALL_DATA_TOKEN`)
+
+Regra de merge (`scripts/lib/mergeApiMatches.ts`): se **qualquer** API reportar `FINISHED`/`AWARDED`, esse status prevalece sobre `IN_PLAY`. A UI confia no `status_api` gravado no Firestore — sem heurísticas de tempo ou ordem de jogos.
 
 ## Automação (GitHub Actions)
 

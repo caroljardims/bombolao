@@ -20,6 +20,7 @@
     "sync-scores": "tsx scripts/sync-scores.ts",
     "sync-scores:all": "tsx scripts/sync-scores.ts -- --all",
     "sync-scores:recalc": "tsx scripts/sync-scores.ts -- --bolao-id colorados-do-inter --recalc-only",
+    "test": "tsx --test scripts/lib/mergeApiMatches.test.ts",
     "functions:build": "cd functions && npm run build",
     "deploy": "npm run build && firebase deploy --only hosting,firestore:rules,firestore:indexes,auth",
     "deploy:functions": "npm run functions:build && firebase deploy --only functions"

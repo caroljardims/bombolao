@@ -12,7 +12,8 @@ import {
   partidaEncerrada,
   temPalpite,
 } from './lib/recalc'
-import { normalizeTeam, teamsMatch } from './lib/teamMatch'
+import { extractApiScore, mergeApiMatches } from './lib/mergeApiMatches'
+import { teamsMatch } from './lib/teamMatch'
 import { fetchWorldCup26Matches, type ApiMatch } from './lib/worldcup26Api'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -114,62 +115,7 @@ function parsePartidaDate(utcDate: string): string {
 }
 
 function extractScore(match: ApiMatch): { home: number; away: number } | null {
-  const blocks = [match.score.fullTime, match.score.regularTime, match.score.halfTime]
-  for (const block of blocks) {
-    if (
-      block?.home !== null &&
-      block?.home !== undefined &&
-      block?.away !== null &&
-      block?.away !== undefined
-    ) {
-      return { home: block.home, away: block.away }
-    }
-  }
-  return null
-}
-
-const STATUS_PRIORITY: Record<string, number> = {
-  FINISHED: 30,
-  AWARDED: 30,
-  IN_PLAY: 20,
-  PAUSED: 20,
-  LIVE: 20,
-  EXTRA_TIME: 20,
-  PENALTY_SHOOTOUT: 20,
-  TIMED: 5,
-  SCHEDULED: 5,
-}
-
-function apiMatchQuality(match: ApiMatch): number {
-  const base = STATUS_PRIORITY[match.status] ?? 0
-  const score = extractScore(match)
-  if (!score) return base
-  if (score.home > 0 || score.away > 0) return base + 10
-  return base + 3
-}
-
-function apiMatchKey(match: ApiMatch): string {
-  const names = [normalizeTeam(match.homeTeam.name), normalizeTeam(match.awayTeam.name)].sort()
-  return names.join('|')
-}
-
-function isValidApiMatch(match: ApiMatch): boolean {
-  return Boolean(match.homeTeam?.name && match.awayTeam?.name)
-}
-
-function mergeApiMatches(...groups: ApiMatch[][]): ApiMatch[] {
-  const map = new Map<string, ApiMatch>()
-  for (const group of groups) {
-    for (const match of group) {
-      if (!isValidApiMatch(match)) continue
-      const key = apiMatchKey(match)
-      const existing = map.get(key)
-      if (!existing || apiMatchQuality(match) > apiMatchQuality(existing)) {
-        map.set(key, match)
-      }
-    }
-  }
-  return [...map.values()]
+  return extractApiScore(match)
 }
 
 async function fetchFootballDataMatches(): Promise<ApiMatch[]> {
