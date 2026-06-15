@@ -298,71 +298,73 @@ export function ContaPage() {
 
   return (
     <div className="screen conta-screen">
-      <div className="login-hero">
-        <div className="login-hero-icon">⚽</div>
-        <h2 style={{ marginTop: 16, fontSize: 27, fontWeight: 800 }}>Entrar no Bombolão</h2>
-        <p className="sub" style={{ marginTop: 8 }}>
-          Crie bolões, entre com convite e faça seus palpites.
-        </p>
-      </div>
+      <div className="page-narrow">
+        <div className="login-hero">
+          <div className="login-hero-icon">⚽</div>
+          <h2 style={{ marginTop: 16, fontSize: 27, fontWeight: 800 }}>Entrar no Bombolão</h2>
+          <p className="sub" style={{ marginTop: 8 }}>
+            Crie bolões, entre com convite e faça seus palpites.
+          </p>
+        </div>
 
-      <div className="mode-tabs" style={{ marginTop: 24 }}>
-        <ModeButton active={mode === 'google'} onClick={() => setMode('google')}>
-          Google
-        </ModeButton>
-        <ModeButton active={mode === 'email'} onClick={() => setMode('email')}>
-          E-mail e senha
-        </ModeButton>
-      </div>
+        <div className="mode-tabs" style={{ marginTop: 24 }}>
+          <ModeButton active={mode === 'google'} onClick={() => setMode('google')}>
+            Google
+          </ModeButton>
+          <ModeButton active={mode === 'email'} onClick={() => setMode('email')}>
+            E-mail e senha
+          </ModeButton>
+        </div>
 
-      <div style={{ marginTop: 20 }}>
-        {mode === 'google' ? (
-          <button type="button" onClick={handleGoogleSignIn} disabled={busy} className="btn-google">
-            <GoogleIcon />
-            {busy ? 'Entrando…' : 'Entrar com Google'}
-          </button>
-        ) : (
-          <form onSubmit={handleEmailSignIn} className="form-stack">
-            <input
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              required
-              className="input"
-            />
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Senha"
-              className="input"
-            />
-            <button type="submit" disabled={busy} className="btn btn-save full">
-              {busy ? 'Entrando…' : 'Entrar'}
+        <div style={{ marginTop: 20 }}>
+          {mode === 'google' ? (
+            <button type="button" onClick={handleGoogleSignIn} disabled={busy} className="btn-google">
+              <GoogleIcon />
+              {busy ? 'Entrando…' : 'Entrar com Google'}
             </button>
-            <div className="alert-gold" style={{ textAlign: 'center' }}>
-              <p style={{ fontWeight: 700 }}>Primeiro acesso?</p>
-              <button
-                type="button"
-                onClick={handleSendPasswordEmail}
-                disabled={busy}
-                className="link-gold"
-                style={{ marginTop: 12 }}
-              >
-                Enviar e-mail para criar senha
+          ) : (
+            <form onSubmit={handleEmailSignIn} className="form-stack">
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                required
+                className="input"
+              />
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Senha"
+                className="input"
+              />
+              <button type="submit" disabled={busy} className="btn btn-save full">
+                {busy ? 'Entrando…' : 'Entrar'}
               </button>
-            </div>
-          </form>
-        )}
-      </div>
+              <div className="alert-gold" style={{ textAlign: 'center' }}>
+                <p style={{ fontWeight: 700 }}>Primeiro acesso?</p>
+                <button
+                  type="button"
+                  onClick={handleSendPasswordEmail}
+                  disabled={busy}
+                  className="link-gold"
+                  style={{ marginTop: 12 }}
+                >
+                  Enviar e-mail para criar senha
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
 
-      <Link to={returnTo} className="link-muted center-link" style={{ marginTop: 20 }}>
-        ← Voltar
-      </Link>
+        <Link to={returnTo} className="link-muted center-link" style={{ marginTop: 20 }}>
+          ← Voltar
+        </Link>
+      </div>
     </div>
   )
 }
