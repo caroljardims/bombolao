@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { RankingHistoryLine, RankingHistoryStep } from '../lib/rankingHistory'
+import { teamFlagUrl } from '../lib/teamFlags'
 
 interface RankingEvolutionChartProps {
   steps: RankingHistoryStep[]
@@ -10,6 +11,9 @@ const H = 340
 const PAD = { top: 24, right: 52, bottom: 52, left: 40 }
 const MIN_CHART_W = 808
 const STEP_WIDTH = 56
+const FLAG_W = 16
+const FLAG_H = 11
+const FLAG_GAP = 3
 
 function chartWidth(steps: number): number {
   if (steps <= 1) return MIN_CHART_W
@@ -91,20 +95,31 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
             </g>
           ))}
 
-          {steps.map((step, i) => (
-            <text
-              key={step.partida.id}
-              x={xScale(i)}
-              y={H - 14}
-              className="ranking-chart-xtick"
-              textAnchor="middle"
-            >
-              <title>
-                {step.partida.time_casa} × {step.partida.time_fora}
-              </title>
-              {step.label}
-            </text>
-          ))}
+          {steps.map((step, i) => {
+            const cx = xScale(i)
+            const y = H - 24
+            const totalW = FLAG_W * 2 + FLAG_GAP
+            const x0 = cx - totalW / 2
+            return (
+              <g key={step.partida.id} className="ranking-chart-match-label">
+                <title>{step.label}</title>
+                <image
+                  href={teamFlagUrl(step.partida.time_casa, 32)}
+                  x={x0}
+                  y={y}
+                  width={FLAG_W}
+                  height={FLAG_H}
+                />
+                <image
+                  href={teamFlagUrl(step.partida.time_fora, 32)}
+                  x={x0 + FLAG_W + FLAG_GAP}
+                  y={y}
+                  width={FLAG_W}
+                  height={FLAG_H}
+                />
+              </g>
+            )
+          })}
 
           {lines.map((line) => {
             const pts = line.positions

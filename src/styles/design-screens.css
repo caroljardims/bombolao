@@ -162,7 +162,7 @@
 .ranking-chart-svg{ display:block; flex-shrink:0; }
 .ranking-chart-grid{ stroke:var(--line-2); stroke-width:1; }
 .ranking-chart-ytick{ fill:var(--t-low); font-size:11px; font-weight:600; }
-.ranking-chart-xtick{ fill:var(--t-mid); font-size:15px; font-weight:600; }
+.ranking-chart-match-label image{ border-radius:2px; }
 .ranking-chart-avatar-ring{ fill:var(--bg-2); stroke-width:2; }
 .ranking-chart-avatar-initials{ fill:#fff; font-size:9px; font-weight:800; pointer-events:none; }
 
