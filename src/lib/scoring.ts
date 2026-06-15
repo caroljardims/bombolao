@@ -164,6 +164,11 @@ export function apostasAbertas(partida: Partida, now: Date = new Date()): boolea
   return now < deadline
 }
 
+/** Palpites de outros participantes ficam visíveis quando as apostas fecham (15 min antes do apito). */
+export function palpitesAdversariosVisiveis(partida: Partida, now: Date = new Date()): boolean {
+  return !apostasAbertas(partida, now)
+}
+
 export const ACERTO_STYLES: Record<AcertoTipo, { label: string; emoji: string; className: string }> = {
   mosca: { label: 'Na mosca', emoji: '🎯', className: 'bg-gold/20 text-gold border-gold/40' },
   empate: { label: 'Empate', emoji: '🤝', className: 'bg-green-500/20 text-green-400 border-green-500/40' },

@@ -64,6 +64,10 @@ h1,h2,h3,h4,p{ margin:0; }
 }
 .app-scroll{ flex:1; overflow-y:auto; }
 .page{ max-width:var(--maxw); margin:0 auto; padding:0 20px; }
+.page-narrow{
+  width:100%; max-width:480px; margin-inline:auto;
+  padding-top:8px;
+}
 .nav-spacer{ height:108px; }
 
 /* ---------- Header ---------- */

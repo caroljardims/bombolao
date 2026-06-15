@@ -4,13 +4,14 @@ import { LoadingState } from '../components/LoadingState'
 import { PalpitesDaySection } from '../components/PalpitesDaySection'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
+import { useNow } from '../hooks/useNow'
 import { usePalpites } from '../hooks/usePalpites'
 import { usePartidas } from '../hooks/usePartidas'
 import { PalpiteInput } from '../components/PalpiteInput'
 import { AcertoBadge } from '../components/AcertoBadge'
 import { Pill, TeamBadge } from '../components/ui'
 import { getHoje, groupPartidasByDay } from '../lib/dates'
-import { apostasAbertas, partidaEncerrada, temPalpite } from '../lib/scoring'
+import { apostasAbertas, palpitesAdversariosVisiveis, partidaEncerrada, temPalpite } from '../lib/scoring'
 import { getPontosLive, classificarAcertoLive } from '../lib/liveRanking'
 import { bolaoPath } from '../lib/paths'
 import type { Palpite, Partida } from '../lib/types'
@@ -65,8 +66,12 @@ interface PalpiteCardProps {
 }
 
 function PalpiteCard({ partida, participanteId, palpite, readOnly }: PalpiteCardProps) {
+  const { participante } = useBolao()
+  const now = useNow()
   const encerrada = partidaEncerrada(partida)
-  const abertas = apostasAbertas(partida)
+  const abertas = apostasAbertas(partida, now)
+  const isOwn = participanteId === participante?.id
+  const oculto = readOnly && !isOwn && !palpitesAdversariosVisiveis(partida, now)
   const tipo = palpite
     ? classificarAcertoLive(palpite, partida)
     : encerrada
@@ -87,7 +92,7 @@ function PalpiteCard({ partida, participanteId, palpite, readOnly }: PalpiteCard
           </h4>
           {encerrada && (
             <span className="real-score">
-              Placar oficial{' '}
+              Placar final{' '}
               <b>
                 {partida.gols_casa} × {partida.gols_fora}
               </b>
@@ -106,6 +111,7 @@ function PalpiteCard({ partida, participanteId, palpite, readOnly }: PalpiteCard
         palpiteCasa={palpite?.palpite_casa ?? null}
         palpiteFora={palpite?.palpite_fora ?? null}
         readOnly={readOnly || !abertas}
+        oculto={oculto}
       />
     </article>
   )

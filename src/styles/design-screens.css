@@ -181,6 +181,11 @@
 .guess-block{ display:flex; align-items:center; gap:12px; }
 .guess-x{ font-style:normal; color:var(--t-low); font-weight:600; font-size:16px; }
 .guess-note{ color:var(--t-low); font-size:13.5px; font-weight:600; }
+.guess-note.muted{ font-style:italic; }
+
+.palpite-display{ font-weight:800; font-size:26px; color:var(--gold); font-variant-numeric:tabular-nums; }
+.palpite-display i{ font-style:normal; color:var(--t-low); font-weight:600; margin:0 6px; font-size:16px; }
+.palpite-display.is-hidden,.palpite-display.is-empty{ color:var(--t-low); font-size:22px; }
 
 .stepper{ display:flex; align-items:center; background:var(--bg-2); border:1px solid var(--line);
   border-radius:14px; overflow:hidden; }

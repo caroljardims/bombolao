@@ -5,10 +5,11 @@ import {
   indiceProximoJogo,
   type ApostaProximoJogo,
 } from '../lib/nextPartida'
-import { temPalpite } from '../lib/scoring'
+import { palpitesAdversariosVisiveis, temPalpite } from '../lib/scoring'
 import type { Palpite, Partida, Participante } from '../lib/types'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
+import { useNow } from '../hooks/useNow'
 import { Avatar, Icon, TeamBadge } from './ui'
 
 interface NextGameBetsProps {
@@ -38,6 +39,7 @@ export function NextGameBets({
 }: NextGameBetsProps) {
   const { user } = useAuth()
   const { participante } = useBolao()
+  const now = useNow()
   const [index, setIndex] = useState(0)
 
   const rankingOrder = useMemo(
@@ -141,7 +143,7 @@ export function NextGameBets({
               <span className="bet-rank">{i + 1}</span>
               <Avatar name={p.nome} id={p.id} size={28} photo={photo} />
               <span className="bet-name">{p.nome}</span>
-              <PalpiteScore palpite={palpite} partida={partida!} />
+              <PalpiteScore palpite={palpite} partida={partida!} isYou={isYou} now={now} />
             </div>
           )
         })}
@@ -150,8 +152,20 @@ export function NextGameBets({
   )
 }
 
-function PalpiteScore({ palpite, partida }: { palpite: Palpite | null; partida: Partida }) {
-  if (!palpite || !temPalpite(palpite)) {
+function PalpiteScore({
+  palpite,
+  partida,
+  isYou,
+  now,
+}: {
+  palpite: Palpite | null
+  partida: Partida
+  isYou: boolean
+  now: Date
+}) {
+  const oculto = !isYou && !palpitesAdversariosVisiveis(partida, now)
+
+  if (oculto || !palpite || !temPalpite(palpite)) {
     return <span className="bet-score" style={{ color: 'var(--t-low)', fontWeight: 600 }}>—</span>
   }
 

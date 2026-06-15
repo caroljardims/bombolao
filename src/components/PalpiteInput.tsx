@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { setDoc } from 'firebase/firestore'
 import toast from 'react-hot-toast'
 import { useBolao } from '../contexts/BolaoContext'
-import { apostasAbertas } from '../lib/scoring'
+import { apostasAbertas, temPalpite } from '../lib/scoring'
 import { palpiteDoc } from '../lib/paths'
 import type { Partida } from '../lib/types'
 import { Icon } from './ui'
@@ -13,6 +13,7 @@ interface PalpiteInputProps {
   palpiteCasa: number | null
   palpiteFora: number | null
   readOnly?: boolean
+  oculto?: boolean
 }
 
 function Stepper({
@@ -51,12 +52,52 @@ function Stepper({
   )
 }
 
+function PalpiteDisplay({
+  casa,
+  fora,
+  oculto,
+}: {
+  casa: number | null
+  fora: number | null
+  oculto?: boolean
+}) {
+  if (oculto) {
+    return (
+      <span className="palpite-display is-hidden">
+        —
+        <i>×</i>
+        —
+      </span>
+    )
+  }
+
+  const filled = casa !== null && fora !== null
+  if (!filled) {
+    return (
+      <span className="palpite-display is-empty">
+        —
+        <i>×</i>
+        —
+      </span>
+    )
+  }
+
+  return (
+    <span className="palpite-display">
+      {casa}
+      <i>×</i>
+      {fora}
+    </span>
+  )
+}
+
 export function PalpiteInput({
   partida,
   participanteId,
   palpiteCasa,
   palpiteFora,
   readOnly = false,
+  oculto = false,
 }: PalpiteInputProps) {
   const { bolaoId } = useBolao()
   const [casa, setCasa] = useState<number | null>(palpiteCasa)
@@ -126,14 +167,16 @@ export function PalpiteInput({
   }
 
   if (readOnly) {
+    const note = oculto
+      ? 'Oculto até fechar apostas'
+      : temPalpite({ palpite_casa: palpiteCasa, palpite_fora: palpiteFora })
+        ? 'Palpite registrado'
+        : 'Sem palpite'
+
     return (
       <div className="palpite-controls">
-        <div className="guess-block">
-          <Stepper value={palpiteCasa} onChange={() => {}} disabled />
-          <i className="guess-x">×</i>
-          <Stepper value={palpiteFora} onChange={() => {}} disabled />
-        </div>
-        <span className="guess-note">Palpite registrado</span>
+        <PalpiteDisplay casa={palpiteCasa} fora={palpiteFora} oculto={oculto} />
+        <span className={`guess-note${oculto ? ' muted' : ''}`}>{note}</span>
       </div>
     )
   }

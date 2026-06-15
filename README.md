@@ -8,7 +8,7 @@ App publicado: **https://bombolao-9ea22.web.app**
 
 ```bash
 npm install
-cp .env.example .env   # preencher VITE_FIREBASE_* e, opcionalmente, FOOTBALL_DATA_TOKEN
+cp .env.example .env   # preencher VITE_FIREBASE_* e WORLDCUP_API_KEY (sync de placares)
 ```
 
 Para scripts Node (seed, sync, import), coloque a service account na raiz (`*-firebase-adminsdk-*.json`) ou use `firebase login`.
@@ -38,7 +38,7 @@ npm run deploy:functions    # Cloud Functions (plano Blaze)
 | Comando | Descrição |
 |---------|-----------|
 | `npm run seed` | Popula Firestore a partir de `src/data/seed.json` |
-| `npm run sync-scores` | Busca placares na API + atualiza Firestore + ranking |
+| `npm run sync-scores` | Busca placares na [World Cup API](https://worldcupapi.com) + atualiza Firestore + ranking |
 | `npm run sync-scores:recalc` | Recalcula pontos com placares já no Firestore |
 | `npm run import-partidas` | Importa partidas da Copa via football-data.org |
 | `npm run sync-participant-photos` | Copia `photoURL` do Auth para docs de participante |
