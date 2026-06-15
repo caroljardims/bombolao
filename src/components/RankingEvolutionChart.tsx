@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import type { RankingHistoryLine, RankingHistoryStep } from '../lib/rankingHistory'
 
 interface RankingEvolutionChartProps {
@@ -6,9 +6,15 @@ interface RankingEvolutionChartProps {
   lines: RankingHistoryLine[]
 }
 
-const W = 900
 const H = 340
 const PAD = { top: 24, right: 52, bottom: 52, left: 40 }
+const MIN_CHART_W = 808
+const STEP_WIDTH = 56
+
+function chartWidth(steps: number): number {
+  if (steps <= 1) return MIN_CHART_W
+  return Math.max(MIN_CHART_W, (steps - 1) * STEP_WIDTH)
+}
 
 function initials(nome: string): string {
   return nome
@@ -20,9 +26,17 @@ function initials(nome: string): string {
 }
 
 export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
   const maxPos = lines.length || 1
-  const chartW = W - PAD.left - PAD.right
+  const chartW = chartWidth(steps.length)
+  const W = PAD.left + chartW + PAD.right
   const chartH = H - PAD.top - PAD.bottom
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollLeft = el.scrollWidth - el.clientWidth
+  }, [steps.length])
 
   const xScale = useMemo(() => {
     const n = steps.length
@@ -53,9 +67,11 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
     <div className="card ranking-chart">
       <h3 className="ranking-chart-title">Evolução do ranking</h3>
       <p className="sub ranking-chart-sub">Posição após cada jogo com placar</p>
-      <div className="ranking-chart-scroll">
+      <div className="ranking-chart-scroll" ref={scrollRef}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
+          width={W}
+          height={H}
           className="ranking-chart-svg"
           role="img"
           aria-label="Gráfico de evolução das posições no ranking"

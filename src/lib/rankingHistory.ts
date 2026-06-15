@@ -1,6 +1,7 @@
 import { getKickoffDate } from './dates'
 import { contarEstatisticasLive } from './liveRanking'
 import { calcularPosicoes, partidaAoVivo, partidaEncerrada, temPlacar } from './scoring'
+import { teamFlag } from './teamFlags'
 import type { Palpite, Partida, Participante } from './types'
 
 export interface RankingHistoryStep {
@@ -39,9 +40,7 @@ function partidaContaParaHistorico(partida: Partida): boolean {
 }
 
 function labelPartida(partida: Partida): string {
-  const casa = partida.time_casa.slice(0, 3).toUpperCase()
-  const fora = partida.time_fora.slice(0, 3).toUpperCase()
-  return `${casa}×${fora}`
+  return `${teamFlag(partida.time_casa)}×${teamFlag(partida.time_fora)}`
 }
 
 export function buildRankingHistory(

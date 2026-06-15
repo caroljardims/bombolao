@@ -153,11 +153,16 @@
 .ranking-chart.empty{ padding:24px; text-align:center; }
 .ranking-chart-title{ font-size:17px; font-weight:800; margin-bottom:4px; }
 .ranking-chart-sub{ margin-bottom:12px; font-size:13px; }
-.ranking-chart-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-.ranking-chart-svg{ width:100%; min-width:520px; height:auto; display:block; }
+.ranking-chart-scroll{
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin; scrollbar-color:var(--line-2) transparent;
+}
+.ranking-chart-scroll::-webkit-scrollbar{ height:6px; }
+.ranking-chart-scroll::-webkit-scrollbar-thumb{ background:var(--line-2); border-radius:3px; }
+.ranking-chart-svg{ display:block; flex-shrink:0; }
 .ranking-chart-grid{ stroke:var(--line-2); stroke-width:1; }
 .ranking-chart-ytick{ fill:var(--t-low); font-size:11px; font-weight:600; }
-.ranking-chart-xtick{ fill:var(--t-mid); font-size:10px; font-weight:600; }
+.ranking-chart-xtick{ fill:var(--t-mid); font-size:15px; font-weight:600; }
 .ranking-chart-avatar-ring{ fill:var(--bg-2); stroke-width:2; }
 .ranking-chart-avatar-initials{ fill:#fff; font-size:9px; font-weight:800; pointer-events:none; }
 
