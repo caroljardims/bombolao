@@ -51,13 +51,13 @@ export function RankingPage() {
 
           <div className="rank-legend">
             <span>
-              <i className="s-e">●</i> Na Mosca
+              <i className="s-e">●</i> Cravou
             </span>
             <span>
-              <i className="s-p">●</i> Resultados
+              <i className="s-p">●</i> Acertou o resultado
             </span>
             <span>
-              <i className="s-x">●</i> Sem aposta
+              <i className="s-x">●</i> Não apostou
             </span>
           </div>
 

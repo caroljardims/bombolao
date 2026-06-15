@@ -27,7 +27,7 @@
   --danger-soft:rgba(255,122,107,.13);
 
   /* stat colors */
-  --c-e:#f4c63d; --c-p:#5bd08a; --c-x:#ff7a6b;
+  --c-e:#5bd08a; --c-p:#f4c63d; --c-x:#ff7a6b;
 
   /* text */
   --t-hi:#f3f8f3;
