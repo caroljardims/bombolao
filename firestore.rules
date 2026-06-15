@@ -38,9 +38,16 @@ service cloud.firestore {
         && participanteEmail(bolaoId, participanteId) == authEmail();
     }
 
+    function isBolaoMember(bolaoId) {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/membrosias/$(bolaoId))
+        || exists(/databases/$(database)/documents/boloes/$(bolaoId)/participantes/$(request.auth.uid))
+      );
+    }
+
     // --- Bolões ---
     match /boloes/{bolaoId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.criadoPor == request.auth.uid;
       allow update: if isSignedIn()
@@ -48,19 +55,19 @@ service cloud.firestore {
       allow delete: if false;
 
       match /partidas/{partidaId} {
-        allow read: if true;
+        allow read: if isBolaoMember(bolaoId);
         allow write: if false;
       }
 
       match /participantes/{participanteId} {
-        allow read: if true;
+        allow read: if isBolaoMember(bolaoId);
         allow create: if isOwner(participanteId);
         allow update: if isOwner(participanteId) && statsUnchanged();
         allow delete: if ownsLegacyParticipante(bolaoId, participanteId);
       }
 
       match /palpites/{palpiteId} {
-        allow read: if true;
+        allow read: if isBolaoMember(bolaoId);
         allow create: if isOwner(request.resource.data.participante_id)
           && validScore(request.resource.data.palpite_casa)
           && validScore(request.resource.data.palpite_fora)

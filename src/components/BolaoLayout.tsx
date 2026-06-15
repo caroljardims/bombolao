@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useParams } from 'react-router-dom'
+import { Link, NavLink, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { LoadingState } from './LoadingState'
 import { Icon, type IconName } from './ui'
 import { useAuth } from '../hooks/useAuth'
@@ -14,9 +14,22 @@ const NAV: { to: string; label: string; icon: IconName; end?: boolean; adminOnly
 ]
 
 export function BolaoLayout() {
-  const { user } = useAuth()
-  const { bolao, loading, error, isAdmin } = useBolao()
+  const { user, loading: authLoading } = useAuth()
+  const { bolao, loading, error, isAdmin, isMember, membershipReady } = useBolao()
   const { bolaoId = '' } = useParams<{ bolaoId: string }>()
+  const location = useLocation()
+
+  if (authLoading) {
+    return (
+      <div className="app">
+        <LoadingState message="Verificando sessão…" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/conta" replace state={{ returnTo: location.pathname }} />
+  }
 
   if (loading) {
     return (
@@ -36,6 +49,23 @@ export function BolaoLayout() {
               <NavLink to="/" className="link-gold" style={{ marginTop: 12 }}>
                 ← Voltar ao lobby
               </NavLink>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (membershipReady && !isMember) {
+    return (
+      <div className="app">
+        <main className="app-scroll">
+          <div className="page" style={{ paddingTop: 24 }}>
+            <div className="alert-gold" style={{ textAlign: 'center' }}>
+              <p>Você precisa entrar neste bolão para ver ranking, jogos e palpites.</p>
+              <Link to="/" className="link-gold center-link" style={{ marginTop: 12 }}>
+                ← Voltar ao lobby
+              </Link>
             </div>
           </div>
         </main>

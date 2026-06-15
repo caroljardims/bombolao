@@ -20,6 +20,7 @@ interface BolaoState {
   isMember: boolean
   isAdmin: boolean
   loading: boolean
+  membershipReady: boolean
   error: string | null
 }
 
@@ -32,6 +33,7 @@ export function BolaoProvider({ children }: { children: ReactNode }) {
   const [participante, setParticipante] = useState<Participante | null>(null)
   const [membrosia, setMembrosia] = useState<Membrosia | null>(null)
   const [loading, setLoading] = useState(true)
+  const [membershipReady, setMembershipReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -65,33 +67,52 @@ export function BolaoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!bolaoId || !user) {
       setParticipante(null)
+      setMembershipReady(false)
       return
     }
 
-    const unsub = onSnapshot(
+    setMembershipReady(false)
+    let participanteDone = false
+    let membrosiaDone = false
+
+    const markReady = () => {
+      if (participanteDone && membrosiaDone) setMembershipReady(true)
+    }
+
+    const unsubParticipante = onSnapshot(
       participanteDoc(bolaoId, user.uid),
       (snap) => {
-        if (!snap.exists()) {
-          setParticipante(null)
-          return
-        }
-        setParticipante({ id: snap.id, ...snap.data() } as Participante)
+        setParticipante(
+          snap.exists() ? ({ id: snap.id, ...snap.data() } as Participante) : null,
+        )
+        participanteDone = true
+        markReady()
       },
-      () => setParticipante(null),
+      () => {
+        setParticipante(null)
+        participanteDone = true
+        markReady()
+      },
     )
-    return unsub
-  }, [bolaoId, user])
 
-  useEffect(() => {
-    if (!bolaoId || !user) {
-      setMembrosia(null)
-      return
+    const unsubMembrosia = onSnapshot(
+      membrosiaDoc(user.uid, bolaoId),
+      (snap) => {
+        setMembrosia(snap.exists() ? (snap.data() as Membrosia) : null)
+        membrosiaDone = true
+        markReady()
+      },
+      () => {
+        setMembrosia(null)
+        membrosiaDone = true
+        markReady()
+      },
+    )
+
+    return () => {
+      unsubParticipante()
+      unsubMembrosia()
     }
-
-    const unsub = onSnapshot(membrosiaDoc(user.uid, bolaoId), (snap) => {
-      setMembrosia(snap.exists() ? (snap.data() as Membrosia) : null)
-    })
-    return unsub
   }, [bolaoId, user])
 
   useEffect(() => {
@@ -118,9 +139,10 @@ export function BolaoProvider({ children }: { children: ReactNode }) {
         participante?.papel === 'admin' ||
         bolao?.criadoPor === user?.uid,
       loading,
+      membershipReady,
       error,
     }),
-    [bolaoId, bolao, participante, membrosia, user, loading, error],
+    [bolaoId, bolao, participante, membrosia, user, loading, membershipReady, error],
   )
 
   return <BolaoContext.Provider value={value}>{children}</BolaoContext.Provider>
