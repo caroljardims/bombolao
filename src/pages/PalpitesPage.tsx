@@ -11,9 +11,10 @@ import { PalpiteInput } from '../components/PalpiteInput'
 import { AcertoBadge } from '../components/AcertoBadge'
 import { Pill, TeamBadge } from '../components/ui'
 import { getHoje, groupPartidasByDay } from '../lib/dates'
-import { apostasAbertas, palpitesAdversariosVisiveis, partidaEncerrada, temPalpite } from '../lib/scoring'
+import { apostasAbertas, palpitesAdversariosVisiveis, partidaAoVivo, partidaEncerrada, temPalpite } from '../lib/scoring'
 import { getPontosLive, classificarAcertoLive } from '../lib/liveRanking'
 import { bolaoPath } from '../lib/paths'
+import { LiveTag } from '../components/LiveTag'
 import type { Palpite, Partida } from '../lib/types'
 
 export function PalpitesPage() {
@@ -69,6 +70,7 @@ function PalpiteCard({ partida, participanteId, palpite, viewOnly }: PalpiteCard
   const { participante } = useBolao()
   const now = useNow()
   const encerrada = partidaEncerrada(partida)
+  const aoVivo = partidaAoVivo(partida)
   const abertas = apostasAbertas(partida, now)
   const isOwn = participanteId === participante?.id
   const oculto = viewOnly && !isOwn && !palpitesAdversariosVisiveis(partida, now)
@@ -102,7 +104,8 @@ function PalpiteCard({ partida, participanteId, palpite, viewOnly }: PalpiteCard
           )}
         </div>
         {encerrada && palpite && <AcertoBadge tipo={tipo} pontos={pontosLive} />}
-        {!encerrada && canEdit && (
+        {aoVivo && <LiveTag partida={partida} />}
+        {!encerrada && !aoVivo && canEdit && (
           <Pill tone={abertas ? 'ok-soft' : 'danger-soft'}>{abertas ? 'Aberto' : 'Fechado'}</Pill>
         )}
       </div>

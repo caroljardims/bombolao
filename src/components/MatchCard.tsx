@@ -1,6 +1,7 @@
 import { apostasAbertas, partidaAoVivo, partidaEncerrada, temPlacar } from '../lib/scoring'
 import { formatDataCurta, isHoje } from '../lib/dates'
 import type { Partida } from '../lib/types'
+import { formatPlacar, LiveTag } from './LiveTag'
 import { Icon, Pill, TeamBadge } from './ui'
 
 interface MatchCardProps {
@@ -11,6 +12,7 @@ export function MatchCard({ partida }: MatchCardProps) {
   const encerrada = partidaEncerrada(partida)
   const aoVivo = partidaAoVivo(partida)
   const comPlacar = temPlacar(partida)
+  const placarAtual = formatPlacar(partida)
   const abertas = apostasAbertas(partida)
   const hoje = isHoje(partida.data)
 
@@ -22,11 +24,7 @@ export function MatchCard({ partida }: MatchCardProps) {
       <div className="match-top">
         <span className="phase">{partida.fase}</span>
         <div className="match-tags">
-          {aoVivo && (
-            <Pill tone="live" dot>
-              Ao vivo
-            </Pill>
-          )}
+          <LiveTag partida={partida} />
           {hoje ? (
             <Pill tone="gold-soft">Hoje</Pill>
           ) : (
@@ -60,6 +58,12 @@ export function MatchCard({ partida }: MatchCardProps) {
         {aoVivo ? (
           <span className="ms-live">
             <i className="live-dot" /> Ao vivo
+            {placarAtual && (
+              <>
+                {' '}
+                · <b>{placarAtual}</b>
+              </>
+            )}
           </span>
         ) : encerrada ? (
           <span className="ms-ft">Encerrado</span>

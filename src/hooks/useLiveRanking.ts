@@ -7,6 +7,7 @@ import {
 } from 'firebase/firestore'
 import { useBolao } from '../contexts/BolaoContext'
 import { buildLiveRanking, countPartidasAoVivo } from '../lib/liveRanking'
+import { partidaAoVivo } from '../lib/scoring'
 import { findProximaPartida, resolveJogosDoDia } from '../lib/nextPartida'
 import { participantesRef, partidasRef, palpitesRef } from '../lib/paths'
 import type { Palpite, Partida, Participante } from '../lib/types'
@@ -130,6 +131,8 @@ export function useLiveRanking() {
 
   const aoVivo = useMemo(() => countPartidasAoVivo(partidas), [partidas])
 
+  const partidasAoVivo = useMemo(() => partidas.filter((p) => partidaAoVivo(p)), [partidas])
+
   const encerradas = useMemo(
     () => partidas.filter((p) => p.gols_casa !== null && p.gols_fora !== null).length,
     [partidas],
@@ -149,6 +152,7 @@ export function useLiveRanking() {
     error,
     lastUpdate,
     aoVivo,
+    partidasAoVivo,
     encerradas,
     total: partidas.length,
     proximaPartida,

@@ -5,11 +5,12 @@ import {
   indiceProximoJogo,
   type ApostaProximoJogo,
 } from '../lib/nextPartida'
-import { palpitesAdversariosVisiveis, temPalpite } from '../lib/scoring'
+import { palpitesAdversariosVisiveis, partidaAoVivo, temPalpite } from '../lib/scoring'
 import type { Palpite, Partida, Participante } from '../lib/types'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
 import { useNow } from '../hooks/useNow'
+import { LiveTag } from './LiveTag'
 import { Avatar, Icon, TeamBadge } from './ui'
 
 interface NextGameBetsProps {
@@ -122,6 +123,12 @@ export function NextGameBets({
               <span>
                 {formatDataCurta(partida.data)} · {partida.hora}
               </span>
+              {partidaAoVivo(partida) && (
+                <>
+                  <span className="dotsep">·</span>
+                  <LiveTag partida={partida} />
+                </>
+              )}
               <span className="dotsep">·</span>
               <span className="ok-text">
                 {comAposta}/{apostas.length} apostaram

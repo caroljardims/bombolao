@@ -12,7 +12,7 @@ import {
   partidaEncerrada,
   temPalpite,
 } from './lib/recalc'
-import { teamsMatch } from './lib/teamMatch'
+import { normalizeTeam, teamsMatch } from './lib/teamMatch'
 import { fetchWorldCup26Matches, type ApiMatch } from './lib/worldcup26Api'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -128,6 +128,50 @@ function extractScore(match: ApiMatch): { home: number; away: number } | null {
   return null
 }
 
+const STATUS_PRIORITY: Record<string, number> = {
+  FINISHED: 30,
+  AWARDED: 30,
+  IN_PLAY: 20,
+  PAUSED: 20,
+  LIVE: 20,
+  EXTRA_TIME: 20,
+  PENALTY_SHOOTOUT: 20,
+  TIMED: 5,
+  SCHEDULED: 5,
+}
+
+function apiMatchQuality(match: ApiMatch): number {
+  const base = STATUS_PRIORITY[match.status] ?? 0
+  const score = extractScore(match)
+  if (!score) return base
+  if (score.home > 0 || score.away > 0) return base + 10
+  return base + 3
+}
+
+function apiMatchKey(match: ApiMatch): string {
+  const names = [normalizeTeam(match.homeTeam.name), normalizeTeam(match.awayTeam.name)].sort()
+  return names.join('|')
+}
+
+function isValidApiMatch(match: ApiMatch): boolean {
+  return Boolean(match.homeTeam?.name && match.awayTeam?.name)
+}
+
+function mergeApiMatches(...groups: ApiMatch[][]): ApiMatch[] {
+  const map = new Map<string, ApiMatch>()
+  for (const group of groups) {
+    for (const match of group) {
+      if (!isValidApiMatch(match)) continue
+      const key = apiMatchKey(match)
+      const existing = map.get(key)
+      if (!existing || apiMatchQuality(match) > apiMatchQuality(existing)) {
+        map.set(key, match)
+      }
+    }
+  }
+  return [...map.values()]
+}
+
 async function fetchFootballDataMatches(): Promise<ApiMatch[]> {
   const token = process.env.FOOTBALL_DATA_TOKEN
   const competition = process.env.FOOTBALL_DATA_COMPETITION ?? 'WC'
@@ -149,32 +193,48 @@ async function fetchFootballDataMatches(): Promise<ApiMatch[]> {
 }
 
 async function fetchApiMatches(): Promise<ApiMatch[]> {
-  try {
-    const wc26 = await fetchWorldCup26Matches()
-    console.log(`  ${wc26.length} jogo(s) retornados pela WorldCup26 API`)
-    return wc26
-  } catch (err) {
+  const wc26 = await fetchWorldCup26Matches().catch((err) => {
     console.warn(`WorldCup26 API falhou: ${err instanceof Error ? err.message : err}`)
+    return [] as ApiMatch[]
+  })
+  const fd = await fetchFootballDataMatches()
+
+  if (wc26.length > 0) console.log(`  ${wc26.length} jogo(s) da WorldCup26 API`)
+  if (fd.length > 0) console.log(`  ${fd.length} jogo(s) da football-data.org`)
+
+  if (wc26.length === 0 && fd.length === 0) {
+    if (!process.env.FOOTBALL_DATA_TOKEN) {
+      console.log('⚠ FOOTBALL_DATA_TOKEN não definido — sem fallback.')
+    }
+    return []
   }
 
-  console.log('Tentando fallback football-data.org…')
-  const fallback = await fetchFootballDataMatches()
-  if (fallback.length > 0) {
-    console.log(`  ${fallback.length} jogo(s) retornados pela football-data.org`)
-  } else if (!process.env.FOOTBALL_DATA_TOKEN) {
-    console.log('⚠ FOOTBALL_DATA_TOKEN não definido — sem fallback.')
-  }
-  return fallback
+  const merged = mergeApiMatches(wc26, fd)
+  console.log(`  ${merged.length} jogo(s) após merge das fontes`)
+  return merged
 }
 
 function findMatchingPartida(partidas: Partida[], apiMatch: ApiMatch): Partida | undefined {
   const apiDate = parsePartidaDate(apiMatch.utcDate)
-  return partidas.find(
+  const apiKickoff = new Date(apiMatch.utcDate).getTime()
+
+  const byDate = partidas.find(
     (p) =>
       p.data === apiDate &&
       teamsMatch(p.time_casa, apiMatch.homeTeam) &&
       teamsMatch(p.time_fora, apiMatch.awayTeam),
   )
+  if (byDate) return byDate
+
+  // UTC pode cair no dia seguinte ao calendário em Brasília (ex.: 23h BRT → 02h UTC).
+  return partidas.find((p) => {
+    if (!teamsMatch(p.time_casa, apiMatch.homeTeam) || !teamsMatch(p.time_fora, apiMatch.awayTeam)) {
+      return false
+    }
+    if (!Number.isFinite(apiKickoff)) return false
+    const kickoff = getKickoffDate(p).getTime()
+    return Math.abs(kickoff - apiKickoff) <= 3 * 60 * 60 * 1000
+  })
 }
 
 function isWithinLiveWindow(partida: Partida, now = new Date()): boolean {
@@ -357,7 +417,7 @@ async function syncScores() {
 
   let apiMatches: ApiMatch[] = []
   if (!recalcOnly) {
-    console.log('Buscando placares (WorldCup26 API)…')
+    console.log('Buscando placares (WorldCup26 + football-data.org)…')
     apiMatches = await fetchApiMatches()
   }
 

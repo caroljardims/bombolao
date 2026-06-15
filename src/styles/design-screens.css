@@ -94,7 +94,8 @@
 .next-vs span:first-child{ text-align:right; }
 .next-vs span:last-child{ text-align:left; }
 .next-meta{ display:flex; align-items:center; gap:8px; justify-content:center; margin-top:12px;
-  color:var(--t-mid); font-size:13px; }
+  flex-wrap:wrap; color:var(--t-mid); font-size:13px; }
+.next-meta .pill{ font-size:12px; padding:4px 10px; }
 
 .next-list{ display:flex; flex-direction:column; gap:2px; padding-top:10px; }
 .bet-row{ display:grid; grid-template-columns:20px 28px 1fr auto; align-items:center; gap:11px;
