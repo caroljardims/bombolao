@@ -2,14 +2,14 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
 import { bolaoPath } from '../lib/paths'
-import type { Participante } from '../lib/types'
+import type { ParticipanteRanking } from '../lib/types'
 import { Avatar, Icon, StatTrio } from './ui'
 
 interface RankingCardProps {
-  participante: Participante
+  participante: ParticipanteRanking
 }
 
-function isCurrentUser(participante: Participante, uid?: string, myId?: string, email?: string | null) {
+function isCurrentUser(participante: ParticipanteRanking, uid?: string, myId?: string, email?: string | null) {
   if (myId && participante.id === myId) return true
   if (uid && participante.id === uid) return true
   if (email && participante.email?.toLowerCase() === email.toLowerCase()) return true
@@ -41,6 +41,9 @@ export function RankingCard({ participante }: RankingCardProps) {
       <span className="rank-pts">
         {participante.total_pontos}
         <i>pts</i>
+        {participante.pontos_ao_vivo > 0 && (
+          <span className="rank-live-delta">+{participante.pontos_ao_vivo}</span>
+        )}
       </span>
       <StatTrio
         e={participante.na_mosca}

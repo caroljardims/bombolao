@@ -105,6 +105,10 @@ export interface ParticipanteStats {
   sem_aposta: number
 }
 
+export interface ParticipanteRanking extends Participante {
+  pontos_ao_vivo: number
+}
+
 export interface SeedData {
   bolao: BolaoConfig & { regras?: Record<string, unknown> }
   partidas: Partida[]

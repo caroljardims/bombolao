@@ -1,4 +1,4 @@
-import type { AcertoTipo, Participante, Palpite, Partida, ParticipanteStats } from './types'
+import type { AcertoTipo, Participante, Palpite, Partida, ParticipanteRanking, ParticipanteStats } from './types'
 import {
   calcularPontos,
   calcularPosicoes,
@@ -50,11 +50,28 @@ export function contarEstatisticasLive(
   return { total_pontos, na_mosca, acerto_resultado, sem_aposta }
 }
 
+export function contarPontosAoVivo(
+  palpites: Palpite[],
+  partidasMap: Map<string, Partida>,
+): number {
+  let pontos = 0
+
+  for (const palpite of palpites) {
+    const partida = partidasMap.get(palpite.partida_id)
+    if (!partida || !partidaAoVivo(partida) || !temPalpite(palpite)) continue
+
+    const pts = getPontosLive(palpite, partida)
+    if (pts !== null && pts > 0) pontos += pts
+  }
+
+  return pontos
+}
+
 export function buildLiveRanking(
   participantes: Participante[],
   palpites: Palpite[],
   partidas: Partida[],
-): Participante[] {
+): ParticipanteRanking[] {
   const partidasMap = new Map(partidas.map((p) => [p.id, p]))
   const palpitesByParticipante = new Map<string, Palpite[]>()
 
@@ -67,7 +84,8 @@ export function buildLiveRanking(
   const withStats = participantes.map((p) => {
     const palpitesDoParticipante = palpitesByParticipante.get(p.id) ?? []
     const stats = contarEstatisticasLive(palpitesDoParticipante, partidasMap)
-    return { ...p, ...stats }
+    const pontos_ao_vivo = contarPontosAoVivo(palpitesDoParticipante, partidasMap)
+    return { ...p, ...stats, pontos_ao_vivo }
   })
 
   const posicoes = calcularPosicoes(withStats)
