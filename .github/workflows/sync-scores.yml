@@ -23,13 +23,8 @@ jobs:
 
       - name: Validar secrets
         env:
-          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: |
-          if [ -z "$FOOTBALL_DATA_TOKEN" ]; then
-            echo "::error::Configure o secret FOOTBALL_DATA_TOKEN (football-data.org)"
-            exit 1
-          fi
           if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
             echo "::error::Configure o secret FIREBASE_SERVICE_ACCOUNT_JSON (JSON da service account Firebase)"
             exit 1
@@ -45,6 +40,5 @@ jobs:
       - name: Sincronizar placares
         env:
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
-          FOOTBALL_DATA_COMPETITION: WC
           BOLAO_IDS: colorados-do-inter
         run: npm run sync-scores -- --all

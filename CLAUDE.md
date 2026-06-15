@@ -13,7 +13,7 @@ firebase deploy --only storage   # regras de avatar (Storage precisa estar ativo
 npm run deploy:functions # build functions + firebase deploy --only functions
 
 # Scripts de dados (requerem service account ou firebase login)
-npm run sync-scores            # busca API football-data.org + atualiza Firestore + recalcula ranking
+npm run sync-scores            # busca WorldCup26 API (worldcup26.ir) + fallback football-data.org
 npm run sync-scores:all        # idem, força todos os bolões
 npm run sync-scores:recalc     # só recalcula pontos com placares já no Firestore
 npm run import-partidas        # importa partidas da Copa (football-data.org) para um bolão

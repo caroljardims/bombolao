@@ -38,7 +38,7 @@ npm run deploy:functions    # Cloud Functions (plano Blaze)
 | Comando | Descrição |
 |---------|-----------|
 | `npm run seed` | Popula Firestore a partir de `src/data/seed.json` |
-| `npm run sync-scores` | Busca placares na API football-data.org + atualiza Firestore + ranking |
+| `npm run sync-scores` | Busca placares na [WorldCup26 API](https://worldcup26.ir) (gratuita) + Firestore + ranking |
 | `npm run sync-scores:recalc` | Recalcula pontos com placares já no Firestore |
 | `npm run import-partidas` | Importa partidas da Copa via football-data.org |
 | `npm run sync-participant-photos` | Copia `photoURL` do Auth para docs de participante |

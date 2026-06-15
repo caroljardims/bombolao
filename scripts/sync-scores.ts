@@ -13,6 +13,7 @@ import {
   temPalpite,
 } from './lib/recalc'
 import { teamsMatch } from './lib/teamMatch'
+import { fetchWorldCup26Matches, type ApiMatch } from './lib/worldcup26Api'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -32,7 +33,7 @@ function loadDotEnv() {
   }
 }
 
-interface ApiMatch {
+interface ApiMatchFromFootballData {
   utcDate: string
   status: string
   homeTeam: { name: string; shortName?: string; tla?: string }
@@ -127,14 +128,11 @@ function extractScore(match: ApiMatch): { home: number; away: number } | null {
   return null
 }
 
-async function fetchApiMatches(): Promise<ApiMatch[]> {
+async function fetchFootballDataMatches(): Promise<ApiMatch[]> {
   const token = process.env.FOOTBALL_DATA_TOKEN
   const competition = process.env.FOOTBALL_DATA_COMPETITION ?? 'WC'
 
-  if (!token) {
-    console.log('⚠ FOOTBALL_DATA_TOKEN não definido — pulando fetch da API.')
-    return []
-  }
+  if (!token) return []
 
   const url = `https://api.football-data.org/v4/competitions/${competition}/matches`
   const res = await fetch(url, {
@@ -146,8 +144,27 @@ async function fetchApiMatches(): Promise<ApiMatch[]> {
     return []
   }
 
-  const data = (await res.json()) as { matches: ApiMatch[] }
-  return data.matches ?? []
+  const data = (await res.json()) as { matches: ApiMatchFromFootballData[] }
+  return (data.matches ?? []) as ApiMatch[]
+}
+
+async function fetchApiMatches(): Promise<ApiMatch[]> {
+  try {
+    const wc26 = await fetchWorldCup26Matches()
+    console.log(`  ${wc26.length} jogo(s) retornados pela WorldCup26 API`)
+    return wc26
+  } catch (err) {
+    console.warn(`WorldCup26 API falhou: ${err instanceof Error ? err.message : err}`)
+  }
+
+  console.log('Tentando fallback football-data.org…')
+  const fallback = await fetchFootballDataMatches()
+  if (fallback.length > 0) {
+    console.log(`  ${fallback.length} jogo(s) retornados pela football-data.org`)
+  } else if (!process.env.FOOTBALL_DATA_TOKEN) {
+    console.log('⚠ FOOTBALL_DATA_TOKEN não definido — sem fallback.')
+  }
+  return fallback
 }
 
 function findMatchingPartida(partidas: Partida[], apiMatch: ApiMatch): Partida | undefined {
@@ -340,7 +357,7 @@ async function syncScores() {
 
   let apiMatches: ApiMatch[] = []
   if (!recalcOnly) {
-    console.log('Buscando placares da API…')
+    console.log('Buscando placares (WorldCup26 API)…')
     apiMatches = await fetchApiMatches()
   }
 
