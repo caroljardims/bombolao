@@ -117,8 +117,8 @@
       "fase": "Primeira fase",
       "time_casa": "Holanda",
       "time_fora": "Japão",
-      "gols_casa": null,
-      "gols_fora": null
+      "gols_casa": 2,
+      "gols_fora": 2
     },
     {
       "id": "2026-06-14-CIV-ECU",
@@ -127,8 +127,8 @@
       "fase": "Primeira fase",
       "time_casa": "Costa do Marfim",
       "time_fora": "Equador",
-      "gols_casa": null,
-      "gols_fora": null
+      "gols_casa": 1,
+      "gols_fora": 0
     },
     {
       "id": "2026-06-14-SWE-TUN",
@@ -137,8 +137,8 @@
       "fase": "Primeira fase",
       "time_casa": "Suécia",
       "time_fora": "Tunísia",
-      "gols_casa": null,
-      "gols_fora": null
+      "gols_casa": 5,
+      "gols_fora": 1
     },
     {
       "id": "2026-06-15-ESP-CPV",
@@ -147,8 +147,8 @@
       "fase": "Primeira fase",
       "time_casa": "Espanha",
       "time_fora": "Cabo Verde",
-      "gols_casa": null,
-      "gols_fora": null
+      "gols_casa": 0,
+      "gols_fora": 0
     },
     {
       "id": "2026-06-15-BEL-EGY",
@@ -157,8 +157,8 @@
       "fase": "Primeira fase",
       "time_casa": "Bélgica",
       "time_fora": "Egito",
-      "gols_casa": null,
-      "gols_fora": null
+      "gols_casa": 1,
+      "gols_fora": 1
     },
     {
       "id": "2026-06-15-KSA-URU",
@@ -167,8 +167,8 @@
       "fase": "Primeira fase",
       "time_casa": "Arábia Saudita",
       "time_fora": "Uruguai",
-      "gols_casa": null,
-      "gols_fora": null
+      "gols_casa": 1,
+      "gols_fora": 1
     },
     {
       "id": "2026-06-15-IRN-NZL",
@@ -177,8 +177,8 @@
       "fase": "Primeira fase",
       "time_casa": "Irã",
       "time_fora": "Nova Zelândia",
-      "gols_casa": null,
-      "gols_fora": null
+      "gols_casa": 0,
+      "gols_fora": 0
     },
     {
       "id": "2026-06-16-FRA-SEN",
@@ -781,7 +781,43 @@
         "partida_id": "2026-06-14-NED-JPN",
         "palpite_casa": 3,
         "palpite_fora": 1,
-        "pontos": null
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-CIV-ECU",
+        "palpite_casa": 2,
+        "palpite_fora": 2,
+        "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-14-SWE-TUN",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": 4
+      },
+      {
+        "partida_id": "2026-06-15-ESP-CPV",
+        "palpite_casa": 4,
+        "palpite_fora": 0,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-15-BEL-EGY",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-15-KSA-URU",
+        "palpite_casa": 0,
+        "palpite_fora": 1,
+        "pontos": 1
+      },
+      {
+        "partida_id": "2026-06-15-IRN-NZL",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": 0
       }
     ]
   },
@@ -844,9 +880,9 @@
     },
     {
       "nome": "Michael",
-      "total_pontos": 10,
+      "total_pontos": 17,
       "na_mosca": 0,
-      "acerto_resultado": 2,
+      "acerto_resultado": 3,
       "sem_aposta": 3,
       "posicao": 8
     }

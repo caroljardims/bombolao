@@ -12,6 +12,7 @@
     "migrate": "tsx scripts/migrate-to-multi-bolao.ts",
     "grant-admin": "tsx scripts/grant-admin.ts",
     "import-palpites": "tsx scripts/import-web-bolao-palpites.ts",
+    "sync-participant-palpites": "tsx scripts/sync-participant-palpites.ts",
     "update-partidas": "tsx scripts/update-partidas-from-seed.ts",
     "merge-participante": "tsx scripts/merge-participante.ts",
     "link-participante": "tsx scripts/link-participante.ts",
