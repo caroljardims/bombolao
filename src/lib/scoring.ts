@@ -56,8 +56,8 @@ export function partidaEmCurso(partida: Partida, now: Date = new Date()): boolea
 
 export function partidaEncerrada(partida: Partida): boolean {
   if (!temPlacar(partida)) return false
-  if (partida.status_api) return FINAL_STATUSES.has(partida.status_api)
-  return true
+  if (!partida.status_api) return false
+  return FINAL_STATUSES.has(partida.status_api)
 }
 
 export function temPalpite(palpite: Pick<Palpite, 'palpite_casa' | 'palpite_fora'>): boolean {

@@ -45,15 +45,18 @@ async function main() {
     const overlay = WEB_BOLAO_PLACAR[partida.id]
     const gols_casa = overlay?.gols_casa ?? partida.gols_casa
     const gols_fora = overlay?.gols_fora ?? partida.gols_fora
-    const status_api =
-      overlay?.status_api ??
-      (gols_casa !== null && gols_fora !== null ? 'FINISHED' : null)
 
     if (gols_casa === null || gols_fora === null) continue
 
+    const patch: { gols_casa: number; gols_fora: number; status_api?: string } = {
+      gols_casa,
+      gols_fora,
+    }
+    if (overlay?.status_api) patch.status_api = overlay.status_api
+
     batch.set(
       bolaoRef.collection('partidas').doc(partida.id),
-      { gols_casa, gols_fora, status_api },
+      patch,
       { merge: true },
     )
     updated++

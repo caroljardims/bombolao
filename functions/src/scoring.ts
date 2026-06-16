@@ -22,8 +22,8 @@ const FINAL_STATUSES = new Set(['FINISHED', 'AWARDED'])
 
 export function partidaEncerrada(partida: Partida): boolean {
   if (partida.gols_casa === null || partida.gols_fora === null) return false
-  if (partida.status_api) return FINAL_STATUSES.has(partida.status_api)
-  return true
+  if (!partida.status_api) return false
+  return FINAL_STATUSES.has(partida.status_api)
 }
 
 export function temPalpite(palpite: Pick<Palpite, 'palpite_casa' | 'palpite_fora'>): boolean {

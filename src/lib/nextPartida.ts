@@ -1,26 +1,15 @@
 import { getKickoffDate, getHoje, isPastKickoff } from './dates'
-import { partidaAoVivo, partidaEmCurso, partidaEncerrada, temPlacar } from './scoring'
+import { partidaAoVivo, partidaEmCurso, partidaEncerrada } from './scoring'
 import type { Palpite, Partida, Participante } from './types'
-
-/** Duração típica de jogo (90'+acréscimos/prorrogação) para inferir fim quando status_api atrasa. */
-const MATCH_DURATION_MS = 110 * 60 * 1000
 
 export interface ApostaProximoJogo {
   participante: Participante
   palpite: Palpite | null
 }
 
-/** Jogo já passou para fins de exibir o próximo (mesmo com status_api desatualizado). */
-export function partidaJaPassou(partida: Partida, now = new Date()): boolean {
-  if (partidaEncerrada(partida)) return true
-  if (!isPastKickoff(partida, now)) return false
-
-  if (temPlacar(partida) && !partidaAoVivo(partida)) return true
-
-  const elapsed = now.getTime() - getKickoffDate(partida).getTime()
-  if (temPlacar(partida) && elapsed > MATCH_DURATION_MS) return true
-
-  return false
+/** Jogo já passou — apenas quando encerrado oficialmente (status_api FINISHED/AWARDED). */
+export function partidaJaPassou(partida: Partida, _now = new Date()): boolean {
+  return partidaEncerrada(partida)
 }
 
 /** Próximo jogo para exibir apostas: ao vivo, em curso, próximo kickoff ou pendente. */
@@ -56,32 +45,27 @@ export function jogosPendentesDiasAnteriores(
   return partidas.filter((p) => p.data < hoje && !partidaJaPassou(p, now))
 }
 
-/** Lista de jogos do dia em exibição: hoje (incl. encerrados) ou amanhã se todos de hoje passaram. */
+/**
+ * Jogos do dia em exibição — alinhado ao jogo destacado em findProximaPartida.
+ * Evita pular para amanhã enquanto ainda há jogo ao vivo, em curso ou aguardando kickoff hoje.
+ */
 export function resolveJogosDoDia(partidas: Partida[], now = new Date()): JogosDoDiaResult {
   const hoje = getHoje(now)
   const sorted = [...partidas].sort(
     (a, b) => getKickoffDate(a).getTime() - getKickoffDate(b).getTime(),
   )
 
-  const pendentesAnteriores = jogosPendentesDiasAnteriores(sorted, hoje, now)
+  const proxima = findProximaPartida(partidas, now)
+  if (proxima) {
+    const pendentesAnteriores = jogosPendentesDiasAnteriores(sorted, hoje, now)
+    const jogosNaData = sorted.filter((p) => p.data === proxima.data)
+    const jogos =
+      proxima.data === hoje ? [...pendentesAnteriores, ...jogosNaData] : jogosNaData
+    return { data: proxima.data, jogos }
+  }
+
   const jogosHoje = sorted.filter((p) => p.data === hoje)
-  const todosHojePassaram =
-    jogosHoje.length === 0 || jogosHoje.every((p) => partidaJaPassou(p, now))
-
-  if (pendentesAnteriores.length > 0 || (jogosHoje.length > 0 && !todosHojePassaram)) {
-    return { data: hoje, jogos: [...pendentesAnteriores, ...jogosHoje] }
-  }
-
-  const datas = [...new Set(sorted.map((p) => p.data))].sort()
-  const proximaData = datas.find((d) => d > hoje)
-  if (!proximaData) {
-    return { data: hoje, jogos: jogosHoje }
-  }
-
-  return {
-    data: proximaData,
-    jogos: sorted.filter((p) => p.data === proximaData),
-  }
+  return { data: hoje, jogos: jogosHoje }
 }
 
 export function indiceProximoJogo(jogos: Partida[], proxima: Partida | null): number {
