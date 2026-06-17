@@ -1,6 +1,7 @@
 export type AcertoTipo = 'mosca' | 'empate' | 'resultado' | 'resultado_gol' | 'gol' | 'nada' | 'sem_aposta'
 export type Papel = 'admin' | 'membro'
 export type AcessoBolao = 'convite' | 'aberto'
+export type CompeticaoId = 'wc2026'
 
 export interface Placar {
   casa: number
@@ -37,6 +38,7 @@ export interface Bolao {
   acesso: AcessoBolao
   regras: RegrasPontuacao
   ultimaSyncApi?: string
+  competicaoTemplateId?: CompeticaoId
 }
 
 export interface Participante {
@@ -86,6 +88,7 @@ export interface BolaoConfig {
 }
 
 export type PartidaDraft = Omit<Partida, 'id' | 'gols_casa' | 'gols_fora'> & {
+  id?: string
   gols_casa?: null
   gols_fora?: null
 }
@@ -96,6 +99,7 @@ export interface CriarBolaoInput {
   acesso: AcessoBolao
   regras: RegrasPontuacao
   partidas: PartidaDraft[]
+  competicaoTemplateId?: CompeticaoId
 }
 
 export interface ParticipanteStats {

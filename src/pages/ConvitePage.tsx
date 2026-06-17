@@ -83,7 +83,7 @@ export function ConvitePage() {
     }
     setBusy(true)
     try {
-      const bolaoId = await joinBolaoByInvite(code, user.uid, user.email ?? '', nomeExibicao)
+      const bolaoId = await joinBolaoByInvite(code, user.uid, user.email ?? '', nomeExibicao, user.photoURL)
       toast.success(`Bem-vindo ao ${bolaoNome}!`)
       navigate(bolaoPath(bolaoId))
     } catch (err) {

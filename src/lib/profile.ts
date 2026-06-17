@@ -98,6 +98,15 @@ const STORAGE_TIMEOUT_MS = 20_000
 const STORAGE_TIMEOUT_MSG =
   'Upload da foto demorou demais. Ative o Firebase Storage no console do projeto e tente de novo.'
 
+export async function syncPhotoToParticipantes(
+  uid: string,
+  email: string | null | undefined,
+  photoURL: string | null | undefined,
+): Promise<void> {
+  if (!photoURL) return
+  await syncParticipanteProfile(uid, email, { photoURL })
+}
+
 export async function updateUserProfile(opts: {
   displayName?: string
   photoFile?: File

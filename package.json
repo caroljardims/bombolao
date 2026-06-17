@@ -18,6 +18,7 @@
     "link-participante": "tsx scripts/link-participante.ts",
     "sync-participant-photos": "tsx scripts/sync-participant-photos.ts",
     "import-partidas": "tsx scripts/import-partidas-from-api.ts",
+    "generate-competicao-template": "tsx scripts/generate-competicao-template.ts",
     "sync-scores": "tsx scripts/sync-scores.ts",
     "sync-scores:all": "tsx scripts/sync-scores.ts -- --all",
     "sync-scores:recalc": "tsx scripts/sync-scores.ts -- --bolao-id colorados-do-inter --recalc-only",

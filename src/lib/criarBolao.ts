@@ -33,6 +33,7 @@ export async function criarBolao(
   uid: string,
   email: string,
   nomeExibicao: string,
+  photoURL?: string | null,
 ): Promise<{ bolaoId: string; inviteCode: string }> {
   if (!input.nome.trim()) throw new Error('Informe o nome do bolão.')
   if (!input.competicao.trim()) throw new Error('Informe a competição.')
@@ -42,31 +43,19 @@ export async function criarBolao(
   const now = new Date().toISOString()
   const inviteCode = generateInviteCode()
 
-  const batch = writeBatch(db)
+  const setupBatch = writeBatch(db)
 
-  batch.set(bolaoDoc(bolaoId), {
+  setupBatch.set(bolaoDoc(bolaoId), {
     nome: input.nome.trim(),
     competicao: input.competicao.trim(),
     criadoPor: uid,
     criadoEm: now,
     acesso: input.acesso,
     regras: input.regras,
+    ...(input.competicaoTemplateId ? { competicaoTemplateId: input.competicaoTemplateId } : {}),
   })
 
-  for (const p of input.partidas) {
-    const id = partidaIdFromFields(p.data, p.hora, p.time_casa, p.time_fora)
-    batch.set(partidaDoc(bolaoId, id), {
-      data: p.data,
-      hora: p.hora,
-      fase: p.fase,
-      time_casa: p.time_casa.trim(),
-      time_fora: p.time_fora.trim(),
-      gols_casa: null,
-      gols_fora: null,
-    })
-  }
-
-  batch.set(participanteDoc(bolaoId, uid), {
+  setupBatch.set(participanteDoc(bolaoId, uid), {
     nome: nomeExibicao.trim() || input.nome.trim(),
     email: email.toLowerCase(),
     total_pontos: 0,
@@ -76,16 +65,17 @@ export async function criarBolao(
     posicao: 1,
     papel: 'admin',
     entrouEm: now,
+    ...(photoURL ? { photoURL } : {}),
   })
 
-  batch.set(membrosiaDoc(uid, bolaoId), {
+  setupBatch.set(membrosiaDoc(uid, bolaoId), {
     bolaoId,
     nome: input.nome.trim(),
     papel: 'admin',
     entrouEm: now,
   })
 
-  batch.set(conviteDoc(inviteCode), {
+  setupBatch.set(conviteDoc(inviteCode), {
     bolaoId,
     criadoPor: uid,
     ativo: true,
@@ -94,7 +84,28 @@ export async function criarBolao(
     expiraEm: null,
   })
 
-  await batch.commit()
+  await setupBatch.commit()
+
+  const FIRESTORE_BATCH_LIMIT = 500
+  for (let i = 0; i < input.partidas.length; i += FIRESTORE_BATCH_LIMIT) {
+    const partidasBatch = writeBatch(db)
+    const chunk = input.partidas.slice(i, i + FIRESTORE_BATCH_LIMIT)
+
+    for (const p of chunk) {
+      const id = p.id ?? partidaIdFromFields(p.data, p.hora, p.time_casa, p.time_fora)
+      partidasBatch.set(partidaDoc(bolaoId, id), {
+        data: p.data,
+        hora: p.hora,
+        fase: p.fase,
+        time_casa: p.time_casa.trim(),
+        time_fora: p.time_fora.trim(),
+        gols_casa: null,
+        gols_fora: null,
+      })
+    }
+
+    await partidasBatch.commit()
+  }
   return { bolaoId, inviteCode }
 }
 

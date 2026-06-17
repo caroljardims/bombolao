@@ -41,6 +41,7 @@ export async function joinBolaoByInvite(
   uid: string,
   email: string,
   nomeExibicao: string,
+  photoURL?: string | null,
 ): Promise<string> {
   const normalized = normalizeInviteCode(code)
   if (!normalized) throw new JoinError('Código de convite inválido.')
@@ -99,7 +100,10 @@ export async function joinBolaoByInvite(
         posicao: 99,
         papel: 'membro',
         entrouEm: now,
+        ...(photoURL ? { photoURL } : {}),
       })
+    } else if (photoURL && !participanteSnap.data()?.photoURL) {
+      tx.update(participanteRef, { photoURL })
     }
 
     tx.set(membrosiaRef, {
@@ -120,6 +124,7 @@ export async function joinBolaoAberto(
   uid: string,
   email: string,
   nomeExibicao: string,
+  photoURL?: string | null,
 ): Promise<void> {
   const membrosiaRef = membrosiaDoc(uid, bolaoId)
   const existingMembrosia = await getDoc(membrosiaRef)
@@ -157,7 +162,10 @@ export async function joinBolaoAberto(
         posicao: 99,
         papel: 'membro',
         entrouEm: now,
+        ...(photoURL ? { photoURL } : {}),
       })
+    } else if (photoURL && !participanteSnap.data()?.photoURL) {
+      tx.update(participanteRef, { photoURL })
     }
 
     tx.set(membrosiaRef, {

@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { LoadingState } from '../components/LoadingState'
-import { PartidaEditor } from '../components/PartidaEditor'
 import { useAuth } from '../hooks/useAuth'
+import { COMPETICOES, getCompeticaoTemplate, isCompeticaoTemplateId } from '../lib/competicoes'
 import { criarBolao } from '../lib/criarBolao'
 import { DEFAULT_REGRAS } from '../lib/regras'
 import { bolaoPath } from '../lib/paths'
-import type { AcessoBolao, PartidaDraft } from '../lib/types'
+import type { AcessoBolao, CompeticaoId, PartidaDraft } from '../lib/types'
 
-type Step = 1 | 2 | 3
+type Step = 1 | 2
 
 export function CriarBolaoPage() {
   const { user, loading } = useAuth()
@@ -18,11 +18,12 @@ export function CriarBolaoPage() {
   const [busy, setBusy] = useState(false)
 
   const [nome, setNome] = useState('')
-  const [competicao, setCompeticao] = useState('')
+  const [competicaoId, setCompeticaoId] = useState<CompeticaoId | ''>('')
   const [acesso, setAcesso] = useState<AcessoBolao>('convite')
-  const [partidas, setPartidas] = useState<PartidaDraft[]>([
-    { data: '', hora: '16:00', fase: 'Fase de grupos', time_casa: '', time_fora: '' },
-  ])
+  const [partidas, setPartidas] = useState<PartidaDraft[]>([])
+
+  const competicaoLabel =
+    competicaoId !== '' ? COMPETICOES.find((c) => c.id === competicaoId)?.label ?? '' : ''
 
   if (loading) return <LoadingState />
   if (!user) {
@@ -41,34 +42,46 @@ export function CriarBolaoPage() {
       toast.error('Informe o nome do bolão.')
       return false
     }
-    if (!competicao.trim()) {
-      toast.error('Informe a competição.')
+    if (!competicaoId) {
+      toast.error('Selecione um campeonato.')
       return false
     }
     return true
   }
 
-  function validateStep2(): boolean {
-    for (const [i, p] of partidas.entries()) {
-      if (!p.data || !p.hora || !p.time_casa.trim() || !p.time_fora.trim()) {
-        toast.error(`Preencha todos os campos do jogo ${i + 1}.`)
-        return false
-      }
-    }
-    return true
+  function goToReview() {
+    if (!validateStep1() || !isCompeticaoTemplateId(competicaoId)) return
+
+    const template = getCompeticaoTemplate(competicaoId)
+    setPartidas(template.partidas)
+    setStep(2)
   }
 
   async function handlePublish() {
-    if (!validateStep1() || !validateStep2()) return
+    if (!validateStep1() || !isCompeticaoTemplateId(competicaoId)) return
+    if (partidas.length === 0) {
+      toast.error('Nenhuma partida carregada para este campeonato.')
+      return
+    }
+
+    const template = getCompeticaoTemplate(competicaoId)
 
     setBusy(true)
     try {
       const nomeExibicao = user!.displayName ?? user!.email?.split('@')[0] ?? 'Organizador'
       const { bolaoId, inviteCode } = await criarBolao(
-        { nome, competicao, acesso, regras: DEFAULT_REGRAS, partidas },
+        {
+          nome,
+          competicao: template.competicao,
+          acesso,
+          regras: DEFAULT_REGRAS,
+          partidas,
+          competicaoTemplateId: competicaoId,
+        },
         user!.uid,
         user!.email ?? '',
         nomeExibicao,
+        user!.photoURL,
       )
       toast.success('Bolão criado!')
       navigate(bolaoPath(bolaoId, 'admin'), {
@@ -89,12 +102,12 @@ export function CriarBolaoPage() {
             ← Voltar ao lobby
           </Link>
           <h2>Criar bolão</h2>
-          <p className="sub">Passo {step} de 3</p>
+          <p className="sub">Passo {step} de 2</p>
         </div>
       </header>
 
       <div className="step-progress">
-        {[1, 2, 3].map((s) => (
+        {[1, 2].map((s) => (
           <div key={s} className={`step-progress-bar${s <= step ? ' active' : ''}`} />
         ))}
       </div>
@@ -104,8 +117,22 @@ export function CriarBolaoPage() {
           <Field label="Nome do bolão">
             <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Bolão da firma" className="input" />
           </Field>
-          <Field label="Competição">
-            <input value={competicao} onChange={(e) => setCompeticao(e.target.value)} placeholder="Copa do Mundo 2026" className="input" />
+          <Field label="Campeonato">
+            <select
+              value={competicaoId}
+              onChange={(e) => setCompeticaoId(e.target.value as CompeticaoId | '')}
+              className="input"
+            >
+              <option value="">Selecione…</option>
+              {COMPETICOES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="sub" style={{ marginTop: 8, fontSize: 13 }}>
+              WIP — mais campeonatos em breve.
+            </p>
           </Field>
           <Field label="Quem pode entrar?">
             <select value={acesso} onChange={(e) => setAcesso(e.target.value as AcessoBolao)} className="input">
@@ -113,37 +140,20 @@ export function CriarBolaoPage() {
               <option value="aberto">Qualquer pessoa com o link</option>
             </select>
           </Field>
-          <button type="button" onClick={() => validateStep1() && setStep(2)} className="btn btn-save full">
-            Próximo: partidas
+          <button type="button" onClick={goToReview} className="btn btn-save full">
+            Próximo: revisar
           </button>
         </div>
       )}
 
       {step === 2 && (
         <div style={{ marginTop: 20 }}>
-          <p className="sub" style={{ marginBottom: 16 }}>
-            Cadastre as partidas do seu bolão.
-          </p>
-          <PartidaEditor partidas={partidas} onChange={setPartidas} />
-          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-            <button type="button" onClick={() => setStep(1)} className="btn btn-ghost-gold" style={{ flex: 1 }}>
-              Voltar
-            </button>
-            <button type="button" onClick={() => validateStep2() && setStep(3)} className="btn btn-save" style={{ flex: 1 }}>
-              Revisar
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div style={{ marginTop: 20 }}>
           <div className="card" style={{ padding: '18px 20px' }}>
             <p>
               <span className="sub">Nome:</span> {nome}
             </p>
             <p style={{ marginTop: 8 }}>
-              <span className="sub">Competição:</span> {competicao}
+              <span className="sub">Campeonato:</span> {competicaoLabel}
             </p>
             <p style={{ marginTop: 8 }}>
               <span className="sub">Acesso:</span> {acesso === 'convite' ? 'Convite' : 'Aberto'}
@@ -153,7 +163,7 @@ export function CriarBolaoPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-            <button type="button" onClick={() => setStep(2)} className="btn btn-ghost-gold" style={{ flex: 1 }}>
+            <button type="button" onClick={() => setStep(1)} className="btn btn-ghost-gold" style={{ flex: 1 }}>
               Voltar
             </button>
             <button type="button" onClick={handlePublish} disabled={busy} className="btn btn-gold" style={{ flex: 1 }}>

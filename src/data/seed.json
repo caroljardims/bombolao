@@ -658,6 +658,18 @@
         "palpite_casa": 1,
         "palpite_fora": 0,
         "pontos": null
+      },
+      {
+        "partida_id": "2026-06-17-ENG-CRO",
+        "palpite_casa": 2,
+        "palpite_fora": 2,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-17-GHA-PAN",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": null
       }
     ],
     "Camile": [

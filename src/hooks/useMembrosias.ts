@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../contexts/AuthContext'
 import { syncLegacyMemberships } from '../lib/linkParticipante'
+import { syncPhotoToParticipantes } from '../lib/profile'
 import { membrosiasRef } from '../lib/paths'
 import type { Membrosia } from '../lib/types'
 
@@ -21,6 +22,12 @@ export function useMembrosias() {
     if (user.email) {
       syncLegacyMemberships(user.uid, user.email, user.displayName ?? undefined).catch(() => {
         /* sem conta legada ou permissão */
+      })
+    }
+
+    if (user.photoURL) {
+      syncPhotoToParticipantes(user.uid, user.email, user.photoURL).catch(() => {
+        /* sync best-effort */
       })
     }
 

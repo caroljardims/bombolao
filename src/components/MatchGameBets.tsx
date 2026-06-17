@@ -48,19 +48,15 @@ export function MatchGameBets({
   const { participante } = useBolao()
   const now = useNow()
 
-  const rankingOrder = useMemo(
-    () =>
-      [...participantes].sort((a, b) => {
-        if (a.posicao !== b.posicao) return a.posicao - b.posicao
-        return a.nome.localeCompare(b.nome, 'pt-BR')
-      }),
+  const participantesOrdenados = useMemo(
+    () => [...participantes].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
     [participantes],
   )
 
-  const apostas = useMemo(() => {
-    const base = buildApostasDoJogo(rankingOrder, palpites, partida.id)
-    return base.sort((a, b) => a.participante.posicao - b.participante.posicao)
-  }, [rankingOrder, palpites, partida.id])
+  const apostas = useMemo(
+    () => buildApostasDoJogo(participantesOrdenados, palpites, partida.id),
+    [participantesOrdenados, palpites, partida.id],
+  )
 
   const comAposta = apostas.filter((a) => a.palpite && temPalpite(a.palpite)).length
   const aoVivo = partidaAoVivo(partida)
@@ -121,7 +117,7 @@ export function MatchGameBets({
       </div>
 
       <div className="next-list">
-        {apostas.map(({ participante: p, palpite }, i) => {
+        {apostas.map(({ participante: p, palpite }) => {
           const isYou =
             participante?.id === p.id ||
             user?.uid === p.id ||
@@ -129,7 +125,6 @@ export function MatchGameBets({
           const photo = photoForParticipante(p, user, participante?.id)
           return (
             <div key={p.id} className={`bet-row${isYou ? ' is-you' : ''}`}>
-              <span className="bet-rank">{i + 1}</span>
               <Avatar name={p.nome} id={p.id} size={28} photo={photo} />
               <span className="bet-name">{p.nome}</span>
               <BetPalpite palpite={palpite} partida={partida} isYou={isYou} now={now} />

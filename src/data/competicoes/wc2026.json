@@ -1,0 +1,583 @@
+{
+  "id": "wc2026",
+  "nome": "Copa do Mundo 2026",
+  "competicao": "Copa do Mundo 2026",
+  "partidas": [
+    {
+      "id": "2026-06-11-MEX-RSA",
+      "data": "2026-06-11",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "México",
+      "time_fora": "África do Sul"
+    },
+    {
+      "id": "2026-06-11-KOR-CZE",
+      "data": "2026-06-11",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Coreia do Sul",
+      "time_fora": "República Tcheca"
+    },
+    {
+      "id": "2026-06-12-CAN-BIH",
+      "data": "2026-06-12",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Canadá",
+      "time_fora": "Bósnia-Herzegovina"
+    },
+    {
+      "id": "2026-06-12-USA-PAR",
+      "data": "2026-06-12",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Estados Unidos",
+      "time_fora": "Paraguai"
+    },
+    {
+      "id": "2026-06-13-QAT-SUI",
+      "data": "2026-06-13",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Catar",
+      "time_fora": "Suíça"
+    },
+    {
+      "id": "2026-06-13-BRA-MAR",
+      "data": "2026-06-13",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Brasil",
+      "time_fora": "Marrocos"
+    },
+    {
+      "id": "2026-06-13-HAI-SCO",
+      "data": "2026-06-13",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Haiti",
+      "time_fora": "Escócia"
+    },
+    {
+      "id": "2026-06-14-AUS-TUR",
+      "data": "2026-06-14",
+      "hora": "01:00",
+      "fase": "Primeira fase",
+      "time_casa": "Austrália",
+      "time_fora": "Turquia"
+    },
+    {
+      "id": "2026-06-14-GER-CUW",
+      "data": "2026-06-14",
+      "hora": "14:00",
+      "fase": "Primeira fase",
+      "time_casa": "Alemanha",
+      "time_fora": "Curaçao"
+    },
+    {
+      "id": "2026-06-14-NED-JPN",
+      "data": "2026-06-14",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Holanda",
+      "time_fora": "Japão"
+    },
+    {
+      "id": "2026-06-14-CIV-ECU",
+      "data": "2026-06-14",
+      "hora": "20:00",
+      "fase": "Primeira fase",
+      "time_casa": "Costa do Marfim",
+      "time_fora": "Equador"
+    },
+    {
+      "id": "2026-06-14-SWE-TUN",
+      "data": "2026-06-14",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Suécia",
+      "time_fora": "Tunísia"
+    },
+    {
+      "id": "2026-06-15-ESP-CPV",
+      "data": "2026-06-15",
+      "hora": "13:00",
+      "fase": "Primeira fase",
+      "time_casa": "Espanha",
+      "time_fora": "Cabo Verde"
+    },
+    {
+      "id": "2026-06-15-BEL-EGY",
+      "data": "2026-06-15",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Bélgica",
+      "time_fora": "Egito"
+    },
+    {
+      "id": "2026-06-15-KSA-URY",
+      "data": "2026-06-15",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Arábia Saudita",
+      "time_fora": "Uruguai"
+    },
+    {
+      "id": "2026-06-15-IRN-NZL",
+      "data": "2026-06-15",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Irã",
+      "time_fora": "Nova Zelândia"
+    },
+    {
+      "id": "2026-06-16-FRA-SEN",
+      "data": "2026-06-16",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "França",
+      "time_fora": "Senegal"
+    },
+    {
+      "id": "2026-06-16-IRQ-NOR",
+      "data": "2026-06-16",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Iraque",
+      "time_fora": "Noruega"
+    },
+    {
+      "id": "2026-06-16-ARG-ALG",
+      "data": "2026-06-16",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Argentina",
+      "time_fora": "Argélia"
+    },
+    {
+      "id": "2026-06-17-AUT-JOR",
+      "data": "2026-06-17",
+      "hora": "01:00",
+      "fase": "Primeira fase",
+      "time_casa": "Áustria",
+      "time_fora": "Jordânia"
+    },
+    {
+      "id": "2026-06-17-POR-COD",
+      "data": "2026-06-17",
+      "hora": "14:00",
+      "fase": "Primeira fase",
+      "time_casa": "Portugal",
+      "time_fora": "Congo"
+    },
+    {
+      "id": "2026-06-17-ENG-CRO",
+      "data": "2026-06-17",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Inglaterra",
+      "time_fora": "Croácia"
+    },
+    {
+      "id": "2026-06-17-GHA-PAN",
+      "data": "2026-06-17",
+      "hora": "20:00",
+      "fase": "Primeira fase",
+      "time_casa": "Gana",
+      "time_fora": "Panamá"
+    },
+    {
+      "id": "2026-06-17-UZB-COL",
+      "data": "2026-06-17",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Uzbequistão",
+      "time_fora": "Colômbia"
+    },
+    {
+      "id": "2026-06-18-CZE-RSA",
+      "data": "2026-06-18",
+      "hora": "13:00",
+      "fase": "Primeira fase",
+      "time_casa": "República Tcheca",
+      "time_fora": "África do Sul"
+    },
+    {
+      "id": "2026-06-18-SUI-BIH",
+      "data": "2026-06-18",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Suíça",
+      "time_fora": "Bósnia-Herzegovina"
+    },
+    {
+      "id": "2026-06-18-CAN-QAT",
+      "data": "2026-06-18",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Canadá",
+      "time_fora": "Catar"
+    },
+    {
+      "id": "2026-06-18-MEX-KOR",
+      "data": "2026-06-18",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "México",
+      "time_fora": "Coreia do Sul"
+    },
+    {
+      "id": "2026-06-19-USA-AUS",
+      "data": "2026-06-19",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Estados Unidos",
+      "time_fora": "Austrália"
+    },
+    {
+      "id": "2026-06-19-SCO-MAR",
+      "data": "2026-06-19",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Escócia",
+      "time_fora": "Marrocos"
+    },
+    {
+      "id": "2026-06-19-BRA-HAI",
+      "data": "2026-06-19",
+      "hora": "21:30",
+      "fase": "Primeira fase",
+      "time_casa": "Brasil",
+      "time_fora": "Haiti"
+    },
+    {
+      "id": "2026-06-20-TUR-PAR",
+      "data": "2026-06-20",
+      "hora": "00:00",
+      "fase": "Primeira fase",
+      "time_casa": "Turquia",
+      "time_fora": "Paraguai"
+    },
+    {
+      "id": "2026-06-20-NED-SWE",
+      "data": "2026-06-20",
+      "hora": "14:00",
+      "fase": "Primeira fase",
+      "time_casa": "Holanda",
+      "time_fora": "Suécia"
+    },
+    {
+      "id": "2026-06-20-GER-CIV",
+      "data": "2026-06-20",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Alemanha",
+      "time_fora": "Costa do Marfim"
+    },
+    {
+      "id": "2026-06-20-ECU-CUW",
+      "data": "2026-06-20",
+      "hora": "21:00",
+      "fase": "Primeira fase",
+      "time_casa": "Equador",
+      "time_fora": "Curaçao"
+    },
+    {
+      "id": "2026-06-21-TUN-JPN",
+      "data": "2026-06-21",
+      "hora": "01:00",
+      "fase": "Primeira fase",
+      "time_casa": "Tunísia",
+      "time_fora": "Japão"
+    },
+    {
+      "id": "2026-06-21-ESP-KSA",
+      "data": "2026-06-21",
+      "hora": "13:00",
+      "fase": "Primeira fase",
+      "time_casa": "Espanha",
+      "time_fora": "Arábia Saudita"
+    },
+    {
+      "id": "2026-06-21-BEL-IRN",
+      "data": "2026-06-21",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Bélgica",
+      "time_fora": "Irã"
+    },
+    {
+      "id": "2026-06-21-URY-CPV",
+      "data": "2026-06-21",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Uruguai",
+      "time_fora": "Cabo Verde"
+    },
+    {
+      "id": "2026-06-21-NZL-EGY",
+      "data": "2026-06-21",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "Nova Zelândia",
+      "time_fora": "Egito"
+    },
+    {
+      "id": "2026-06-22-ARG-AUT",
+      "data": "2026-06-22",
+      "hora": "14:00",
+      "fase": "Primeira fase",
+      "time_casa": "Argentina",
+      "time_fora": "Áustria"
+    },
+    {
+      "id": "2026-06-22-FRA-IRQ",
+      "data": "2026-06-22",
+      "hora": "18:00",
+      "fase": "Primeira fase",
+      "time_casa": "França",
+      "time_fora": "Iraque"
+    },
+    {
+      "id": "2026-06-22-NOR-SEN",
+      "data": "2026-06-22",
+      "hora": "21:00",
+      "fase": "Primeira fase",
+      "time_casa": "Noruega",
+      "time_fora": "Senegal"
+    },
+    {
+      "id": "2026-06-23-JOR-ALG",
+      "data": "2026-06-23",
+      "hora": "00:00",
+      "fase": "Primeira fase",
+      "time_casa": "Jordânia",
+      "time_fora": "Argélia"
+    },
+    {
+      "id": "2026-06-23-POR-UZB",
+      "data": "2026-06-23",
+      "hora": "14:00",
+      "fase": "Primeira fase",
+      "time_casa": "Portugal",
+      "time_fora": "Uzbequistão"
+    },
+    {
+      "id": "2026-06-23-ENG-GHA",
+      "data": "2026-06-23",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Inglaterra",
+      "time_fora": "Gana"
+    },
+    {
+      "id": "2026-06-23-PAN-CRO",
+      "data": "2026-06-23",
+      "hora": "20:00",
+      "fase": "Primeira fase",
+      "time_casa": "Panamá",
+      "time_fora": "Croácia"
+    },
+    {
+      "id": "2026-06-23-COL-COD",
+      "data": "2026-06-23",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Colômbia",
+      "time_fora": "Congo"
+    },
+    {
+      "id": "2026-06-24-SUI-CAN",
+      "data": "2026-06-24",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Suíça",
+      "time_fora": "Canadá"
+    },
+    {
+      "id": "2026-06-24-BIH-QAT",
+      "data": "2026-06-24",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Bósnia-Herzegovina",
+      "time_fora": "Catar"
+    },
+    {
+      "id": "2026-06-24-MAR-HAI",
+      "data": "2026-06-24",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Marrocos",
+      "time_fora": "Haiti"
+    },
+    {
+      "id": "2026-06-24-SCO-BRA",
+      "data": "2026-06-24",
+      "hora": "19:00",
+      "fase": "Primeira fase",
+      "time_casa": "Escócia",
+      "time_fora": "Brasil"
+    },
+    {
+      "id": "2026-06-24-CZE-MEX",
+      "data": "2026-06-24",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "República Tcheca",
+      "time_fora": "México"
+    },
+    {
+      "id": "2026-06-24-RSA-KOR",
+      "data": "2026-06-24",
+      "hora": "22:00",
+      "fase": "Primeira fase",
+      "time_casa": "África do Sul",
+      "time_fora": "Coreia do Sul"
+    },
+    {
+      "id": "2026-06-25-ECU-GER",
+      "data": "2026-06-25",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Equador",
+      "time_fora": "Alemanha"
+    },
+    {
+      "id": "2026-06-25-CUW-CIV",
+      "data": "2026-06-25",
+      "hora": "17:00",
+      "fase": "Primeira fase",
+      "time_casa": "Curaçao",
+      "time_fora": "Costa do Marfim"
+    },
+    {
+      "id": "2026-06-25-TUN-NED",
+      "data": "2026-06-25",
+      "hora": "20:00",
+      "fase": "Primeira fase",
+      "time_casa": "Tunísia",
+      "time_fora": "Holanda"
+    },
+    {
+      "id": "2026-06-25-JPN-SWE",
+      "data": "2026-06-25",
+      "hora": "20:00",
+      "fase": "Primeira fase",
+      "time_casa": "Japão",
+      "time_fora": "Suécia"
+    },
+    {
+      "id": "2026-06-25-TUR-USA",
+      "data": "2026-06-25",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Turquia",
+      "time_fora": "Estados Unidos"
+    },
+    {
+      "id": "2026-06-25-PAR-AUS",
+      "data": "2026-06-25",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Paraguai",
+      "time_fora": "Austrália"
+    },
+    {
+      "id": "2026-06-26-NOR-FRA",
+      "data": "2026-06-26",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Noruega",
+      "time_fora": "França"
+    },
+    {
+      "id": "2026-06-26-SEN-IRQ",
+      "data": "2026-06-26",
+      "hora": "16:00",
+      "fase": "Primeira fase",
+      "time_casa": "Senegal",
+      "time_fora": "Iraque"
+    },
+    {
+      "id": "2026-06-26-URY-ESP",
+      "data": "2026-06-26",
+      "hora": "21:00",
+      "fase": "Primeira fase",
+      "time_casa": "Uruguai",
+      "time_fora": "Espanha"
+    },
+    {
+      "id": "2026-06-26-CPV-KSA",
+      "data": "2026-06-26",
+      "hora": "21:00",
+      "fase": "Primeira fase",
+      "time_casa": "Cabo Verde",
+      "time_fora": "Arábia Saudita"
+    },
+    {
+      "id": "2026-06-27-NZL-BEL",
+      "data": "2026-06-27",
+      "hora": "00:00",
+      "fase": "Primeira fase",
+      "time_casa": "Nova Zelândia",
+      "time_fora": "Bélgica"
+    },
+    {
+      "id": "2026-06-27-EGY-IRN",
+      "data": "2026-06-27",
+      "hora": "00:00",
+      "fase": "Primeira fase",
+      "time_casa": "Egito",
+      "time_fora": "Irã"
+    },
+    {
+      "id": "2026-06-27-PAN-ENG",
+      "data": "2026-06-27",
+      "hora": "18:00",
+      "fase": "Primeira fase",
+      "time_casa": "Panamá",
+      "time_fora": "Inglaterra"
+    },
+    {
+      "id": "2026-06-27-CRO-GHA",
+      "data": "2026-06-27",
+      "hora": "18:00",
+      "fase": "Primeira fase",
+      "time_casa": "Croácia",
+      "time_fora": "Gana"
+    },
+    {
+      "id": "2026-06-27-COL-POR",
+      "data": "2026-06-27",
+      "hora": "20:30",
+      "fase": "Primeira fase",
+      "time_casa": "Colômbia",
+      "time_fora": "Portugal"
+    },
+    {
+      "id": "2026-06-27-COD-UZB",
+      "data": "2026-06-27",
+      "hora": "20:30",
+      "fase": "Primeira fase",
+      "time_casa": "Congo",
+      "time_fora": "Uzbequistão"
+    },
+    {
+      "id": "2026-06-27-JOR-ARG",
+      "data": "2026-06-27",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Jordânia",
+      "time_fora": "Argentina"
+    },
+    {
+      "id": "2026-06-27-ALG-AUT",
+      "data": "2026-06-27",
+      "hora": "23:00",
+      "fase": "Primeira fase",
+      "time_casa": "Argélia",
+      "time_fora": "Áustria"
+    }
+  ]
+}
