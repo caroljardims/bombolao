@@ -283,6 +283,22 @@ export function engineToCravada(
   return { competicao: 'Copa do Mundo 2026', matches }
 }
 
+/**
+ * Progresso da cravada: quantos confrontos com os dois times já definidos ainda
+ * estão sem palpite de avançador. `completa` só é verdadeiro quando não falta
+ * nenhum e a final já tem um campeão escolhido.
+ */
+export function cravadaProgress(data: ChaveData): { faltam: number; completa: boolean } {
+  let faltam = 0
+  let finalEscolhida = false
+  for (const m of data.matches) {
+    const prontos = m.timeA.tipo === 'time' && m.timeB.tipo === 'time'
+    if (prontos && !m.selecionado) faltam++
+    if (m.fase === 'final' && m.selecionado) finalEscolhida = true
+  }
+  return { faltam, completa: finalEscolhida && faltam === 0 }
+}
+
 /** Vencedor previsto pelo placar do usuário (empate não decide mata-mata). */
 function placarWinner(
   partida: Partida,

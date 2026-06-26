@@ -11,6 +11,7 @@ import { buildChaveData } from '../lib/resolveChave'
 import { DEFAULT_REGRAS_CHAVE } from '../lib/regras'
 import {
   buildEngine,
+  cravadaProgress,
   engineToCravada,
   engineToPlacarProjection,
   faseFromLabel,
@@ -216,6 +217,7 @@ function ChaveMataMata({
     () => engineToCravada(engine, cravada, { editavel: cravadaOpen && !!participanteId }),
     [engine, cravada, cravadaOpen, participanteId],
   )
+  const { faltam, completa } = useMemo(() => cravadaProgress(cravadaData), [cravadaData])
   const placarData = useMemo(
     () => engineToPlacarProjection(engine, myPalpites),
     [engine, myPalpites],
@@ -226,13 +228,6 @@ function ChaveMataMata({
 
   return (
     <div className="screen chave-screen">
-      <header className="section-head plain">
-        <div>
-          <h2>Chave</h2>
-          <p className="sub">{data.competicao} · monte o mata-mata e some pontos</p>
-        </div>
-      </header>
-
       <div className="chave-toggle">
         <button
           type="button"
@@ -260,13 +255,28 @@ function ChaveMataMata({
                   {deadline ? ` em ${deadline.toLocaleString('pt-BR')}` : ' no 1º jogo dos 16-avos'}.
                 </p>
                 {participanteId && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost-gold"
-                    onClick={() => setConfirmLock(true)}
-                  >
-                    Travar minha cravada
-                  </button>
+                  <div className="chave-lock-actions">
+                    <button
+                      type="button"
+                      className="btn btn-ghost-gold"
+                      onClick={() => completa && setConfirmLock(true)}
+                      disabled={!completa}
+                      title={
+                        completa
+                          ? undefined
+                          : 'Preencha todos os confrontos até o campeão para travar.'
+                      }
+                    >
+                      Travar minha cravada
+                    </button>
+                    {!completa && (
+                      <span className="chave-lock-hint">
+                        {faltam > 0
+                          ? `Faltam ${faltam} confronto${faltam > 1 ? 's' : ''} para completar sua cravada.`
+                          : 'Escolha o campeão para completar sua cravada.'}
+                      </span>
+                    )}
+                  </div>
                 )}
               </>
             ) : (

@@ -1,5 +1,5 @@
 import type { KeyboardEvent, ReactNode } from 'react'
-import { TeamBadge } from './ui'
+import { Icon, TeamBadge } from './ui'
 import { teamAbbr } from '../lib/teamFlags'
 import {
   BODY_TOP,
@@ -21,7 +21,42 @@ import {
 import type { ChaveData, KnockoutFase, KnockoutMatch, SlotRef } from '../lib/chave'
 
 const FINAL_CENTER_Y = matchCenterY(3, 0)
-const TERCEIRO_CENTER_Y = FINAL_CENTER_Y + MATCH_H + 72
+// Espaço extra para a tag "Final" acima do card antes do box do campeão.
+const CHAMPION_GAP = 42
+const CHAMPION_H = 58
+const TERCEIRO_CENTER_Y = FINAL_CENTER_Y + MATCH_H + CHAMPION_GAP + CHAMPION_H + 28
+
+/** Time campeão = lado selecionado da final (palpite ou projeção). */
+function championSlot(finalMatch: KnockoutMatch | undefined): SlotRef | null {
+  if (!finalMatch || !finalMatch.selecionado) return null
+  const slot = finalMatch.selecionado === 'A' ? finalMatch.timeA : finalMatch.timeB
+  return slot.tipo === 'time' ? slot : null
+}
+
+function ChampionBox({ slot, compact }: { slot: SlotRef | null; compact?: boolean }) {
+  const champ = slot && slot.tipo === 'time' ? slot : null
+  const projetado = champ?.projetado === true
+  const cls = ['chave-champion', champ ? 'is-set' : '', projetado ? 'is-proj' : '']
+    .filter(Boolean)
+    .join(' ')
+  return (
+    <div className={cls}>
+      <span className="chave-champion-tag">
+        <Icon.trophy s={13} /> Campeão
+      </span>
+      {champ ? (
+        <span className="chave-champion-team">
+          <TeamBadge name={champ.nome} size={compact ? 20 : 24} />
+          <span className="chave-champion-name" title={champ.nome}>
+            {compact ? teamAbbr(champ.nome) : champ.nome}
+          </span>
+        </span>
+      ) : (
+        <span className="chave-champion-empty">a definir</span>
+      )}
+    </div>
+  )
+}
 
 interface ChaveBracketProps {
   data: ChaveData
@@ -294,6 +329,19 @@ export function ChaveBracket({ data, onPick, onSelectMatch, selectedMatchId }: C
           )
         })()}
 
+      {finalMatch && (
+        <div
+          className="chave-champion-wrap"
+          style={{
+            left: columnX(4) - 18,
+            top: BODY_TOP + FINAL_CENTER_Y + MATCH_H / 2 + CHAMPION_GAP,
+            width: COL_W + 36,
+          }}
+        >
+          <ChampionBox slot={championSlot(finalMatch)} compact />
+        </div>
+      )}
+
       {terceiroMatch &&
         (() => {
           const sel = selectableProps(terceiroMatch, onSelectMatch, selectedMatchId)
@@ -327,6 +375,7 @@ export function ChaveStacked({
   selectedMatchId,
   detail,
 }: ChaveBracketProps) {
+  const finalMatch = data.matches.find((mm) => mm.fase === 'final')
   return (
     <div className="chave-stacked">
       {STACK_ORDER.map((fase) => {
@@ -351,6 +400,11 @@ export function ChaveStacked({
                 )
               })}
             </div>
+            {fase === 'final' && (
+              <div className="chave-champion-wrap chave-champion-wrap-stack">
+                <ChampionBox slot={championSlot(finalMatch)} />
+              </div>
+            )}
           </section>
         )
       })}
