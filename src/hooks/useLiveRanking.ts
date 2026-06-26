@@ -179,6 +179,7 @@ export function useLiveRanking() {
     proximaPartida,
     jogosDoDia,
     participantes,
+    partidas,
     palpites,
     refresh,
   }

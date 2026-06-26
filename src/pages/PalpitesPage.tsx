@@ -3,8 +3,6 @@ import { useMemo } from 'react'
 import { LoadingState } from '../components/LoadingState'
 import { MatchGameBets } from '../components/MatchGameBets'
 import { PalpitesDaySection } from '../components/PalpitesDaySection'
-import { RankingEvolutionChart } from '../components/RankingEvolutionChart'
-import { PointsEvolutionChart } from '../components/PointsEvolutionChart'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
 import { useNow } from '../hooks/useNow'
@@ -16,7 +14,6 @@ import { getHoje, getKickoffDate, groupPartidasByDay } from '../lib/dates'
 import { apostasAbertas, palpitesAdversariosVisiveis, partidaAoVivo, partidaEncerrada, temPalpite } from '../lib/scoring'
 import { jogosPendentesDiasAnteriores, partidaJaPassou } from '../lib/nextPartida'
 import { getPontosLive, classificarAcertoLive } from '../lib/liveRanking'
-import { buildRankingHistory } from '../lib/rankingHistory'
 import { bolaoPath } from '../lib/paths'
 import { LiveTag } from '../components/LiveTag'
 import type { Palpite, Partida } from '../lib/types'
@@ -52,11 +49,6 @@ export function PalpitesPage() {
   const { user, loading: authLoading } = useAuth()
   const { participante, isMember, bolaoId } = useBolao()
   const { partidas, participantes, palpites, loading } = usePartidas()
-
-  const rankingHistory = useMemo(
-    () => buildRankingHistory(participantes, palpites, partidas),
-    [participantes, palpites, partidas],
-  )
 
   const myPalpitesMap = useMemo(() => {
     const map = new Map<string, Palpite>()
@@ -99,9 +91,6 @@ export function PalpitesPage() {
         </div>
         {pending > 0 && <Pill tone="gold-soft">{pending} sem palpite</Pill>}
       </header>
-
-      <RankingEvolutionChart steps={rankingHistory.steps} lines={rankingHistory.lines} />
-      <PointsEvolutionChart steps={rankingHistory.steps} lines={rankingHistory.pointsLines} />
 
       <div className="palpite-days">
         {dayGroups.map(([data, partidasDoDia]) => (

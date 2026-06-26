@@ -1,6 +1,7 @@
 import { LoadingState } from '../components/LoadingState'
 import { NextGameBets } from '../components/NextGameBets'
 import { RankingCard } from '../components/RankingCard'
+import { RankingRaceCharts } from '../components/RankingRaceCharts'
 import { useLiveRanking } from '../hooks/useLiveRanking'
 
 export function RankingPage() {
@@ -11,6 +12,7 @@ export function RankingPage() {
     proximaPartida,
     jogosDoDia,
     participantes,
+    partidas,
     palpites,
     refresh,
   } = useLiveRanking()
@@ -68,6 +70,8 @@ export function RankingPage() {
           </div>
         </section>
       </div>
+
+      <RankingRaceCharts participantes={participantes} palpites={palpites} partidas={partidas} />
     </div>
   )
 }
