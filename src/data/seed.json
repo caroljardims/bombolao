@@ -830,6 +830,90 @@
         "palpite_casa": 2,
         "palpite_fora": 1,
         "pontos": 0
+      },
+      {
+        "partida_id": "2026-06-16-FRA-SEN",
+        "palpite_casa": 3,
+        "palpite_fora": 1,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-16-IRQ-NOR",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-16-ARG-ALG",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-17-AUT-JOR",
+        "palpite_casa": null,
+        "palpite_fora": null,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-17-POR-COD",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-17-ENG-CRO",
+        "palpite_casa": 0,
+        "palpite_fora": 1,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-17-GHA-PAN",
+        "palpite_casa": 2,
+        "palpite_fora": 1,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-17-UZB-COL",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-18-CZE-RSA",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-18-SUI-BIH",
+        "palpite_casa": 0,
+        "palpite_fora": 1,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-18-CAN-QAT",
+        "palpite_casa": 1,
+        "palpite_fora": 1,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-18-MEX-KOR",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-19-USA-AUS",
+        "palpite_casa": 2,
+        "palpite_fora": 0,
+        "pontos": null
+      },
+      {
+        "partida_id": "2026-06-19-SCO-MAR",
+        "palpite_casa": 1,
+        "palpite_fora": 2,
+        "pontos": null
       }
     ]
   },

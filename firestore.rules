@@ -93,6 +93,15 @@ service cloud.firestore {
         );
         allow delete: if ownsLegacyParticipante(bolaoId, resource.data.participante_id);
       }
+
+      // Palpites de chave (mata-mata): cravada + flexível por fase.
+      // Doc id = uid do participante. Prazos por fase são validados no cliente.
+      match /palpitesChave/{participanteId} {
+        allow read: if isBolaoMember(bolaoId);
+        allow create, update: if isOwner(participanteId)
+          && request.resource.data.participante_id == participanteId;
+        allow delete: if false;
+      }
     }
 
     // --- Convites ---

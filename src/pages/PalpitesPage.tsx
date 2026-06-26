@@ -1,28 +1,73 @@
 import { Link, Navigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import { LoadingState } from '../components/LoadingState'
+import { MatchGameBets } from '../components/MatchGameBets'
 import { PalpitesDaySection } from '../components/PalpitesDaySection'
+import { RankingEvolutionChart } from '../components/RankingEvolutionChart'
+import { PointsEvolutionChart } from '../components/PointsEvolutionChart'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
 import { useNow } from '../hooks/useNow'
-import { usePalpites } from '../hooks/usePalpites'
 import { usePartidas } from '../hooks/usePartidas'
 import { PalpiteInput } from '../components/PalpiteInput'
 import { AcertoBadge } from '../components/AcertoBadge'
 import { Pill, TeamBadge } from '../components/ui'
-import { getHoje, groupPartidasByDay } from '../lib/dates'
+import { getHoje, getKickoffDate, groupPartidasByDay } from '../lib/dates'
 import { apostasAbertas, palpitesAdversariosVisiveis, partidaAoVivo, partidaEncerrada, temPalpite } from '../lib/scoring'
-import { partidaJaPassou } from '../lib/nextPartida'
+import { jogosPendentesDiasAnteriores, partidaJaPassou } from '../lib/nextPartida'
 import { getPontosLive, classificarAcertoLive } from '../lib/liveRanking'
+import { buildRankingHistory } from '../lib/rankingHistory'
 import { bolaoPath } from '../lib/paths'
 import { LiveTag } from '../components/LiveTag'
 import type { Palpite, Partida } from '../lib/types'
 
+/** Agrupa por dia, jogando partidas pendentes de dias anteriores no bloco de hoje. */
+function groupPartidasForDisplay(partidas: Partida[]): [string, Partida[]][] {
+  const hoje = getHoje()
+  const pendentes = jogosPendentesDiasAnteriores(partidas, hoje)
+  const pendentesIds = new Set(pendentes.map((p) => p.id))
+
+  const groups = new Map<string, Partida[]>()
+  for (const p of partidas) {
+    if (pendentesIds.has(p.id)) continue
+    const list = groups.get(p.data) ?? []
+    list.push(p)
+    groups.set(p.data, list)
+  }
+
+  const hojeList = [...pendentes, ...(groups.get(hoje) ?? [])].sort(
+    (a, b) => getKickoffDate(a).getTime() - getKickoffDate(b).getTime(),
+  )
+  if (hojeList.length > 0) groups.set(hoje, hojeList)
+
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([data, list]) => [
+      data,
+      [...list].sort((a, b) => getKickoffDate(a).getTime() - getKickoffDate(b).getTime()),
+    ])
+}
+
 export function PalpitesPage() {
   const { user, loading: authLoading } = useAuth()
   const { participante, isMember, bolaoId } = useBolao()
-  const { partidas, loading: partidasLoading } = usePartidas()
-  const { palpitesMap, loading: palpitesLoading } = usePalpites(participante?.id, partidas)
+  const { partidas, participantes, palpites, loading } = usePartidas()
+
+  const rankingHistory = useMemo(
+    () => buildRankingHistory(participantes, palpites, partidas),
+    [participantes, palpites, partidas],
+  )
+
+  const myPalpitesMap = useMemo(() => {
+    const map = new Map<string, Palpite>()
+    if (!participante) return map
+    for (const p of palpites) {
+      if (p.participante_id === participante.id) map.set(p.partida_id, p)
+    }
+    return map
+  }, [palpites, participante])
+
+  const dayGroups = useMemo(() => groupPartidasForDisplay(partidas), [partidas])
 
   if (authLoading) return <LoadingState />
   if (!user) return <Navigate to="/conta" replace state={{ returnTo: bolaoPath(bolaoId, 'palpites') }} />
@@ -37,17 +82,58 @@ export function PalpitesPage() {
     )
   }
 
-  if (partidasLoading || palpitesLoading) return <LoadingState message="Carregando palpites…" />
+  if (loading) return <LoadingState message="Carregando palpites…" />
+
+  const hoje = getHoje()
+  const pending = partidas.filter((p) => {
+    const palpite = myPalpitesMap.get(p.id)
+    return apostasAbertas(p) && (!palpite || !temPalpite(palpite))
+  }).length
 
   return (
-    <PalpitesList
-      title="Palpites"
-      subtitle="Mande seu placar antes do apito inicial de cada jogo"
-      participanteId={participante.id}
-      partidas={partidas}
-      palpitesMap={palpitesMap}
-      viewOnly={false}
-    />
+    <div className="screen palpites-screen">
+      <header className="section-head plain">
+        <div>
+          <h2>Palpites</h2>
+          <p className="sub">Mande seu placar antes do apito inicial de cada jogo</p>
+        </div>
+        {pending > 0 && <Pill tone="gold-soft">{pending} sem palpite</Pill>}
+      </header>
+
+      <RankingEvolutionChart steps={rankingHistory.steps} lines={rankingHistory.lines} />
+      <PointsEvolutionChart steps={rankingHistory.steps} lines={rankingHistory.pointsLines} />
+
+      <div className="palpite-days">
+        {dayGroups.map(([data, partidasDoDia]) => (
+          <PalpitesDaySection
+            key={data}
+            data={data}
+            count={partidasDoDia.length}
+            defaultOpen={data >= hoje || partidasDoDia.some((p) => !partidaJaPassou(p))}
+          >
+            {partidasDoDia.map((partida) =>
+              apostasAbertas(partida) ? (
+                <PalpiteCard
+                  key={partida.id}
+                  partida={partida}
+                  participanteId={participante.id}
+                  palpite={myPalpitesMap.get(partida.id)}
+                  viewOnly={false}
+                />
+              ) : (
+                <MatchGameBets
+                  key={partida.id}
+                  partida={partida}
+                  participantes={participantes}
+                  palpites={palpites}
+                  embedded
+                />
+              ),
+            )}
+          </PalpitesDaySection>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -67,7 +153,7 @@ interface PalpiteCardProps {
   viewOnly: boolean
 }
 
-function PalpiteCard({ partida, participanteId, palpite, viewOnly }: PalpiteCardProps) {
+export function PalpiteCard({ partida, participanteId, palpite, viewOnly }: PalpiteCardProps) {
   const { participante } = useBolao()
   const now = useNow()
   const encerrada = partidaEncerrada(partida)

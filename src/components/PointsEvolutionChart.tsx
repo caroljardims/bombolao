@@ -1,81 +1,36 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { ChartRaceHeader } from './ChartRaceHeader'
-import type { RankingHistoryLine, RankingHistoryStep } from '../lib/rankingHistory'
-import { chartWidth, lerp, useChartRacePlayhead } from '../lib/chartRace'
+import {
+  axisTicks,
+  chartWidth,
+  EVOLUTION_CHART,
+  initials,
+  lineHeadSeries,
+  niceAxisMax,
+  partialPolylineSeries,
+  useChartRacePlayhead,
+} from '../lib/chartRace'
+import type { PointsHistoryLine, RankingHistoryStep } from '../lib/rankingHistory'
 import { teamFlagUrl } from '../lib/teamFlags'
 
-interface RankingEvolutionChartProps {
+interface PointsEvolutionChartProps {
   steps: RankingHistoryStep[]
-  lines: RankingHistoryLine[]
+  lines: PointsHistoryLine[]
 }
 
-const H = 340
-const PAD = { top: 24, right: 52, bottom: 52, left: 40 }
-const FLAG_W = 16
-const FLAG_H = 11
-const FLAG_GAP = 3
-const AVATAR_R = 14
+const { H, PAD, FLAG_W, FLAG_H, FLAG_GAP, AVATAR_R } = EVOLUTION_CHART
 
-function initials(nome: string): string {
-  return nome
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-}
-
-function lineHead(
-  line: RankingHistoryLine,
-  playhead: number,
-  xAt: (p: number) => number,
-  yAt: (pos: number) => number,
-): { x: number; y: number; rank: number } {
-  const last = line.positions.length - 1
-  const p = Math.min(Math.max(playhead, 0), last)
-  const i = Math.floor(p)
-  const frac = p - i
-  const posA = line.positions[i]
-  const posB = line.positions[Math.min(i + 1, last)]
-  return {
-    x: xAt(p),
-    y: lerp(yAt(posA), yAt(posB), frac),
-    rank: lerp(posA, posB, frac),
-  }
-}
-
-function partialPolyline(
-  line: RankingHistoryLine,
-  playhead: number,
-  xIndex: (i: number) => number,
-  xContinuous: (p: number) => number,
-  yAt: (pos: number) => number,
-): string {
-  const last = line.positions.length - 1
-  const p = Math.min(Math.max(playhead, 0), last)
-  const maxI = Math.floor(p)
-  const pts: string[] = []
-
-  for (let i = 0; i <= maxI; i++) {
-    pts.push(`${xIndex(i)},${yAt(line.positions[i])}`)
-  }
-
-  const head = lineHead(line, playhead, xContinuous, yAt)
-  pts.push(`${head.x},${head.y}`)
-  return pts.join(' ')
-}
-
-function RankingAvatar({
+function SeriesAvatar({
   line,
   cx,
   cy,
 }: {
-  line: RankingHistoryLine
+  line: PointsHistoryLine
   cx: number
   cy: number
 }) {
   const r = AVATAR_R
-  const clipId = `clip-${line.participanteId}`
+  const clipId = `pts-clip-${line.participanteId}`
 
   return (
     <g className="ranking-chart-line">
@@ -109,15 +64,21 @@ function RankingAvatar({
   )
 }
 
-export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartProps) {
+export function PointsEvolutionChart({ steps, lines }: PointsEvolutionChartProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const stepsKey = useMemo(() => steps.map((s) => s.partida.id).join(','), [steps])
   const { playhead, animDone, replay, canReplay } = useChartRacePlayhead(stepsKey, steps.length)
 
-  const maxPos = lines.length || 1
   const chartW = chartWidth(steps.length)
   const W = PAD.left + chartW + PAD.right
   const chartH = H - PAD.top - PAD.bottom
+
+  const maxPts = useMemo(() => {
+    const peak = lines.reduce((m, line) => Math.max(m, ...line.points), 0)
+    return niceAxisMax(peak)
+  }, [lines])
+
+  const yTicks = useMemo(() => axisTicks(maxPts), [maxPts])
 
   const xScale = useMemo(() => {
     const n = steps.length
@@ -136,11 +97,15 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
   }, [steps.length, chartW])
 
   const yScale = useMemo(() => {
-    return (pos: number) => {
-      if (maxPos <= 1) return PAD.top + chartH / 2
-      return PAD.top + ((pos - 1) / (maxPos - 1)) * chartH
+    return (pts: number) => {
+      if (maxPts <= 0) return PAD.top + chartH / 2
+      return PAD.top + chartH - (pts / maxPts) * chartH
     }
-  }, [maxPos, chartH])
+  }, [maxPts, chartH])
+
+  const maxPlayhead = Math.max(0, steps.length - 1)
+  const displayPlayhead = animDone ? maxPlayhead : playhead
+  const currentStep = Math.min(Math.round(displayPlayhead), steps.length - 1)
 
   useEffect(() => {
     const el = scrollRef.current
@@ -151,39 +116,29 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
       return
     }
 
-    const x = xAtPlayhead(playhead)
+    const x = xAtPlayhead(displayPlayhead)
     const target = x - el.clientWidth * 0.38
     el.scrollLeft = Math.max(0, Math.min(target, el.scrollWidth - el.clientWidth))
-  }, [playhead, animDone, xAtPlayhead])
+  }, [displayPlayhead, animDone, xAtPlayhead])
 
   if (steps.length === 0) {
-    return (
-      <div className="card ranking-chart empty">
-        <p className="sub">O gráfico aparece quando houver jogos com placar.</p>
-      </div>
-    )
+    return null
   }
-
-  const yTicks = Array.from({ length: maxPos }, (_, i) => i + 1)
-  const maxPlayhead = Math.max(0, steps.length - 1)
-  const displayPlayhead = animDone ? maxPlayhead : playhead
 
   const avatars = lines
     .map((line) => ({
       line,
-      head: lineHead(line, displayPlayhead, xAtPlayhead, yScale),
+      head: lineHeadSeries(line.points, displayPlayhead, xAtPlayhead, yScale),
     }))
-    .sort((a, b) => b.head.y - a.head.y)
-
-  const currentStep = Math.min(Math.round(displayPlayhead), steps.length - 1)
+    .sort((a, b) => a.head.y - b.head.y)
 
   return (
     <div className="card ranking-chart">
       <ChartRaceHeader
-        title="Evolução do ranking"
+        title="Evolução de pontos"
         subtitle={
           animDone
-            ? 'Posição após cada jogo com placar'
+            ? 'Total acumulado após cada jogo com placar'
             : `Jogo ${currentStep + 1} de ${steps.length} · ${steps[currentStep]?.label ?? ''}`
         }
         canReplay={canReplay}
@@ -196,19 +151,19 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
           height={H}
           className="ranking-chart-svg"
           role="img"
-          aria-label="Gráfico de evolução das posições no ranking"
+          aria-label="Gráfico de evolução de pontos acumulados"
         >
-          {yTicks.map((pos) => (
-            <g key={pos}>
+          {yTicks.map((pts) => (
+            <g key={pts}>
               <line
                 x1={PAD.left}
-                y1={yScale(pos)}
+                y1={yScale(pts)}
                 x2={W - PAD.right}
-                y2={yScale(pos)}
+                y2={yScale(pts)}
                 className="ranking-chart-grid"
               />
-              <text x={PAD.left - 8} y={yScale(pos) + 4} className="ranking-chart-ytick" textAnchor="end">
-                {pos}º
+              <text x={PAD.left - 8} y={yScale(pts) + 4} className="ranking-chart-ytick" textAnchor="end">
+                {pts}
               </text>
             </g>
           ))}
@@ -246,8 +201,8 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
 
           {lines.map((line) => (
             <polyline
-              key={`line-${line.participanteId}`}
-              points={partialPolyline(line, displayPlayhead, xScale, xAtPlayhead, yScale)}
+              key={`pts-line-${line.participanteId}`}
+              points={partialPolylineSeries(line.points, displayPlayhead, xScale, xAtPlayhead, yScale)}
               fill="none"
               stroke={line.color}
               strokeWidth={2.5}
@@ -267,11 +222,10 @@ export function RankingEvolutionChart({ steps, lines }: RankingEvolutionChartPro
           )}
 
           {avatars.map(({ line, head }) => (
-            <g key={`avatar-${line.participanteId}`}>
-              <RankingAvatar line={line} cx={head.x} cy={head.y} />
+            <g key={`pts-avatar-${line.participanteId}`}>
+              <SeriesAvatar line={line} cx={head.x} cy={head.y} />
               <title>
-                {line.nome}: {Math.round(head.rank)}º
-                {animDone ? ` após ${steps[currentStep]?.label}` : ''}
+                {line.nome}: {Math.round(head.value)} pts
               </title>
             </g>
           ))}

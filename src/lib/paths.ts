@@ -29,6 +29,14 @@ export function palpiteDoc(bolaoId: string, palpiteId: string) {
   return doc(db, 'boloes', bolaoId, 'palpites', palpiteId)
 }
 
+export function palpitesChaveRef(bolaoId: string) {
+  return collection(db, 'boloes', bolaoId, 'palpitesChave')
+}
+
+export function palpiteChaveDoc(bolaoId: string, participanteId: string) {
+  return doc(db, 'boloes', bolaoId, 'palpitesChave', participanteId)
+}
+
 export function conviteDoc(code: string) {
   return doc(db, 'convites', code.toUpperCase())
 }

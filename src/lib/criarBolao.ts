@@ -52,7 +52,11 @@ export async function criarBolao(
     criadoEm: now,
     acesso: input.acesso,
     regras: input.regras,
+    modalidade: input.modalidade ?? 'pontos',
     ...(input.competicaoTemplateId ? { competicaoTemplateId: input.competicaoTemplateId } : {}),
+    ...(input.modalidade === 'mata-mata' && input.regrasChave
+      ? { regrasChave: input.regrasChave }
+      : {}),
   })
 
   setupBatch.set(participanteDoc(bolaoId, uid), {

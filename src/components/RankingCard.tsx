@@ -16,10 +16,16 @@ function isCurrentUser(participante: ParticipanteRanking, uid?: string, myId?: s
   return false
 }
 
+function podiumClass(posicao: number): string {
+  if (posicao === 1) return ' leader'
+  if (posicao === 2) return ' podium-2'
+  if (posicao === 3) return ' podium-3'
+  return ''
+}
+
 export function RankingCard({ participante }: RankingCardProps) {
   const { user } = useAuth()
   const { bolaoId, participante: me } = useBolao()
-  const leader = participante.posicao === 1
   const isYou = isCurrentUser(participante, user?.uid, me?.id, user?.email)
   const photo = isYou
     ? (participante.photoURL ?? user?.photoURL)
@@ -28,15 +34,26 @@ export function RankingCard({ participante }: RankingCardProps) {
   return (
     <Link
       to={bolaoPath(bolaoId, `palpites/${participante.id}`)}
-      className={`rank-row${leader ? ' leader' : ''}${isYou ? ' is-you' : ''}`}
+      className={`rank-row${podiumClass(participante.posicao)}${isYou ? ' is-you' : ''}`}
     >
       <span className="rank-pos">
-        {leader ? <Icon.trophy s={18} w={2} /> : participante.posicao}
+        {participante.posicao === 1 ? (
+          <Icon.trophy s={18} w={2} />
+        ) : (
+          participante.posicao
+        )}
       </span>
       <Avatar name={participante.nome} id={participante.id} size={40} photo={photo} />
       <span className="rank-name">
         {participante.nome}
         {isYou && <em className="you-tag">você</em>}
+        {participante.pontos_cravada !== undefined && (
+          <small className="rank-breakdown">
+            {participante.pontos_placar ? `placar ${participante.pontos_placar}` : null}
+            {participante.pontos_placar ? ' · ' : ''}
+            cravada {participante.pontos_cravada} · fase {participante.pontos_flex ?? 0}
+          </small>
+        )}
       </span>
       <span className="rank-pts">
         {participante.total_pontos}

@@ -11,7 +11,7 @@ import { CriarBolaoPage } from './pages/CriarBolaoPage'
 import { LobbyPage } from './pages/LobbyPage'
 import { PalpitesPage } from './pages/PalpitesPage'
 import { ParticipantePalpitesPage } from './pages/ParticipantePalpitesPage'
-import { PartidasPage } from './pages/PartidasPage'
+import { ChavePage } from './pages/ChavePage'
 import { RankingPage } from './pages/RankingPage'
 
 export default function App() {
@@ -39,9 +39,10 @@ export default function App() {
 
           <Route path="b/:bolaoId" element={<BolaoProvider><BolaoLayout /></BolaoProvider>}>
             <Route index element={<RankingPage />} />
-            <Route path="partidas" element={<PartidasPage />} />
+            <Route path="partidas" element={<Navigate to="palpites" replace />} />
             <Route path="palpites" element={<PalpitesPage />} />
             <Route path="palpites/:participanteId" element={<ParticipantePalpitesPage />} />
+            <Route path="chave" element={<ChavePage />} />
             <Route path="admin" element={<AdminBolaoPage />} />
           </Route>
 

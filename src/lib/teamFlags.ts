@@ -101,10 +101,67 @@ const TEAM_EMOJI: Record<string, string> = {
   'Colômbia': '🇨🇴',
 }
 
+/** Siglas FIFA (3 letras) para versões compactas (bracket). */
+const TEAM_ABBR: Record<string, string> = {
+  'México': 'MEX',
+  'África do Sul': 'RSA',
+  'Coreia do Sul': 'KOR',
+  'República Tcheca': 'CZE',
+  'Canadá': 'CAN',
+  'Bósnia-Herzegovina': 'BIH',
+  'Estados Unidos': 'USA',
+  'Paraguai': 'PAR',
+  'Catar': 'QAT',
+  'Suíça': 'SUI',
+  'Brasil': 'BRA',
+  'Marrocos': 'MAR',
+  'Haiti': 'HAI',
+  'Escócia': 'SCO',
+  'Austrália': 'AUS',
+  'Turquia': 'TUR',
+  'Alemanha': 'GER',
+  'Curaçao': 'CUW',
+  'Holanda': 'NED',
+  'Japão': 'JPN',
+  'Costa do Marfim': 'CIV',
+  'Equador': 'ECU',
+  'Suécia': 'SWE',
+  'Tunísia': 'TUN',
+  'Espanha': 'ESP',
+  'Cabo Verde': 'CPV',
+  'Bélgica': 'BEL',
+  'Egito': 'EGY',
+  'Arábia Saudita': 'KSA',
+  'Uruguai': 'URU',
+  'Irã': 'IRN',
+  'Nova Zelândia': 'NZL',
+  'França': 'FRA',
+  'Senegal': 'SEN',
+  'Iraque': 'IRQ',
+  'Noruega': 'NOR',
+  'Argentina': 'ARG',
+  'Argélia': 'ALG',
+  'Áustria': 'AUT',
+  'Jordânia': 'JOR',
+  'Portugal': 'POR',
+  'Congo': 'COD',
+  'Inglaterra': 'ENG',
+  'Croácia': 'CRO',
+  'Gana': 'GHA',
+  'Panamá': 'PAN',
+  'Uzbequistão': 'UZB',
+  'Colômbia': 'COL',
+}
+
 const DEFAULT_CODE = 'xx'
 
 export function teamFlagCode(name: string): string {
   return TEAM_CODES[name] ?? DEFAULT_CODE
+}
+
+/** Sigla de 3 letras; cai para as 3 primeiras letras maiúsculas se desconhecida. */
+export function teamAbbr(name: string): string {
+  return TEAM_ABBR[name] ?? name.slice(0, 3).toUpperCase()
 }
 
 /** Bandeira hospedada no app (public/flags) — funciona em Mac, Windows e no SVG do gráfico. */

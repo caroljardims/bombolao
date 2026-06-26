@@ -15,9 +15,14 @@ export interface Partida {
   fase: string
   time_casa: string
   time_fora: string
+  /** Placar do tempo normal (90min). No mata-mata, prorrogação/pênaltis não entram aqui. */
   gols_casa: number | null
   gols_fora: number | null
   status_api?: string | null
+  /** Quem avançou no confronto (resolve prorrogação/pênaltis). Só faz sentido no mata-mata. */
+  vencedor?: 'casa' | 'fora' | null
+  penaltis_casa?: number | null
+  penaltis_fora?: number | null
 }
 
 export interface RegrasPontuacao {
@@ -26,6 +31,24 @@ export interface RegrasPontuacao {
   vencedor: number
   um_gol: number
   nada: number
+  prazo_minutos: number
+}
+
+export type Modalidade = 'pontos' | 'mata-mata'
+
+/** Fases do mata-mata (mesmas chaves de KnockoutFase em chave.ts). */
+export type FaseChave = 'r32' | 'r16' | 'qf' | 'sf' | 'final' | 'terceiro'
+export type PesosChave = Record<FaseChave, number>
+
+export interface RegrasChave {
+  /** Pontos por acerto de avançador em cada fase na chave cravada (travada upfront). */
+  pesos_cravada: PesosChave
+  /** Pontos por acerto de avançador em cada fase na chave flexível (trava por fase). */
+  pesos_flex: PesosChave
+  /** Se o stream C (palpite de placar por jogo) está ativo no mata-mata. */
+  placarAtivo: boolean
+  /** Stream C conta apenas o tempo normal (90min). */
+  placarConta: 'tempo_normal'
   prazo_minutos: number
 }
 
@@ -39,6 +62,9 @@ export interface Bolao {
   regras: RegrasPontuacao
   ultimaSyncApi?: string
   competicaoTemplateId?: CompeticaoId
+  /** Default 'pontos' (retrocompatível). */
+  modalidade?: Modalidade
+  regrasChave?: RegrasChave
 }
 
 export interface Participante {
@@ -100,6 +126,8 @@ export interface CriarBolaoInput {
   regras: RegrasPontuacao
   partidas: PartidaDraft[]
   competicaoTemplateId?: CompeticaoId
+  modalidade?: Modalidade
+  regrasChave?: RegrasChave
 }
 
 export interface ParticipanteStats {
@@ -111,6 +139,12 @@ export interface ParticipanteStats {
 
 export interface ParticipanteRanking extends Participante {
   pontos_ao_vivo: number
+  /** Mata-mata: pontos por placar (stream C). */
+  pontos_placar?: number
+  /** Mata-mata: pontos da chave cravada (stream A). */
+  pontos_cravada?: number
+  /** Mata-mata: pontos da chave flexível (stream B). */
+  pontos_flex?: number
 }
 
 export interface SeedData {

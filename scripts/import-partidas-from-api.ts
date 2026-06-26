@@ -4,7 +4,8 @@
  *
  * Uso:
  *   npm run import-partidas -- --bolao-id colorados-do-inter
- *   npm run import-partidas -- --bolao-id colorados-do-inter --dry-run
+ *   npm run import-partidas -- --all
+ *   npm run import-partidas -- --all --dry-run
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -105,17 +106,20 @@ function findMatchingPartida(partidas: Partida[], apiMatch: ApiMatch): Partida |
   )
 }
 
-function getBolaoId(): string {
+async function getBolaoIds(db: ReturnType<typeof initAdmin>): Promise<string[]> {
+  if (process.argv.includes('--all')) {
+    const snap = await db.collection('boloes').get()
+    return snap.docs.map((d) => d.id)
+  }
   const idx = process.argv.indexOf('--bolao-id')
-  if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1]
-  const fromEnv = process.env.BOLAO_IDS?.split(',')[0]?.trim()
-  if (fromEnv) return fromEnv
-  return 'colorados-do-inter'
+  if (idx !== -1 && process.argv[idx + 1]) return [process.argv[idx + 1]]
+  const fromEnv = process.env.BOLAO_IDS?.split(',').map((s) => s.trim()).filter(Boolean)
+  if (fromEnv?.length) return fromEnv
+  return ['colorados-do-inter']
 }
 
 async function importPartidas() {
   loadDotEnv()
-  const bolaoId = getBolaoId()
   const dryRun = process.argv.includes('--dry-run')
   const db = initAdmin()
 
@@ -123,6 +127,18 @@ async function importPartidas() {
   const apiMatches = await fetchCompetitionMatches()
   console.log(`· ${apiMatches.length} jogos na API`)
 
+  const bolaoIds = await getBolaoIds(db)
+  for (const bolaoId of bolaoIds) {
+    await importInto(db, bolaoId, apiMatches, dryRun)
+  }
+}
+
+async function importInto(
+  db: ReturnType<typeof initAdmin>,
+  bolaoId: string,
+  apiMatches: ApiMatch[],
+  dryRun: boolean,
+) {
   const bolaoRef = db.collection('boloes').doc(bolaoId)
   const partidasSnap = await bolaoRef.collection('partidas').get()
   const existing = partidasSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Partida)
@@ -152,7 +168,8 @@ async function importPartidas() {
       continue
     }
 
-    const { id, apiMatchId: _apiId, ...data } = partidaImport
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, apiMatchId, ...data } = partidaImport
     toCreate.push(`${data.time_casa} × ${data.time_fora} (${data.data} ${data.hora}) [${id}]`)
 
     if (!dryRun) {

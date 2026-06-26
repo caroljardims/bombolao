@@ -21,9 +21,11 @@ export interface ApiMatch {
   homeTeam: ApiTeam
   awayTeam: ApiTeam
   score: {
+    winner?: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null
     fullTime?: { home: number | null; away: number | null }
     regularTime?: { home: number | null; away: number | null }
     halfTime?: { home: number | null; away: number | null }
+    penalties?: { home: number | null; away: number | null }
   }
 }
 

@@ -58,6 +58,13 @@ export const Icon = {
       <path d="M4 12.5 9 17.5 20 6.5" />
     </svg>
   ),
+  bracket: ({ s = 22, w = 1.9 }: IconProps) => (
+    <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 5h4v5h3M3 14h4v5h3" />
+      <path d="M21 5h-4v5h-3M21 14h-4v5h-3" />
+      <path d="M10 12h4" />
+    </svg>
+  ),
 }
 
 export type IconName = keyof typeof Icon

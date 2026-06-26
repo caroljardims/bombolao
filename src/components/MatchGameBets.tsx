@@ -1,14 +1,21 @@
 import { useMemo } from 'react'
-import { formatDataCurta } from '../lib/dates'
+import { formatDataCurta, isHoje } from '../lib/dates'
 import { getPontosLive } from '../lib/liveRanking'
 import { buildApostasDoJogo } from '../lib/nextPartida'
-import { palpitesAdversariosVisiveis, partidaAoVivo, partidaEncerrada, temPalpite } from '../lib/scoring'
+import {
+  apostasAbertas,
+  palpitesAdversariosVisiveis,
+  partidaAoVivo,
+  partidaEncerrada,
+  temPalpite,
+  temPlacar,
+} from '../lib/scoring'
 import type { Palpite, Partida, Participante } from '../lib/types'
 import { useAuth } from '../hooks/useAuth'
 import { useBolao } from '../contexts/BolaoContext'
 import { useNow } from '../hooks/useNow'
 import { LiveTag } from './LiveTag'
-import { Avatar, Icon, TeamBadge } from './ui'
+import { Avatar, Icon, Pill, TeamBadge } from './ui'
 
 interface MatchGameBetsProps {
   partida: Partida
@@ -89,32 +96,36 @@ export function MatchGameBets({
         </div>
       )}
 
-      <div className="next-head">
-        <div className="next-match">
-          <TeamBadge name={partida.time_casa} size={34} />
-          <div className="next-vs">
-            <span>{partida.time_casa}</span>
-            <i>×</i>
-            <span>{partida.time_fora}</span>
+      {embedded ? (
+        <EmbeddedMatchHeader partida={partida} comAposta={comAposta} totalApostas={apostas.length} />
+      ) : (
+        <div className="next-head">
+          <div className="next-match">
+            <TeamBadge name={partida.time_casa} size={34} />
+            <div className="next-vs">
+              <span>{partida.time_casa}</span>
+              <i>×</i>
+              <span>{partida.time_fora}</span>
+            </div>
+            <TeamBadge name={partida.time_fora} size={34} />
           </div>
-          <TeamBadge name={partida.time_fora} size={34} />
+          <div className="next-meta">
+            <span>
+              {formatDataCurta(partida.data)} · {partida.hora}
+            </span>
+            {aoVivo && (
+              <>
+                <span className="dotsep">·</span>
+                <LiveTag partida={partida} />
+              </>
+            )}
+            <span className="dotsep">·</span>
+            <span className="ok-text">
+              {comAposta}/{apostas.length} apostaram
+            </span>
+          </div>
         </div>
-        <div className="next-meta">
-          <span>
-            {formatDataCurta(partida.data)} · {partida.hora}
-          </span>
-          {aoVivo && (
-            <>
-              <span className="dotsep">·</span>
-              <LiveTag partida={partida} />
-            </>
-          )}
-          <span className="dotsep">·</span>
-          <span className="ok-text">
-            {comAposta}/{apostas.length} apostaram
-          </span>
-        </div>
-      </div>
+      )}
 
       <div className="next-list">
         {apostas.map(({ participante: p, palpite }) => {
@@ -134,6 +145,78 @@ export function MatchGameBets({
         })}
       </div>
     </aside>
+  )
+}
+
+function EmbeddedMatchHeader({
+  partida,
+  comAposta,
+  totalApostas,
+}: {
+  partida: Partida
+  comAposta: number
+  totalApostas: number
+}) {
+  const encerrada = partidaEncerrada(partida)
+  const aoVivo = partidaAoVivo(partida)
+  const comPlacar = temPlacar(partida)
+  const abertas = apostasAbertas(partida)
+  const hoje = isHoje(partida.data)
+  const homeWin = comPlacar && partida.gols_casa! > partida.gols_fora!
+  const awayWin = comPlacar && partida.gols_fora! > partida.gols_casa!
+
+  return (
+    <div className="jogo-card-head">
+      <div className="match-top">
+        <span className="phase">{partida.fase}</span>
+        <div className="match-tags">
+          {aoVivo && <LiveTag partida={partida} />}
+          {hoje ? (
+            <Pill tone="gold-soft">Hoje</Pill>
+          ) : (
+            <Pill tone="muted">
+              {formatDataCurta(partida.data)} · {partida.hora}
+            </Pill>
+          )}
+        </div>
+      </div>
+
+      <div className="match-teams">
+        <div className={`mt-row${comPlacar && !homeWin ? ' dim' : ''}`}>
+          <TeamBadge name={partida.time_casa} size={34} />
+          <span className="mt-name">{partida.time_casa}</span>
+          {comPlacar ? (
+            <span className={`mt-score${aoVivo ? ' live' : ''}`}>{partida.gols_casa}</span>
+          ) : (
+            <span className="mt-kick">{partida.hora}</span>
+          )}
+        </div>
+        <div className={`mt-row${comPlacar && !awayWin ? ' dim' : ''}`}>
+          <TeamBadge name={partida.time_fora} size={34} />
+          <span className="mt-name">{partida.time_fora}</span>
+          {comPlacar ? (
+            <span className={`mt-score${aoVivo ? ' live' : ''}`}>{partida.gols_fora}</span>
+          ) : (
+            <span className="mt-kick muted">&nbsp;</span>
+          )}
+        </div>
+      </div>
+
+      <div className="jogo-card-meta">
+        <div className="match-foot">
+          {encerrada && (
+            <span className="settled">
+              <Icon.check s={15} /> Resultado computado
+            </span>
+          )}
+          {!encerrada && !abertas && <Pill tone="danger-soft">Apostas encerradas</Pill>}
+          {!encerrada && abertas && <Pill tone="ok-soft">Apostas abertas</Pill>}
+        </div>
+        <span className="ok-text">
+          {comAposta}/{totalApostas} apostaram
+        </span>
+      </div>
+    </div>
   )
 }
 

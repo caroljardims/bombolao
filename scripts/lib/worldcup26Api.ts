@@ -9,9 +9,11 @@ export interface ApiMatch {
   homeTeam: { name: string; shortName?: string; tla?: string }
   awayTeam: { name: string; shortName?: string; tla?: string }
   score: {
+    winner?: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null
     fullTime?: { home: number | null; away: number | null }
     regularTime?: { home: number | null; away: number | null }
     halfTime?: { home: number | null; away: number | null }
+    penalties?: { home: number | null; away: number | null }
   }
   lastUpdated?: string
 }

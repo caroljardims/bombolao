@@ -1,12 +1,22 @@
 import { getKickoffDate } from './dates'
+import { chartColorForParticipant, assignChartColors } from './chartColors'
 import { contarEstatisticasLive } from './liveRanking'
 import { calcularPosicoes, partidaAoVivo, partidaEncerrada, temPlacar } from './scoring'
 import type { Palpite, Partida, Participante } from './types'
+
+export interface PointsHistoryLine {
+  participanteId: string
+  nome: string
+  photoURL?: string | null
+  points: number[]
+  color: string
+}
 
 export interface RankingHistoryStep {
   partida: Partida
   label: string
   posicoes: Map<string, number>
+  pontos: Map<string, number>
 }
 
 export interface RankingHistoryLine {
@@ -15,23 +25,6 @@ export interface RankingHistoryLine {
   photoURL?: string | null
   positions: number[]
   color: string
-}
-
-const LINE_COLORS = [
-  '#f6c945',
-  '#54c98a',
-  '#5aa7f0',
-  '#e9846b',
-  '#b388f0',
-  '#56cdd6',
-  '#f0a35a',
-  '#7bd06a',
-] as const
-
-function hashIdx(s: string, n: number): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
-  return h % n
 }
 
 function partidaContaParaHistorico(partida: Partida): boolean {
@@ -46,9 +39,9 @@ export function buildRankingHistory(
   participantes: Participante[],
   palpites: Palpite[],
   partidas: Partida[],
-): { steps: RankingHistoryStep[]; lines: RankingHistoryLine[] } {
+): { steps: RankingHistoryStep[]; lines: RankingHistoryLine[]; pointsLines: PointsHistoryLine[] } {
   if (participantes.length === 0) {
-    return { steps: [], lines: [] }
+    return { steps: [], lines: [], pointsLines: [] }
   }
 
   const sorted = [...partidas].sort(
@@ -78,22 +71,33 @@ export function buildRankingHistory(
     })
 
     const posicoes = calcularPosicoes(withStats)
+    const pontos = new Map(withStats.map((s) => [s.id, s.total_pontos]))
     steps.push({
       partida: stepsPartidas[i],
       label: labelPartida(stepsPartidas[i]),
       posicoes,
+      pontos,
     })
   }
 
   const fallbackPos = participantes.length
+  const colorById = assignChartColors(participantes.map((p) => p.id))
 
   const lines: RankingHistoryLine[] = participantes.map((p) => ({
     participanteId: p.id,
     nome: p.nome,
     photoURL: p.photoURL,
     positions: steps.map((s) => s.posicoes.get(p.id) ?? fallbackPos),
-    color: LINE_COLORS[hashIdx(p.id, LINE_COLORS.length)],
+    color: colorById.get(p.id) ?? chartColorForParticipant(p.id),
   }))
 
-  return { steps, lines }
+  const pointsLines: PointsHistoryLine[] = participantes.map((p) => ({
+    participanteId: p.id,
+    nome: p.nome,
+    photoURL: p.photoURL,
+    points: steps.map((s) => s.pontos.get(p.id) ?? 0),
+    color: colorById.get(p.id) ?? chartColorForParticipant(p.id),
+  }))
+
+  return { steps, lines, pointsLines }
 }

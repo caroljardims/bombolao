@@ -9,14 +9,16 @@ import { useBolao } from '../contexts/BolaoContext'
 import { buildLiveRanking, countPartidasAoVivo } from '../lib/liveRanking'
 import { partidaAoVivo } from '../lib/scoring'
 import { findProximaPartida, resolveJogosDoDia } from '../lib/nextPartida'
-import { participantesRef, partidasRef, palpitesRef } from '../lib/paths'
+import { participantesRef, partidasRef, palpitesRef, palpitesChaveRef } from '../lib/paths'
 import type { Palpite, Partida, Participante } from '../lib/types'
+import type { PalpiteChaveDoc } from '../lib/chavePalpite'
 
 export function useLiveRanking() {
-  const { bolaoId } = useBolao()
+  const { bolaoId, bolao } = useBolao()
   const [participantes, setParticipantes] = useState<Participante[]>([])
   const [partidas, setPartidas] = useState<Partida[]>([])
   const [palpites, setPalpites] = useState<Palpite[]>([])
+  const [chaveDocs, setChaveDocs] = useState<PalpiteChaveDoc[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,7 +69,7 @@ export function useLiveRanking() {
   useEffect(() => {
     if (!bolaoId) return
 
-    let loaded = { participantes: false, partidas: false, palpites: false }
+    const loaded = { participantes: false, partidas: false, palpites: false }
 
     function checkLoaded() {
       if (loaded.participantes && loaded.partidas && loaded.palpites) {
@@ -124,9 +126,28 @@ export function useLiveRanking() {
     }
   }, [bolaoId])
 
+  const regrasChave = bolao?.regrasChave
+  const isMataMata = bolao?.modalidade === 'mata-mata' && !!regrasChave
+
+  useEffect(() => {
+    if (!bolaoId || !isMataMata) return
+    const unsub = onSnapshot(
+      palpitesChaveRef(bolaoId),
+      (snap) => setChaveDocs(snap.docs.map((d) => ({ ...(d.data() as PalpiteChaveDoc) }))),
+      () => setChaveDocs([]),
+    )
+    return unsub
+  }, [bolaoId, isMataMata])
+
   const ranking = useMemo(
-    () => buildLiveRanking(participantes, palpites, partidas),
-    [participantes, palpites, partidas],
+    () =>
+      buildLiveRanking(
+        participantes,
+        palpites,
+        partidas,
+        isMataMata && regrasChave ? { chaveDocs, regrasChave } : undefined,
+      ),
+    [participantes, palpites, partidas, isMataMata, regrasChave, chaveDocs],
   )
 
   const aoVivo = useMemo(() => countPartidasAoVivo(partidas), [partidas])

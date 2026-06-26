@@ -12,7 +12,13 @@ import {
   partidaEncerrada,
   temPalpite,
 } from './lib/recalc'
-import { extractApiScore, mergeApiMatches } from './lib/mergeApiMatches'
+import {
+  extractPenalties,
+  extractRegularScore,
+  extractVencedor,
+  isFinalApiStatus,
+  mergeApiMatches,
+} from './lib/mergeApiMatches'
 import { teamsMatch } from './lib/teamMatch'
 import { fetchWorldCup26Matches, type ApiMatch } from './lib/worldcup26Api'
 
@@ -40,9 +46,11 @@ interface ApiMatchFromFootballData {
   homeTeam: { name: string; shortName?: string; tla?: string }
   awayTeam: { name: string; shortName?: string; tla?: string }
   score: {
+    winner?: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null
     fullTime?: { home: number | null; away: number | null }
     regularTime?: { home: number | null; away: number | null }
     halfTime?: { home: number | null; away: number | null }
+    penalties?: { home: number | null; away: number | null }
   }
 }
 
@@ -112,10 +120,6 @@ function initAdmin() {
 
 function parsePartidaDate(utcDate: string): string {
   return utcDate.slice(0, 10)
-}
-
-function extractScore(match: ApiMatch): { home: number; away: number } | null {
-  return extractApiScore(match)
 }
 
 async function fetchFootballDataMatches(): Promise<ApiMatch[]> {
@@ -204,6 +208,34 @@ type PartidaPatch = {
   gols_casa?: number
   gols_fora?: number
   status_api: string
+  vencedor?: 'casa' | 'fora' | null
+  penaltis_casa?: number | null
+  penaltis_fora?: number | null
+}
+
+/** Acrescenta vencedor/pênaltis ao patch quando o jogo encerrou (mata-mata). */
+function applyKnockoutResult(patch: PartidaPatch, partida: Partida, apiMatch: ApiMatch): PartidaPatch {
+  if (!isFinalApiStatus(patch.status_api)) return patch
+
+  const vencedor = extractVencedor(apiMatch)
+  const penalties = extractPenalties(apiMatch)
+
+  const next = { ...patch }
+  let changed = false
+
+  if (vencedor !== null && partida.vencedor !== vencedor) {
+    next.vencedor = vencedor
+    changed = true
+  }
+  if (penalties) {
+    if (partida.penaltis_casa !== penalties.home || partida.penaltis_fora !== penalties.away) {
+      next.penaltis_casa = penalties.home
+      next.penaltis_fora = penalties.away
+      changed = true
+    }
+  }
+
+  return changed ? next : patch
 }
 
 function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date()): PartidaPatch | null {
@@ -213,22 +245,25 @@ function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date(
 
   if (!apiUpdatable && !inferredLive) return null
 
-  const score = extractScore(apiMatch)
+  const score = extractRegularScore(apiMatch)
   const status_api = apiUpdatable ? apiMatch.status : 'IN_PLAY'
 
   if (score) {
-    if (
+    const base: PartidaPatch = { gols_casa: score.home, gols_fora: score.away, status_api }
+    const patch = applyKnockoutResult(base, partida, apiMatch)
+    const scoreUnchanged =
       partida.gols_casa === score.home &&
       partida.gols_fora === score.away &&
       partida.status_api === status_api
-    ) {
-      return null
-    }
-    return { gols_casa: score.home, gols_fora: score.away, status_api }
+    const onlyScore = patch === base
+    if (scoreUnchanged && onlyScore) return null
+    return patch
   }
 
-  if (partida.status_api === status_api) return null
-  return { status_api }
+  const base: PartidaPatch = { status_api }
+  const patch = applyKnockoutResult(base, partida, apiMatch)
+  if (partida.status_api === status_api && patch === base) return null
+  return patch
 }
 
 async function recalcAll(db: Firestore, bolaoId: string) {

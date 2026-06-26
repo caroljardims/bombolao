@@ -5,11 +5,22 @@ import { LoadingState } from '../components/LoadingState'
 import { useAuth } from '../hooks/useAuth'
 import { COMPETICOES, getCompeticaoTemplate, isCompeticaoTemplateId } from '../lib/competicoes'
 import { criarBolao } from '../lib/criarBolao'
-import { DEFAULT_REGRAS } from '../lib/regras'
+import { DEFAULT_REGRAS, DEFAULT_REGRAS_CHAVE } from '../lib/regras'
 import { bolaoPath } from '../lib/paths'
-import type { AcessoBolao, CompeticaoId, PartidaDraft } from '../lib/types'
+import { FASE_LABEL } from '../lib/chave'
+import type {
+  AcessoBolao,
+  CompeticaoId,
+  FaseChave,
+  Modalidade,
+  PartidaDraft,
+  PesosChave,
+  RegrasChave,
+} from '../lib/types'
 
 type Step = 1 | 2
+
+const FASE_KEYS: FaseChave[] = ['r32', 'r16', 'qf', 'sf', 'final', 'terceiro']
 
 export function CriarBolaoPage() {
   const { user, loading } = useAuth()
@@ -21,6 +32,16 @@ export function CriarBolaoPage() {
   const [competicaoId, setCompeticaoId] = useState<CompeticaoId | ''>('')
   const [acesso, setAcesso] = useState<AcessoBolao>('convite')
   const [partidas, setPartidas] = useState<PartidaDraft[]>([])
+  const [modalidade, setModalidade] = useState<Modalidade>('pontos')
+  const [regrasChave, setRegrasChave] = useState<RegrasChave>(DEFAULT_REGRAS_CHAVE)
+  const [pesosAvancado, setPesosAvancado] = useState(false)
+
+  function setPeso(grupo: 'pesos_cravada' | 'pesos_flex', fase: FaseChave, valor: number) {
+    setRegrasChave((prev) => ({
+      ...prev,
+      [grupo]: { ...prev[grupo], [fase]: valor } as PesosChave,
+    }))
+  }
 
   const competicaoLabel =
     competicaoId !== '' ? COMPETICOES.find((c) => c.id === competicaoId)?.label ?? '' : ''
@@ -77,6 +98,8 @@ export function CriarBolaoPage() {
           regras: DEFAULT_REGRAS,
           partidas,
           competicaoTemplateId: competicaoId,
+          modalidade,
+          ...(modalidade === 'mata-mata' ? { regrasChave } : {}),
         },
         user!.uid,
         user!.email ?? '',
@@ -140,6 +163,71 @@ export function CriarBolaoPage() {
               <option value="aberto">Qualquer pessoa com o link</option>
             </select>
           </Field>
+          <Field label="Modalidade">
+            <select
+              value={modalidade}
+              onChange={(e) => setModalidade(e.target.value as Modalidade)}
+              className="input"
+            >
+              <option value="pontos">Pontos por palpite (campeonato inteiro)</option>
+              <option value="mata-mata">Mata-mata (palpite de chave, a partir dos 16-avos)</option>
+            </select>
+            {modalidade === 'mata-mata' && (
+              <p className="sub" style={{ marginTop: 8, fontSize: 13 }}>
+                Os participantes montam a chave (cravada e por fase) e ainda podem palpitar o
+                placar de cada jogo. Tudo soma no ranking.
+              </p>
+            )}
+          </Field>
+
+          {modalidade === 'mata-mata' && (
+            <div className="card" style={{ padding: '16px 18px' }}>
+              <label className="check-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="checkbox"
+                  checked={regrasChave.placarAtivo}
+                  onChange={(e) =>
+                    setRegrasChave((prev) => ({ ...prev, placarAtivo: e.target.checked }))
+                  }
+                />
+                <span>Ativar palpite de placar por jogo (conta só o tempo normal)</span>
+              </label>
+
+              <button
+                type="button"
+                className="link-gold"
+                style={{ marginTop: 12, display: 'inline-flex' }}
+                onClick={() => setPesosAvancado((v) => !v)}
+              >
+                {pesosAvancado ? '− Ocultar pesos' : '+ Ajustar pesos (avançado)'}
+              </button>
+
+              {pesosAvancado && (
+                <div style={{ marginTop: 12 }}>
+                  <p className="sub" style={{ fontSize: 13, marginBottom: 8 }}>
+                    Pontos por acerto de avançador em cada fase. Padrão dobra a cada fase; a chave
+                    cravada vale o dobro da flexível.
+                  </p>
+                  <div className="pesos-grid">
+                    <span className="pesos-head" />
+                    <span className="pesos-head">Cravada</span>
+                    <span className="pesos-head">Flexível</span>
+                    {FASE_KEYS.map((fase) => (
+                      <PesoRow
+                        key={fase}
+                        label={FASE_LABEL[fase]}
+                        cravada={regrasChave.pesos_cravada[fase]}
+                        flex={regrasChave.pesos_flex[fase]}
+                        onCravada={(v) => setPeso('pesos_cravada', fase, v)}
+                        onFlex={(v) => setPeso('pesos_flex', fase, v)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <button type="button" onClick={goToReview} className="btn btn-save full">
             Próximo: revisar
           </button>
@@ -157,6 +245,10 @@ export function CriarBolaoPage() {
             </p>
             <p style={{ marginTop: 8 }}>
               <span className="sub">Acesso:</span> {acesso === 'convite' ? 'Convite' : 'Aberto'}
+            </p>
+            <p style={{ marginTop: 8 }}>
+              <span className="sub">Modalidade:</span>{' '}
+              {modalidade === 'mata-mata' ? 'Mata-mata (chave)' : 'Pontos por palpite'}
             </p>
             <p style={{ marginTop: 8 }}>
               <span className="sub">Partidas:</span> {partidas.length}
@@ -182,5 +274,39 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="field-label">{label}</span>
       {children}
     </label>
+  )
+}
+
+function PesoRow({
+  label,
+  cravada,
+  flex,
+  onCravada,
+  onFlex,
+}: {
+  label: string
+  cravada: number
+  flex: number
+  onCravada: (v: number) => void
+  onFlex: (v: number) => void
+}) {
+  return (
+    <>
+      <span className="pesos-label">{label}</span>
+      <input
+        type="number"
+        min={0}
+        className="input pesos-input"
+        value={cravada}
+        onChange={(e) => onCravada(Math.max(0, Number(e.target.value) || 0))}
+      />
+      <input
+        type="number"
+        min={0}
+        className="input pesos-input"
+        value={flex}
+        onChange={(e) => onFlex(Math.max(0, Number(e.target.value) || 0))}
+      />
+    </>
   )
 }

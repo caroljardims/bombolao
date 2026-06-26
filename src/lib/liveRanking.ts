@@ -1,4 +1,12 @@
-import type { AcertoTipo, Participante, Palpite, Partida, ParticipanteRanking, ParticipanteStats } from './types'
+import type {
+  AcertoTipo,
+  Participante,
+  Palpite,
+  Partida,
+  ParticipanteRanking,
+  ParticipanteStats,
+  RegrasChave,
+} from './types'
 import {
   calcularPontos,
   calcularPosicoes,
@@ -8,6 +16,9 @@ import {
   temPalpite,
 } from './scoring'
 import { isPastKickoff } from './dates'
+import { buildEngine, type KnockoutEngine } from './knockoutBracket'
+import { scoreChave } from './chaveScoring'
+import type { PalpiteChaveDoc } from './chavePalpite'
 
 export function getPontosLive(palpite: Palpite, partida: Partida): number | null {
   const temPlacar = partida.gols_casa !== null && partida.gols_fora !== null
@@ -67,10 +78,18 @@ export function contarPontosAoVivo(
   return pontos
 }
 
+export interface ChaveRankingOpts {
+  chaveDocs: PalpiteChaveDoc[]
+  regrasChave: RegrasChave
+  /** Engine pré-construído; se ausente, é montado das `partidas`. */
+  engine?: KnockoutEngine
+}
+
 export function buildLiveRanking(
   participantes: Participante[],
   palpites: Palpite[],
   partidas: Partida[],
+  chave?: ChaveRankingOpts,
 ): ParticipanteRanking[] {
   const partidasMap = new Map(partidas.map((p) => [p.id, p]))
   const palpitesByParticipante = new Map<string, Palpite[]>()
@@ -81,10 +100,33 @@ export function buildLiveRanking(
     palpitesByParticipante.set(palpite.participante_id, list)
   }
 
+  const engine = chave ? chave.engine ?? buildEngine(partidas) : null
+  const chaveByParticipante = new Map<string, PalpiteChaveDoc>()
+  if (chave) {
+    for (const doc of chave.chaveDocs) {
+      if (doc.participante_id) chaveByParticipante.set(doc.participante_id, doc)
+    }
+  }
+
   const withStats = participantes.map((p) => {
     const palpitesDoParticipante = palpitesByParticipante.get(p.id) ?? []
     const stats = contarEstatisticasLive(palpitesDoParticipante, partidasMap)
     const pontos_ao_vivo = contarPontosAoVivo(palpitesDoParticipante, partidasMap)
+
+    if (chave && engine) {
+      const placar = chave.regrasChave.placarAtivo ? stats.total_pontos : 0
+      const breakdown = scoreChave(chaveByParticipante.get(p.id) ?? null, engine, chave.regrasChave)
+      return {
+        ...p,
+        ...stats,
+        total_pontos: placar + breakdown.total,
+        pontos_placar: placar,
+        pontos_cravada: breakdown.cravada,
+        pontos_flex: breakdown.flex,
+        pontos_ao_vivo,
+      }
+    }
+
     return { ...p, ...stats, pontos_ao_vivo }
   })
 
