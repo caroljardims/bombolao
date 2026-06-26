@@ -1,13 +1,36 @@
 name: Sync placares
 
 on:
+  schedule:
+    # A cada 10 min na janela de jogos (15h–05h UTC ≈ 12h–02h BRT), junho/julho.
+    # O gate abaixo dispensa o sync quando não há jogo ao vivo/próximo.
+    - cron: '*/10 0-5,15-23 * 6,7 *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      should_sync: ${{ steps.check.outputs.should_sync }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verificar se há jogo na janela
+        id: check
+        run: node scripts/should-sync-scores.mjs
+
   sync:
+    needs: gate
+    # Roda quando o gate detecta jogo na janela, ou sempre que disparado manualmente.
+    if: ${{ needs.gate.outputs.should_sync == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -37,8 +60,7 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-sa.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-sa.json" >> "$GITHUB_ENV"
 
-      - name: Sincronizar placares
+      - name: Sincronizar placares (todos os bolões)
         env:
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
-          BOLAO_IDS: colorados-do-inter
         run: npm run sync-scores -- --all
