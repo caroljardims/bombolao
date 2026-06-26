@@ -149,6 +149,8 @@ function ChaveMataMata({
   const [cravada, setCravada] = useState<ChavePicks>({})
   const [seeded, setSeeded] = useState(false)
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null)
+  const [confirmLock, setConfirmLock] = useState(false)
+  const [locking, setLocking] = useState(false)
 
   const engine = useMemo(() => buildEngine(partidas), [partidas])
 
@@ -197,12 +199,16 @@ function ChaveMataMata({
   }
 
   async function handleLock() {
-    if (!participanteId) return
+    if (!participanteId || locking) return
+    setLocking(true)
     try {
       await lockCravada(bolao!.id, participanteId)
+      setConfirmLock(false)
       toast.success('Chave cravada travada!')
     } catch {
       toast.error('Não consegui travar a chave.')
+    } finally {
+      setLocking(false)
     }
   }
 
@@ -254,7 +260,11 @@ function ChaveMataMata({
                   {deadline ? ` em ${deadline.toLocaleString('pt-BR')}` : ' no 1º jogo dos 16-avos'}.
                 </p>
                 {participanteId && (
-                  <button type="button" className="btn btn-ghost-gold" onClick={handleLock}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost-gold"
+                    onClick={() => setConfirmLock(true)}
+                  >
                     Travar minha cravada
                   </button>
                 )}
@@ -298,6 +308,46 @@ function ChaveMataMata({
             />
           )}
         </>
+      )}
+
+      {confirmLock && (
+        <div
+          className="chave-modal-overlay"
+          role="presentation"
+          onClick={() => !locking && setConfirmLock(false)}
+        >
+          <div
+            className="chave-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-lock-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="confirm-lock-title">Travar a cravada?</h3>
+            <p className="sub">
+              Esta ação é <strong>definitiva</strong>: depois de travar, você não poderá
+              modificar mais nenhum palpite da chave.
+            </p>
+            <div className="chave-modal-actions">
+              <button
+                type="button"
+                className="btn btn-ghost-gold"
+                onClick={() => setConfirmLock(false)}
+                disabled={locking}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-gold"
+                onClick={handleLock}
+                disabled={locking}
+              >
+                {locking ? 'Travando…' : 'Confirmar e travar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

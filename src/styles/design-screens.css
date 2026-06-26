@@ -611,6 +611,38 @@ button.chave-slot.is-pickable:hover{
 }
 .chave-status .sub{ margin:0; flex:1; min-width:220px; }
 
+/* Modal de confirmação para travar a cravada */
+.chave-modal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(2px);
+  animation:chave-fade .14s ease;
+}
+.chave-modal{
+  width:100%;
+  max-width:380px;
+  background:var(--surface, #16181d);
+  border:1px solid rgba(244,198,61,.35);
+  border-radius:16px;
+  padding:22px;
+  box-shadow:0 18px 48px rgba(0,0,0,.5);
+}
+.chave-modal h3{ margin:0 0 8px; font-size:18px; }
+.chave-modal .sub{ margin:0 0 18px; }
+.chave-modal-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+}
+.chave-modal-actions .btn:disabled{ opacity:.6; cursor:not-allowed; }
+@keyframes chave-fade{ from{ opacity:0; } to{ opacity:1; } }
+
 /* "Por fase": disputa da chave é o botão; card do palpite aparece acima */
 .chave-placar-detail{
   margin-bottom:16px;
