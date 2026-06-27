@@ -69,6 +69,16 @@ describe('mergeApiMatchPair', () => {
     assert.equal(merged.status, 'IN_PLAY')
     assert.deepEqual(extractApiScore(merged), { home: 2, away: 1 })
   })
+
+  it('prefere a data UTC real (terminada em Z) da football-data', () => {
+    const wc26 = match('Egypt', 'Iran', 'IN_PLAY', { home: 1, away: 1 })
+    wc26.utcDate = '2026-06-26T20:00:00' // horário do estádio (naive), cai no dia errado
+    const fd = match('Egypt', 'Iran', 'IN_PLAY', { home: 1, away: 0 })
+    fd.utcDate = '2026-06-27T03:00:00Z' // UTC real
+
+    assert.equal(mergeApiMatchPair(wc26, fd).utcDate, '2026-06-27T03:00:00Z')
+    assert.equal(mergeApiMatchPair(fd, wc26).utcDate, '2026-06-27T03:00:00Z')
+  })
 })
 
 describe('mergeApiMatches', () => {

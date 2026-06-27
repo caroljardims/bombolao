@@ -138,28 +138,47 @@ function withFallbackScore(primary: ApiMatch, fallback: ApiMatch): ApiMatch {
 }
 
 /**
+ * Data/hora UTC mais confiável entre as fontes. A football-data.org devolve UTC
+ * real (ISO terminando em `Z`); a WorldCup26 devolve horário do estádio (naive),
+ * que para jogos de madrugada (BRT) cai em outro dia e quebra o matching. Por isso
+ * preferimos sempre a data terminada em `Z` quando existir.
+ */
+function reliableUtcDate(a: ApiMatch, b: ApiMatch, fallback: string): string {
+  if (a.utcDate?.endsWith('Z')) return a.utcDate
+  if (b.utcDate?.endsWith('Z')) return b.utcDate
+  return fallback
+}
+
+/**
  * Entre duas fontes para o mesmo jogo, status finalizado (FINISHED/AWARDED) sempre vence.
  */
 export function mergeApiMatchPair(a: ApiMatch, b: ApiMatch): ApiMatch {
   const aFinal = isFinalApiStatus(a.status)
   const bFinal = isFinalApiStatus(b.status)
 
-  if (aFinal && !bFinal) return withFallbackScore(a, b)
-  if (bFinal && !aFinal) return withFallbackScore(b, a)
-
-  if (aFinal && bFinal) {
+  let result: ApiMatch
+  if (aFinal && !bFinal) {
+    result = withFallbackScore(a, b)
+  } else if (bFinal && !aFinal) {
+    result = withFallbackScore(b, a)
+  } else if (aFinal && bFinal) {
     const scoreA = extractApiScore(a)
     const scoreB = extractApiScore(b)
-    if (scoreA && !scoreB) return withFallbackWinner(a, b)
-    if (scoreB && !scoreA) return withFallbackWinner(b, a)
-    return liveMatchQuality(a) >= liveMatchQuality(b)
-      ? withFallbackWinner(a, b)
-      : withFallbackWinner(b, a)
+    if (scoreA && !scoreB) result = withFallbackWinner(a, b)
+    else if (scoreB && !scoreA) result = withFallbackWinner(b, a)
+    else
+      result =
+        liveMatchQuality(a) >= liveMatchQuality(b)
+          ? withFallbackWinner(a, b)
+          : withFallbackWinner(b, a)
+  } else {
+    result =
+      liveMatchQuality(a) >= liveMatchQuality(b)
+        ? withFallbackWinner(a, b)
+        : withFallbackWinner(b, a)
   }
 
-  return liveMatchQuality(a) >= liveMatchQuality(b)
-    ? withFallbackWinner(a, b)
-    : withFallbackWinner(b, a)
+  return { ...result, utcDate: reliableUtcDate(a, b, result.utcDate) }
 }
 
 export function mergeApiMatches(...groups: ApiMatch[][]): ApiMatch[] {
