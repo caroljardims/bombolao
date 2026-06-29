@@ -10,8 +10,8 @@ import type { ParticipanteRanking } from '../lib/types'
 const TABS: { id: RankingView; label: string }[] = [
   { id: 'geral', label: 'Geral' },
   { id: 'tradicional', label: 'Tradicional' },
-  { id: 'eliminatorias', label: 'Eliminatórias' },
   { id: 'cravada', label: 'Cravada' },
+  { id: 'eliminatorias', label: 'Eliminatórias' },
 ]
 
 const METRIC: Record<RankingView, (p: ParticipanteRanking) => number> = {
