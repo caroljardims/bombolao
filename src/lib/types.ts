@@ -36,9 +36,23 @@ export interface RegrasPontuacao {
 
 export type Modalidade = 'pontos' | 'mata-mata'
 
-/** Fases do mata-mata (mesmas chaves de KnockoutFase em chave.ts). */
+/** Fases do bracket (estrutura visual — mesmas chaves de KnockoutFase em chave.ts). */
 export type FaseChave = 'r32' | 'r16' | 'qf' | 'sf' | 'final' | 'terceiro'
-export type PesosChave = Record<FaseChave, number>
+
+/**
+ * Chaves de scoring (pesos + apuração). Diferem das fases do bracket porque a
+ * `final` gera DOIS picks pontuáveis — vice e campeão — em vez de um único.
+ */
+export type FaseScore =
+  | 'r32'      // 16-avos
+  | 'r16'      // Oitavas
+  | 'qf'       // Quartas
+  | 'sf'       // Semis
+  | 'terceiro' // 3º lugar
+  | 'vice'     // Vice-campeão (perde a final)
+  | 'campeao'  // Campeão (vence a final)
+
+export type PesosChave = Record<FaseScore, number>
 
 export interface RegrasChave {
   /** Pontos por acerto de avançador em cada fase na chave cravada (travada upfront). */
@@ -141,6 +155,8 @@ export interface ParticipanteRanking extends Participante {
   pontos_ao_vivo: number
   /** Mata-mata: pontos por placar (stream C). */
   pontos_placar?: number
+  /** Mata-mata: pontos por placar apenas das partidas de fase eliminatória. */
+  pontos_placar_elim?: number
   /** Mata-mata: pontos da chave cravada (stream A). */
   pontos_cravada?: number
   /** Mata-mata: pontos da chave flexível (stream B). */

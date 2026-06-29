@@ -4,7 +4,7 @@
  * Estrutura derivada de copa2026-chaveamento.md.
  */
 
-import type { FaseChave, Partida } from './types'
+import type { FaseChave, FaseScore, Partida } from './types'
 
 export type KnockoutFase = FaseChave
 export type BracketLado = 'esq' | 'dir' | 'centro'
@@ -46,6 +46,17 @@ export const FASE_LABEL: Record<KnockoutFase, string> = {
   sf: 'Semifinal',
   final: 'Final',
   terceiro: '3º lugar',
+}
+
+/** Rótulos das chaves de scoring (inclui vice/campeão separados). */
+export const FASE_SCORE_LABEL: Record<FaseScore, string> = {
+  r32: '16-avos',
+  r16: 'Oitavas',
+  qf: 'Quartas',
+  sf: 'Semifinal',
+  terceiro: '3º lugar',
+  vice: 'Vice-campeão',
+  campeao: 'Campeão',
 }
 
 /** Ordem das fases, de fora para dentro do bracket. */

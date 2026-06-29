@@ -3,6 +3,9 @@
  * Docs: https://worldcup26.ir/api-docs
  */
 
+/** Etapa do jogo conforme a football-data: tempo normal, prorrogação ou pênaltis. */
+export type ApiDuration = 'REGULAR' | 'EXTRA_TIME' | 'PENALTY_SHOOTOUT'
+
 export interface ApiMatch {
   utcDate: string
   status: string
@@ -10,6 +13,8 @@ export interface ApiMatch {
   awayTeam: { name: string; shortName?: string; tla?: string }
   score: {
     winner?: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null
+    /** Etapa alcançada; só a football-data informa. WorldCup26 deixa indefinido. */
+    duration?: ApiDuration | string
     fullTime?: { home: number | null; away: number | null }
     regularTime?: { home: number | null; away: number | null }
     halfTime?: { home: number | null; away: number | null }

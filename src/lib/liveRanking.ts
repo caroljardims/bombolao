@@ -61,6 +61,44 @@ export function contarEstatisticasLive(
   return { total_pontos, na_mosca, acerto_resultado, sem_aposta }
 }
 
+const FASES_GRUPO = new Set([
+  'primeira fase',
+  'fase de grupos',
+  'fase de grupo',
+  'grupos',
+  'group stage',
+])
+
+function normalizarFase(fase: string | undefined | null): string {
+  return (fase ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+/** True para partidas de mata-mata (qualquer fase que não seja de grupos). */
+export function isPartidaEliminatoria(partida: Partida): boolean {
+  const fase = normalizarFase(partida.fase)
+  if (!fase) return false
+  return !FASES_GRUPO.has(fase)
+}
+
+/** Soma de pontos de placar apenas nas partidas de fase eliminatória. */
+export function contarPontosEliminatorias(
+  palpites: Palpite[],
+  partidasMap: Map<string, Partida>,
+): number {
+  let pontos = 0
+  for (const palpite of palpites) {
+    const partida = partidasMap.get(palpite.partida_id)
+    if (!partida || !isPartidaEliminatoria(partida)) continue
+    const pts = getPontosLive(palpite, partida)
+    if (pts !== null) pontos += pts
+  }
+  return pontos
+}
+
 export function contarPontosAoVivo(
   palpites: Palpite[],
   partidasMap: Map<string, Partida>,
@@ -115,12 +153,16 @@ export function buildLiveRanking(
 
     if (chave && engine) {
       const placar = chave.regrasChave.placarAtivo ? stats.total_pontos : 0
+      const placarElim = chave.regrasChave.placarAtivo
+        ? contarPontosEliminatorias(palpitesDoParticipante, partidasMap)
+        : 0
       const breakdown = scoreChave(chaveByParticipante.get(p.id) ?? null, engine, chave.regrasChave)
       return {
         ...p,
         ...stats,
         total_pontos: placar + breakdown.total,
         pontos_placar: placar,
+        pontos_placar_elim: placarElim,
         pontos_cravada: breakdown.cravada,
         pontos_flex: breakdown.flex,
         pontos_ao_vivo,

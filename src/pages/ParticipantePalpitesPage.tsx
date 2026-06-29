@@ -1,6 +1,7 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { LoadingState } from '../components/LoadingState'
 import { Icon } from '../components/ui'
+import { ParticipanteCravada } from '../components/ParticipanteCravada'
 import { PalpitesList } from './PalpitesPage'
 import { useParticipante, usePalpites } from '../hooks/usePalpites'
 import { usePartidas } from '../hooks/usePartidas'
@@ -9,7 +10,7 @@ import { bolaoPath } from '../lib/paths'
 
 export function ParticipantePalpitesPage() {
   const { participanteId } = useParams<{ participanteId: string }>()
-  const { bolaoId, participante } = useBolao()
+  const { bolao, bolaoId, participante } = useBolao()
   const { partidas, loading: partidasLoading } = usePartidas()
   const { palpitesMap, loading: palpitesLoading } = usePalpites(participanteId, partidas)
   const { nome, loading: nomeLoading } = useParticipante(participanteId)
@@ -29,6 +30,9 @@ export function ParticipantePalpitesPage() {
       <Link to={bolaoPath(bolaoId)} className="link-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
         <Icon.back s={14} /> Voltar ao ranking
       </Link>
+      {bolao?.modalidade === 'mata-mata' && (
+        <ParticipanteCravada participanteId={participanteId} nome={nome} partidas={partidas} />
+      )}
       <PalpitesList
         title={`Palpites de ${nome}`}
         subtitle="Visualização"

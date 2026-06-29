@@ -2,14 +2,19 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { ChaveBracket, ChaveStacked } from '../components/ChaveBracket'
+import { CravadaProgressBar } from '../components/CravadaProgressBar'
+import { CravadaLockDialog } from '../components/CravadaLockDialog'
+import { CravadaFinalPicks } from '../components/CravadaFinalPicks'
 import { LoadingState } from '../components/LoadingState'
 import { PalpiteCard } from './PalpitesPage'
 import { useBolao } from '../contexts/BolaoContext'
 import { usePartidas } from '../hooks/usePartidas'
 import { usePalpiteChave } from '../hooks/usePalpiteChave'
 import { buildChaveData } from '../lib/resolveChave'
-import { DEFAULT_REGRAS_CHAVE } from '../lib/regras'
 import {
+  CAMPEAO_PICK,
+  TOTAL_PICKS_CRAVADA,
+  VICE_PICK,
   buildEngine,
   cravadaProgress,
   engineToCravada,
@@ -19,7 +24,6 @@ import {
 } from '../lib/knockoutBracket'
 import {
   cravadaAberta,
-  cravadaDeadline,
   cravadaPicks,
   lockCravada,
   saveCravada,
@@ -27,14 +31,25 @@ import {
 import { descendentesDe } from '../data/chaveBracketTemplate'
 import { getKickoffDate } from '../lib/dates'
 import { apostasAbertas } from '../lib/scoring'
-import type { ChaveData } from '../lib/chave'
+import { useNow } from '../hooks/useNow'
+import type { ChaveData, KnockoutMatch } from '../lib/chave'
 import type { Palpite, Partida } from '../lib/types'
+
+/** Dado o campeão escolhido, o outro finalista é o vice. */
+function otherFinalist(finalMatch: KnockoutMatch | undefined, champion: string): string | null {
+  if (!finalMatch) return null
+  const a = finalMatch.timeA.tipo === 'time' ? finalMatch.timeA.nome : null
+  const b = finalMatch.timeB.tipo === 'time' ? finalMatch.timeB.nome : null
+  if (champion === a) return b
+  if (champion === b) return a
+  return null
+}
 
 type ChaveView = 'cravada' | 'placar'
 
 // ─── Área da chave: bracket espelhado + empilhado, com toggle Lista/Chave no mobile ─
 
-function BracketArea({
+export function BracketArea({
   data,
   onPick,
   onSelectMatch,
@@ -143,7 +158,6 @@ function ChaveMataMata({
   participanteId: string | undefined
 }) {
   const { bolao } = useBolao()
-  const regras = bolao?.regrasChave ?? DEFAULT_REGRAS_CHAVE
   const { doc, loading } = usePalpiteChave(participanteId)
 
   const [view, setView] = useState<ChaveView>('cravada')
@@ -186,13 +200,48 @@ function ChaveMataMata({
     setCravada(cravadaPicks(doc))
   }
 
-  const cravadaOpen = cravadaAberta(engine, regras, doc)
-  const deadline = cravadaDeadline(engine, regras)
+  const now = useNow()
+  const cravadaOpen = cravadaAberta(doc)
+
+  const cravadaData = useMemo(
+    () => engineToCravada(engine, cravada, { editavel: cravadaOpen && !!participanteId, now }),
+    [engine, cravada, cravadaOpen, participanteId, now],
+  )
+  const { faltam, completa } = useMemo(() => cravadaProgress(cravadaData), [cravadaData])
+  const finalMatch = useMemo(
+    () => cravadaData.matches.find((m) => m.fase === 'final'),
+    [cravadaData],
+  )
+  // Conta o que está de fato selecionado no bracket atual (ignora picks antigos
+  // que não batem mais com os confrontos). O vice é derivado quando há campeão.
+  const feitos = useMemo(() => {
+    const selecionados = cravadaData.matches.filter((m) => m.selecionado).length
+    return selecionados + (finalMatch?.selecionado ? 1 : 0)
+  }, [cravadaData, finalMatch])
+  const placarData = useMemo(
+    () => engineToPlacarProjection(engine, myPalpites),
+    [engine, myPalpites],
+  )
+  const data = view === 'cravada' ? cravadaData : placarData
 
   function handlePickCravada(slotId: string, team: string) {
     if (!participanteId || !cravadaOpen) return
-    const next: ChavePicks = { ...cravada, [slotId]: team }
-    for (const id of descendentesDe(slotId)) delete next[id]
+    const next: ChavePicks = { ...cravada }
+    if (slotId === 'final') {
+      const vice = otherFinalist(finalMatch, team)
+      next[CAMPEAO_PICK] = team
+      if (vice) next[VICE_PICK] = vice
+      else delete next[VICE_PICK]
+    } else {
+      next[slotId] = team
+      for (const id of descendentesDe(slotId)) {
+        delete next[id]
+        if (id === 'final') {
+          delete next[CAMPEAO_PICK]
+          delete next[VICE_PICK]
+        }
+      }
+    }
     setCravada(next)
     saveCravada(bolao!.id, participanteId, next).catch(() =>
       toast.error('Não consegui salvar seu palpite.'),
@@ -212,17 +261,6 @@ function ChaveMataMata({
       setLocking(false)
     }
   }
-
-  const cravadaData = useMemo(
-    () => engineToCravada(engine, cravada, { editavel: cravadaOpen && !!participanteId }),
-    [engine, cravada, cravadaOpen, participanteId],
-  )
-  const { faltam, completa } = useMemo(() => cravadaProgress(cravadaData), [cravadaData])
-  const placarData = useMemo(
-    () => engineToPlacarProjection(engine, myPalpites),
-    [engine, myPalpites],
-  )
-  const data = view === 'cravada' ? cravadaData : placarData
 
   if (loading) return <LoadingState message="Carregando chave…" />
 
@@ -251,29 +289,23 @@ function ChaveMataMata({
             {cravadaOpen ? (
               <>
                 <p className="sub">
-                  Clique no time que avança em cada jogo. A cravada trava
-                  {deadline ? ` em ${deadline.toLocaleString('pt-BR')}` : ' no 1º jogo dos 16-avos'}.
+                  Clique no time que avança em cada jogo. Você pode ajustar e travar quando quiser —
+                  confrontos que já começaram ficam bloqueados e não pontuam.
                 </p>
                 {participanteId && (
                   <div className="chave-lock-actions">
                     <button
                       type="button"
                       className="btn btn-ghost-gold"
-                      onClick={() => completa && setConfirmLock(true)}
-                      disabled={!completa}
-                      title={
-                        completa
-                          ? undefined
-                          : 'Preencha todos os confrontos até o campeão para travar.'
-                      }
+                      onClick={() => setConfirmLock(true)}
                     >
                       Travar minha cravada
                     </button>
                     {!completa && (
                       <span className="chave-lock-hint">
                         {faltam > 0
-                          ? `Faltam ${faltam} confronto${faltam > 1 ? 's' : ''} para completar sua cravada.`
-                          : 'Escolha o campeão para completar sua cravada.'}
+                          ? `Você ainda tem ${faltam} confronto${faltam > 1 ? 's' : ''} sem palpite.`
+                          : 'Escolha o campeão para fechar sua cravada.'}
                       </span>
                     )}
                   </div>
@@ -285,6 +317,18 @@ function ChaveMataMata({
               </p>
             )}
           </div>
+
+          {cravadaOpen && participanteId && (
+            <>
+              <CravadaProgressBar feitos={feitos} total={TOTAL_PICKS_CRAVADA} />
+              <CravadaFinalPicks
+                finalMatch={finalMatch}
+                campeao={cravada[CAMPEAO_PICK] ?? null}
+                vice={cravada[VICE_PICK] ?? null}
+                onPickCampeao={(team) => handlePickCravada('final', team)}
+              />
+            </>
+          )}
 
           <BracketArea data={data} onPick={handlePickCravada} />
         </>
@@ -320,45 +364,12 @@ function ChaveMataMata({
         </>
       )}
 
-      {confirmLock && (
-        <div
-          className="chave-modal-overlay"
-          role="presentation"
-          onClick={() => !locking && setConfirmLock(false)}
-        >
-          <div
-            className="chave-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-lock-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 id="confirm-lock-title">Travar a cravada?</h3>
-            <p className="sub">
-              Esta ação é <strong>definitiva</strong>: depois de travar, você não poderá
-              modificar mais nenhum palpite da chave.
-            </p>
-            <div className="chave-modal-actions">
-              <button
-                type="button"
-                className="btn btn-ghost-gold"
-                onClick={() => setConfirmLock(false)}
-                disabled={locking}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn btn-gold"
-                onClick={handleLock}
-                disabled={locking}
-              >
-                {locking ? 'Travando…' : 'Confirmar e travar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CravadaLockDialog
+        open={confirmLock}
+        locking={locking}
+        onCancel={() => setConfirmLock(false)}
+        onConfirm={handleLock}
+      />
     </div>
   )
 }

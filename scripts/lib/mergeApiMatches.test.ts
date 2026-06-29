@@ -79,6 +79,15 @@ describe('mergeApiMatchPair', () => {
     assert.equal(mergeApiMatchPair(wc26, fd).utcDate, '2026-06-27T03:00:00Z')
     assert.equal(mergeApiMatchPair(fd, wc26).utcDate, '2026-06-27T03:00:00Z')
   })
+
+  it('propaga a etapa mais avançada (EXTRA_TIME) entre as fontes', () => {
+    const wc26 = match('Spain', 'Italy', 'FINISHED', { home: 2, away: 1 }) // sem duration
+    const fd = match('Spain', 'Italy', 'FINISHED', { home: 2, away: 1 })
+    fd.score.duration = 'EXTRA_TIME'
+
+    assert.equal(mergeApiMatchPair(wc26, fd).score.duration, 'EXTRA_TIME')
+    assert.equal(mergeApiMatchPair(fd, wc26).score.duration, 'EXTRA_TIME')
+  })
 })
 
 describe('mergeApiMatches', () => {

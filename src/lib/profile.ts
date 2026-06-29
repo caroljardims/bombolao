@@ -44,7 +44,7 @@ async function syncParticipanteProfile(
   await Promise.all(updates)
 }
 
-async function deleteStoredAvatars(uid: string): Promise<void> {
+export async function deleteStoredAvatars(uid: string): Promise<void> {
   const targets = [avatarRef(uid), ...LEGACY_AVATAR_EXTS.map((ext) => avatarRef(uid, `profile.${ext}`))]
   await withTimeout(
     Promise.allSettled(targets.map((r) => deleteObject(r))),

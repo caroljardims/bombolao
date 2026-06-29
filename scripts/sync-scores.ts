@@ -21,6 +21,7 @@ import {
 } from './lib/mergeApiMatches'
 import { teamsMatch } from './lib/teamMatch'
 import { fetchWorldCup26Matches, type ApiMatch } from './lib/worldcup26Api'
+import { wc2026MataPartidas } from '../src/data/competicoes/wc2026Mata'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -47,6 +48,7 @@ interface ApiMatchFromFootballData {
   awayTeam: { name: string; shortName?: string; tla?: string }
   score: {
     winner?: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null
+    duration?: string
     fullTime?: { home: number | null; away: number | null }
     regularTime?: { home: number | null; away: number | null }
     halfTime?: { home: number | null; away: number | null }
@@ -248,7 +250,15 @@ function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date(
   const score = extractRegularScore(apiMatch)
   const status_api = apiUpdatable ? apiMatch.status : 'IN_PLAY'
 
-  if (score) {
+  // Pontuação vale só o tempo regulamentar: quando a API marca prorrogação/pênaltis,
+  // congelamos o placar já gravado (dos 90 min) e não sobrescrevemos com gols da
+  // prorrogação. Quem avança na chave continua vindo de `vencedor` (que considera tudo).
+  const beyondRegular =
+    apiMatch.score.duration === 'EXTRA_TIME' || apiMatch.score.duration === 'PENALTY_SHOOTOUT'
+  const jaTemPlacar = partida.gols_casa !== null && partida.gols_fora !== null
+  const congelarPlacar = beyondRegular && jaTemPlacar
+
+  if (score && !congelarPlacar) {
     const base: PartidaPatch = { gols_casa: score.home, gols_fora: score.away, status_api }
     const patch = applyKnockoutResult(base, partida, apiMatch)
     const scoreUnchanged =
@@ -264,6 +274,59 @@ function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date(
   const patch = applyKnockoutResult(base, partida, apiMatch)
   if (partida.status_api === status_api && patch === base) return null
   return patch
+}
+
+/**
+ * Mantém uma fonte pública (`resultadosOficiais/wc2026`) com os placares atuais
+ * dos 16-avos, para que bolões mata-mata recém-criados já nasçam com os jogos
+ * passados preenchidos, sem esperar o próximo sync.
+ */
+async function updateResultadosOficiais(db: Firestore, apiMatches: ApiMatch[]) {
+  if (apiMatches.length === 0) return
+
+  const template = wc2026MataPartidas().map((p) => ({
+    id: p.id!,
+    data: p.data,
+    hora: p.hora,
+    fase: p.fase,
+    time_casa: p.time_casa,
+    time_fora: p.time_fora,
+    gols_casa: null,
+    gols_fora: null,
+  })) as Partida[]
+
+  const jogos: Record<string, Record<string, unknown>> = {}
+
+  for (const apiMatch of apiMatches) {
+    const partida = findMatchingPartida(template, apiMatch)
+    if (!partida) continue
+    if (!UPDATABLE_STATUS.has(apiMatch.status)) continue
+
+    const entry: Record<string, unknown> = { status_api: apiMatch.status }
+    const score = extractRegularScore(apiMatch)
+    if (score) {
+      entry.gols_casa = score.home
+      entry.gols_fora = score.away
+    }
+    if (isFinalApiStatus(apiMatch.status)) {
+      const vencedor = extractVencedor(apiMatch)
+      if (vencedor !== null) entry.vencedor = vencedor
+      const pen = extractPenalties(apiMatch)
+      if (pen) {
+        entry.penaltis_casa = pen.home
+        entry.penaltis_fora = pen.away
+      }
+    }
+    jogos[partida.id] = entry
+  }
+
+  if (Object.keys(jogos).length === 0) return
+
+  await db
+    .collection('resultadosOficiais')
+    .doc('wc2026')
+    .set({ atualizadoEm: new Date().toISOString(), jogos }, { merge: true })
+  console.log(`✓ resultadosOficiais/wc2026: ${Object.keys(jogos).length} jogo(s) espelhado(s)`)
 }
 
 async function recalcAll(db: Firestore, bolaoId: string) {
@@ -400,6 +463,7 @@ async function syncScores() {
   if (!recalcOnly) {
     console.log('Buscando placares (WorldCup26 + football-data.org)…')
     apiMatches = await fetchApiMatches()
+    await updateResultadosOficiais(db, apiMatches)
   }
 
   for (const bolaoId of bolaoIds) {

@@ -50,13 +50,20 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/boloes/$(bolaoId)).data.criadoPor == request.auth.uid;
     }
 
+    function isBolaoAdmin(bolaoId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/boloes/$(bolaoId)/participantes/$(request.auth.uid))
+        && get(/databases/$(database)/documents/boloes/$(bolaoId)/participantes/$(request.auth.uid)).data.papel == 'admin';
+    }
+
     // --- Bolões ---
     match /boloes/{bolaoId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.criadoPor == request.auth.uid;
       allow update: if isSignedIn()
-        && resource.data.criadoPor == request.auth.uid;
+        && (resource.data.criadoPor == request.auth.uid || isBolaoAdmin(bolaoId))
+        && request.resource.data.criadoPor == resource.data.criadoPor;
       allow delete: if false;
 
       match /partidas/{partidaId} {
@@ -71,7 +78,8 @@ service cloud.firestore {
           || (isSignedIn() && resource.data.email.lower() == authEmail());
         allow create: if isOwner(participanteId);
         allow update: if isOwner(participanteId) && statsUnchanged();
-        allow delete: if ownsLegacyParticipante(bolaoId, participanteId);
+        allow delete: if isOwner(participanteId)
+          || ownsLegacyParticipante(bolaoId, participanteId);
       }
 
       match /palpites/{palpiteId} {
@@ -91,7 +99,8 @@ service cloud.firestore {
           && request.resource.data.participante_id == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participante_id'])
         );
-        allow delete: if ownsLegacyParticipante(bolaoId, resource.data.participante_id);
+        allow delete: if isOwner(resource.data.participante_id)
+          || ownsLegacyParticipante(bolaoId, resource.data.participante_id);
       }
 
       // Palpites de chave (mata-mata): cravada + flexível por fase.
@@ -100,8 +109,15 @@ service cloud.firestore {
         allow read: if isBolaoMember(bolaoId);
         allow create, update: if isOwner(participanteId)
           && request.resource.data.participante_id == participanteId;
-        allow delete: if false;
+        allow delete: if isOwner(participanteId);
       }
+    }
+
+    // --- Resultados oficiais (fonte pública para pré-preencher chave) ---
+    // Escrito apenas pelo sync (Admin SDK); leitura pública.
+    match /resultadosOficiais/{competicaoId} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // --- Convites ---
@@ -120,7 +136,8 @@ service cloud.firestore {
     match /users/{uid}/membrosias/{bolaoId} {
       allow read: if isSignedIn() && request.auth.uid == uid;
       allow create: if isSignedIn() && request.auth.uid == uid;
-      allow update, delete: if false;
+      allow delete: if isSignedIn() && request.auth.uid == uid;
+      allow update: if false;
     }
 
     // --- Legado: bloquear writes nas coleções root ---

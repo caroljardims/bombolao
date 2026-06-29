@@ -14,6 +14,7 @@ import {
   AuthError,
 } from '../lib/auth'
 import { ProfileError, updateUserProfile } from '../lib/profile'
+import { AccountError, deleteAccount, isPasswordUser } from '../lib/account'
 
 type LoginMode = 'google' | 'email'
 
@@ -60,6 +61,9 @@ export function ContaPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [removePhoto, setRemovePhoto] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -131,6 +135,33 @@ export function ContaPage() {
     }
   }
 
+  async function handleDeleteAccount() {
+    const needsPassword = isPasswordUser()
+    if (needsPassword && !deletePassword.trim()) {
+      toast.error('Digite sua senha para confirmar.')
+      return
+    }
+    setDeleting(true)
+    try {
+      await deleteAccount({ password: deletePassword || undefined })
+      toast.success('Conta excluída.')
+      setConfirmDelete(false)
+    } catch (err) {
+      if (err instanceof AccountError && err.code === 'password-required') {
+        toast.error('Digite sua senha para confirmar.')
+      } else if (err instanceof FirebaseError && err.code === 'auth/wrong-password') {
+        toast.error('Senha incorreta.')
+      } else if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') {
+        toast.error('Confirmação cancelada.')
+      } else {
+        toast.error(err instanceof Error ? err.message : 'Não foi possível excluir a conta.')
+      }
+    } finally {
+      setDeleting(false)
+      setDeletePassword('')
+    }
+  }
+
   function handlePhotoSelect(file: File | null) {
     if (!file) return
     if (photoPreview) URL.revokeObjectURL(photoPreview)
@@ -188,6 +219,12 @@ export function ContaPage() {
             <p className="sub">Edite seu nome e foto de perfil</p>
           </div>
         </header>
+
+        <Link to="/" className="btn btn-gold full wide-out conta-cta">
+          <Icon.trophy s={18} w={2} />
+          Ver meus bolões
+          <Icon.arrow s={16} />
+        </Link>
 
         <form onSubmit={handleSaveProfile} className="conta-card card">
           <div className="conta-avatar">
@@ -266,7 +303,7 @@ export function ContaPage() {
           <button
             type="submit"
             disabled={formLocked || !profileDirty || !nome.trim()}
-            className={`btn btn-gold full${saved ? ' done' : ''}`}
+            className={`btn btn-save full${saved ? ' done' : ''}`}
           >
             {saved ? (
               <>
@@ -278,10 +315,6 @@ export function ContaPage() {
               'Salvar alterações'
             )}
           </button>
-
-          <Link to="/" className="link-gold center-link">
-            Ver meus bolões <Icon.arrow s={15} />
-          </Link>
         </form>
 
         <button
@@ -292,6 +325,71 @@ export function ContaPage() {
         >
           {signingOut ? 'Saindo…' : 'Sair da conta'}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          disabled={formLocked || deleting}
+          className="link-danger center-link wide-out"
+        >
+          Excluir minha conta
+        </button>
+
+        {confirmDelete && (
+          <div
+            className="chave-modal-overlay"
+            role="presentation"
+            onClick={() => !deleting && setConfirmDelete(false)}
+          >
+            <div
+              className="chave-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-account-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 id="delete-account-title">Excluir sua conta?</h3>
+              <p className="sub">
+                Esta ação é <strong>definitiva</strong>. Você sai de todos os bolões e perde seus
+                palpites, cravadas e pontuação. Não dá para desfazer.
+              </p>
+              {isPasswordUser() ? (
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  className="input"
+                  style={{ marginTop: 12 }}
+                  placeholder="Digite sua senha para confirmar"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  disabled={deleting}
+                />
+              ) : (
+                <p className="sub" style={{ marginTop: 8, fontSize: 13 }}>
+                  Você confirmará sua identidade pelo Google na próxima etapa.
+                </p>
+              )}
+              <div className="chave-modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-ghost-gold"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Excluindo…' : 'Excluir conta'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

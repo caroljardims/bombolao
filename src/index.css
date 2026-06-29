@@ -94,6 +94,85 @@ a.lobby-card {
   color: var(--t-mid);
 }
 
+.lobby-card-wrap {
+  position: relative;
+}
+
+.lobby-card-wrap .lobby-card {
+  padding-right: 48px;
+}
+
+.lobby-card-arrow {
+  color: var(--t-mid);
+  display: inline-flex;
+}
+
+.lobby-card-menu-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--t-mid);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lobby-card-menu-btn:hover {
+  background: rgba(244, 198, 61, 0.16);
+  color: var(--gold-2);
+}
+
+.lobby-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+.lobby-menu {
+  position: absolute;
+  top: calc(50% + 18px);
+  right: 8px;
+  z-index: 31;
+  min-width: 170px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--gold-line);
+  background: var(--surface-2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.lobby-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  color: var(--t-hi);
+}
+
+.lobby-menu-item.danger {
+  color: var(--danger);
+}
+
+.lobby-menu-item.danger:hover {
+  background: rgba(255, 122, 107, 0.14);
+}
+
 .invite-row {
   display: flex;
   gap: 10px;

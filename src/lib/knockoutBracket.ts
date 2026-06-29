@@ -2,7 +2,7 @@ import type { ChaveData, KnockoutFase, KnockoutMatch, SlotRef } from './chave'
 import { computeGroupStandings } from './standings'
 import type { GroupLetter, GroupStanding } from './standings'
 import { getKickoffDate } from './dates'
-import { partidaEncerrada } from './scoring'
+import { apostasAbertas, partidaEncerrada } from './scoring'
 import type { Palpite, Partida } from './types'
 import {
   BRACKET_TEMPLATE,
@@ -17,6 +17,30 @@ const TBD: SlotRef = { tipo: 'placeholder', label: 'a definir' }
 export type ChavePicks = Record<string, string>
 /** Palpites flexíveis por fase. */
 export type ChaveFlexPicks = Partial<Record<KnockoutFase, ChavePicks>>
+
+/** Ids reservados para os dois picks pontuáveis da final. */
+export const CAMPEAO_PICK = 'final-campeao'
+export const VICE_PICK = 'final-vice'
+
+/**
+ * Total de picks de uma cravada completa: 16+8+4+2 (lados) + 3º + vice +
+ * campeão = 33. A final conta como dois (campeão e vice).
+ */
+export const TOTAL_PICKS_CRAVADA = BRACKET_TEMPLATE.length + 1
+
+/** Quantos picks o usuário já preencheu (campeão e vice contam separadamente). */
+export function contarPicksCravada(picks: ChavePicks): number {
+  let n = 0
+  for (const node of BRACKET_TEMPLATE) {
+    if (node.fase === 'final') {
+      if (picks[CAMPEAO_PICK]) n++
+      if (picks[VICE_PICK]) n++
+    } else if (picks[node.id]) {
+      n++
+    }
+  }
+  return n
+}
 
 /** Converte o rótulo de fase do sync (pt-BR) para a chave canônica. */
 export function faseFromLabel(label: string | undefined | null): KnockoutFase | null {
@@ -108,11 +132,21 @@ function realAdvancerOf(p: Partida | undefined): string | null {
   return null
 }
 
+/** Time eliminado no confronto real (o outro do jogo, dado quem avançou). */
+function realLoserOf(p: Partida | undefined, advancer: string | null): string | null {
+  if (!p || !advancer) return null
+  if (advancer === p.time_casa) return p.time_fora
+  if (advancer === p.time_fora) return p.time_casa
+  return null
+}
+
 export interface KnockoutEngine {
   /** Times reais/esperados (1º A, etc.) por nó. */
   realTeams: Map<string, { A: SlotRef; B: SlotRef }>
   /** Time que avançou de fato por nó (null enquanto indefinido). */
   realAdvancer: Map<string, string | null>
+  /** Time eliminado de fato por nó (null enquanto indefinido). */
+  realPerdedor: Map<string, string | null>
   /** Partida real associada por nó. */
   realPartida: Map<string, Partida | undefined>
   /** Apito do primeiro jogo de cada fase (para prazos). */
@@ -133,6 +167,7 @@ export function buildEngine(partidas: Partida[]): KnockoutEngine {
 
   const realTeams = new Map<string, { A: SlotRef; B: SlotRef }>()
   const realAdvancer = new Map<string, string | null>()
+  const realPerdedor = new Map<string, string | null>()
   const realPartida = new Map<string, Partida | undefined>()
 
   const teamFromFeed = (feed: BracketTemplateNode['feedA']): SlotRef => {
@@ -158,14 +193,24 @@ export function buildEngine(partidas: Partida[]): KnockoutEngine {
       let B: SlotRef
       let partida: Partida | undefined
       if (node.r32) {
-        const resolved = attachR32(
-          resolveR32Slot(node.r32.a, standings),
-          resolveR32Slot(node.r32.b, standings),
-          list,
-        )
-        A = resolved.A
-        B = resolved.B
-        partida = resolved.partida
+        // Bolões mata-mata gravam os 16-avos reais com id `r32-{no}` → casa
+        // direto, sem depender dos resultados da fase de grupos.
+        const no = node.r32.no
+        const direct = list.find((p) => p.id === `r32-${no}`)
+        if (direct) {
+          A = timeRef(direct.time_casa)
+          B = timeRef(direct.time_fora)
+          partida = direct
+        } else {
+          const resolved = attachR32(
+            resolveR32Slot(node.r32.a, standings),
+            resolveR32Slot(node.r32.b, standings),
+            list,
+          )
+          A = resolved.A
+          B = resolved.B
+          partida = resolved.partida
+        }
       } else {
         A = teamFromFeed(node.feedA)
         B = teamFromFeed(node.feedB)
@@ -173,9 +218,11 @@ export function buildEngine(partidas: Partida[]): KnockoutEngine {
         const bN = teamName(B)
         partida = aN && bN ? findPartida(list, aN, bN) : undefined
       }
+      const adv = realAdvancerOf(partida)
       realTeams.set(node.id, { A, B })
       realPartida.set(node.id, partida)
-      realAdvancer.set(node.id, realAdvancerOf(partida))
+      realAdvancer.set(node.id, adv)
+      realPerdedor.set(node.id, realLoserOf(partida, adv))
     }
   }
 
@@ -190,7 +237,7 @@ export function buildEngine(partidas: Partida[]): KnockoutEngine {
     primeiroKickoff.set(fase, earliest)
   }
 
-  return { realTeams, realAdvancer, realPartida, primeiroKickoff }
+  return { realTeams, realAdvancer, realPerdedor, realPartida, primeiroKickoff }
 }
 
 function side(team: string | null, A: SlotRef, B: SlotRef): 'A' | 'B' | null {
@@ -227,8 +274,9 @@ export function engineToResultado(engine: KnockoutEngine): ChaveData {
 export function engineToCravada(
   engine: KnockoutEngine,
   picks: ChavePicks,
-  opts: { editavel: boolean } = { editavel: false },
+  opts: { editavel: boolean; now?: Date } = { editavel: false },
 ): ChaveData {
+  const now = opts.now ?? new Date()
   const pickAdvancer = new Map<string, string | null>()
   const teamA = new Map<string, SlotRef>()
   const teamB = new Map<string, SlotRef>()
@@ -262,14 +310,33 @@ export function engineToCravada(
       teamA.set(node.id, A)
       teamB.set(node.id, B)
 
-      const picked = picks[node.id] ?? null
+      const partida = engine.realPartida.get(node.id)
+
+      // A final guarda o campeão num id reservado (final-campeao); o vice
+      // (final-vice) é o outro finalista, derivado automaticamente. Fallback para
+      // a chave antiga (`final`) para docs ainda não migrados.
+      const picked =
+        (node.fase === 'final' ? picks[CAMPEAO_PICK] ?? picks[node.id] : picks[node.id]) ?? null
       const pickedSide = side(picked, A, B)
-      pickAdvancer.set(node.id, pickedSide ? picked : null)
+      // Cascata: usa o pick do usuário; se o jogo já encerrou e ele não palpitou,
+      // propaga o vencedor REAL para destravar as fases seguintes (ele só não
+      // pontua por esse confronto).
+      let cascadeAdv: string | null = pickedSide ? picked : null
+      if (!cascadeAdv && partida && partidaEncerrada(partida)) {
+        cascadeAdv = engine.realAdvancer.get(node.id) ?? null
+      }
+      pickAdvancer.set(node.id, cascadeAdv)
 
       const m = baseMatch(node, A, B)
-      m.partida = engine.realPartida.get(node.id)
+      m.partida = partida
       m.selecionado = pickedSide
-      m.editavel = opts.editavel && teamName(A) !== null && teamName(B) !== null
+      // Cada confronto tem prazo próprio: jogos que já começaram (ou sem os dois
+      // times definidos) não podem mais ser palpitados.
+      m.editavel =
+        opts.editavel &&
+        teamName(A) !== null &&
+        teamName(B) !== null &&
+        (!partida || apostasAbertas(partida, now))
 
       const real = engine.realAdvancer.get(node.id) ?? null
       if (real && pickedSide) {

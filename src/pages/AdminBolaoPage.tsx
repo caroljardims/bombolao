@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { getDocs, query, where } from 'firebase/firestore'
+import { getDocs, query, updateDoc, where } from 'firebase/firestore'
 import { Icon } from '../components/ui'
+import { RegrasChaveEditor } from '../components/RegrasChaveEditor'
 import { useBolao } from '../contexts/BolaoContext'
 import { useAuth } from '../hooks/useAuth'
 import { criarConvite } from '../lib/joinBolao'
-import { convitesRef } from '../lib/paths'
-import type { Convite } from '../lib/types'
+import { bolaoDoc, convitesRef } from '../lib/paths'
+import { normalizeRegrasChave } from '../lib/regras'
+import type { Convite, RegrasChave } from '../lib/types'
 
 export function AdminBolaoPage() {
   const { user } = useAuth()
@@ -124,6 +126,22 @@ export function AdminBolaoPage() {
         </Link>
       </div>
 
+      {bolao?.modalidade === 'mata-mata' && (
+        <>
+          <header className="section-head plain" style={{ paddingTop: 28 }}>
+            <div>
+              <h2 style={{ fontSize: 20 }}>Regras do mata-mata</h2>
+              <p className="sub">Placar por jogo e pontos por fase (cravada e flexível).</p>
+            </div>
+          </header>
+          <ChaveRegrasSection
+            key={bolaoId}
+            bolaoId={bolaoId}
+            inicial={normalizeRegrasChave(bolao.regrasChave)}
+          />
+        </>
+      )}
+
       <header className="section-head plain" style={{ paddingTop: 28 }}>
         <div>
           <h2 style={{ fontSize: 20 }}>Convites ativos</h2>
@@ -151,6 +169,45 @@ export function AdminBolaoPage() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function ChaveRegrasSection({
+  bolaoId,
+  inicial,
+}: {
+  bolaoId: string
+  inicial: RegrasChave
+}) {
+  const [regras, setRegras] = useState<RegrasChave>(inicial)
+  const [saving, setSaving] = useState(false)
+  const dirty = JSON.stringify(regras) !== JSON.stringify(inicial)
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await updateDoc(bolaoDoc(bolaoId), { regrasChave: regras })
+      toast.success('Regras atualizadas! O ranking recalcula automaticamente.')
+    } catch {
+      toast.error('Não foi possível salvar as regras.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <RegrasChaveEditor value={regras} onChange={setRegras} defaultAdvanced />
+      <button
+        type="button"
+        className="btn btn-gold full"
+        style={{ marginTop: 12 }}
+        onClick={handleSave}
+        disabled={saving || !dirty}
+      >
+        {saving ? 'Salvando…' : dirty ? 'Salvar regras' : 'Salvo'}
+      </button>
     </div>
   )
 }

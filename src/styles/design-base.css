@@ -158,6 +158,9 @@ h1,h2,h3,h4,p{ margin:0; }
 .link-gold:hover{ color:var(--gold-2); }
 .link-muted{ color:var(--t-low); font-weight:600; font-size:15px; }
 .link-muted:hover{ color:var(--t-mid); }
+.link-danger{ background:none; border:none; cursor:pointer; color:var(--danger); font-weight:600; font-size:14px; }
+.link-danger:hover{ color:#ff9b8f; }
+.link-danger:disabled{ opacity:.5; cursor:not-allowed; }
 .center-link{ display:flex; margin:16px auto 2px; }
 
 /* ---------- Pills ---------- */

@@ -6,6 +6,7 @@ import {
   query,
 } from 'firebase/firestore'
 import { useBolao } from '../contexts/BolaoContext'
+import { normalizeRegrasChave } from '../lib/regras'
 import { buildLiveRanking, countPartidasAoVivo } from '../lib/liveRanking'
 import { partidaAoVivo } from '../lib/scoring'
 import { findProximaPartida, resolveJogosDoDia } from '../lib/nextPartida'
@@ -126,7 +127,10 @@ export function useLiveRanking() {
     }
   }, [bolaoId])
 
-  const regrasChave = bolao?.regrasChave
+  const regrasChave = useMemo(
+    () => (bolao?.regrasChave ? normalizeRegrasChave(bolao.regrasChave) : undefined),
+    [bolao?.regrasChave],
+  )
   const isMataMata = bolao?.modalidade === 'mata-mata' && !!regrasChave
 
   useEffect(() => {

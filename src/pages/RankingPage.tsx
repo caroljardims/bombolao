@@ -1,10 +1,52 @@
+import { useMemo, useState } from 'react'
 import { LoadingState } from '../components/LoadingState'
 import { NextGameBets } from '../components/NextGameBets'
-import { RankingCard } from '../components/RankingCard'
+import { RankingCard, type RankingView } from '../components/RankingCard'
 import { RankingRaceCharts } from '../components/RankingRaceCharts'
+import { useBolao } from '../contexts/BolaoContext'
 import { useLiveRanking } from '../hooks/useLiveRanking'
+import type { ParticipanteRanking } from '../lib/types'
+
+const TABS: { id: RankingView; label: string }[] = [
+  { id: 'geral', label: 'Geral' },
+  { id: 'tradicional', label: 'Tradicional' },
+  { id: 'eliminatorias', label: 'Eliminatórias' },
+  { id: 'cravada', label: 'Cravada' },
+]
+
+const METRIC: Record<RankingView, (p: ParticipanteRanking) => number> = {
+  geral: (p) => p.total_pontos,
+  tradicional: (p) => (p.pontos_placar ?? 0) + (p.pontos_flex ?? 0),
+  eliminatorias: (p) => (p.pontos_placar_elim ?? 0) + (p.pontos_flex ?? 0),
+  cravada: (p) => p.pontos_cravada ?? 0,
+}
+
+/** Re-ordena e re-posiciona o ranking pela métrica da visão (empates compartilham posição). */
+function rankByMetric(list: ParticipanteRanking[], view: RankingView): ParticipanteRanking[] {
+  const metric = METRIC[view]
+  const sorted = [...list].sort(
+    (a, b) =>
+      metric(b) - metric(a) ||
+      b.na_mosca - a.na_mosca ||
+      b.acerto_resultado - a.acerto_resultado ||
+      a.sem_aposta - b.sem_aposta,
+  )
+  let posicao = 0
+  let prev: number | null = null
+  return sorted.map((p, i) => {
+    const m = metric(p)
+    if (prev === null || m !== prev) {
+      posicao = i + 1
+      prev = m
+    }
+    return { ...p, posicao }
+  })
+}
 
 export function RankingPage() {
+  const { bolao } = useBolao()
+  const isMata = bolao?.modalidade === 'mata-mata'
+  const [view, setView] = useState<RankingView>('geral')
   const {
     ranking,
     loading,
@@ -16,6 +58,11 @@ export function RankingPage() {
     palpites,
     refresh,
   } = useLiveRanking()
+
+  const viewRanking = useMemo(
+    () => (isMata && view !== 'geral' ? rankByMetric(ranking, view) : ranking),
+    [ranking, view, isMata],
+  )
 
   async function handleRefresh() {
     await refresh()
@@ -51,6 +98,35 @@ export function RankingPage() {
             <h2>Ranking</h2>
           </header>
 
+          {isMata && (
+            <div className="rank-tabs" role="tablist">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={view === t.id}
+                  className={`rank-tab${view === t.id ? ' active' : ''}`}
+                  onClick={() => setView(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {isMata && (
+            <p className="rank-tab-hint">
+              {view === 'geral'
+                ? 'Soma de tudo: placar por jogo + flexível + cravada. Toque no card para ver o detalhe.'
+                : view === 'tradicional'
+                  ? 'Bolão tradicional: placar por jogo + flexível (sem a cravada).'
+                  : view === 'eliminatorias'
+                    ? 'Só as eliminatórias: placar por jogo + flexível do mata-mata (ignora grupos e cravada).'
+                    : 'Apenas os pontos da cravada (chave travada no início).'}
+            </p>
+          )}
+
           <div className="rank-legend">
             <span>
               <i className="s-e">●</i> Cravou
@@ -64,8 +140,8 @@ export function RankingPage() {
           </div>
 
           <div className="rank-list">
-            {ranking.map((p) => (
-              <RankingCard key={p.id} participante={p} />
+            {viewRanking.map((p) => (
+              <RankingCard key={p.id} participante={p} view={isMata ? view : 'geral'} />
             ))}
           </div>
         </section>

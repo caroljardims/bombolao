@@ -2,25 +2,22 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { LoadingState } from '../components/LoadingState'
+import { RegrasChaveEditor } from '../components/RegrasChaveEditor'
 import { useAuth } from '../hooks/useAuth'
 import { COMPETICOES, getCompeticaoTemplate, isCompeticaoTemplateId } from '../lib/competicoes'
+import { wc2026MataPartidas } from '../data/competicoes/wc2026Mata'
 import { criarBolao } from '../lib/criarBolao'
 import { DEFAULT_REGRAS, DEFAULT_REGRAS_CHAVE } from '../lib/regras'
 import { bolaoPath } from '../lib/paths'
-import { FASE_LABEL } from '../lib/chave'
 import type {
   AcessoBolao,
   CompeticaoId,
-  FaseChave,
   Modalidade,
   PartidaDraft,
-  PesosChave,
   RegrasChave,
 } from '../lib/types'
 
 type Step = 1 | 2
-
-const FASE_KEYS: FaseChave[] = ['r32', 'r16', 'qf', 'sf', 'final', 'terceiro']
 
 export function CriarBolaoPage() {
   const { user, loading } = useAuth()
@@ -34,14 +31,6 @@ export function CriarBolaoPage() {
   const [partidas, setPartidas] = useState<PartidaDraft[]>([])
   const [modalidade, setModalidade] = useState<Modalidade>('pontos')
   const [regrasChave, setRegrasChave] = useState<RegrasChave>(DEFAULT_REGRAS_CHAVE)
-  const [pesosAvancado, setPesosAvancado] = useState(false)
-
-  function setPeso(grupo: 'pesos_cravada' | 'pesos_flex', fase: FaseChave, valor: number) {
-    setRegrasChave((prev) => ({
-      ...prev,
-      [grupo]: { ...prev[grupo], [fase]: valor } as PesosChave,
-    }))
-  }
 
   const competicaoLabel =
     competicaoId !== '' ? COMPETICOES.find((c) => c.id === competicaoId)?.label ?? '' : ''
@@ -74,7 +63,8 @@ export function CriarBolaoPage() {
     if (!validateStep1() || !isCompeticaoTemplateId(competicaoId)) return
 
     const template = getCompeticaoTemplate(competicaoId)
-    setPartidas(template.partidas)
+    // Mata-mata começa nos 16-avos reais; pontos usa o campeonato inteiro.
+    setPartidas(modalidade === 'mata-mata' ? wc2026MataPartidas() : template.partidas)
     setStep(2)
   }
 
@@ -181,51 +171,7 @@ export function CriarBolaoPage() {
           </Field>
 
           {modalidade === 'mata-mata' && (
-            <div className="card" style={{ padding: '16px 18px' }}>
-              <label className="check-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input
-                  type="checkbox"
-                  checked={regrasChave.placarAtivo}
-                  onChange={(e) =>
-                    setRegrasChave((prev) => ({ ...prev, placarAtivo: e.target.checked }))
-                  }
-                />
-                <span>Ativar palpite de placar por jogo (conta só o tempo normal)</span>
-              </label>
-
-              <button
-                type="button"
-                className="link-gold"
-                style={{ marginTop: 12, display: 'inline-flex' }}
-                onClick={() => setPesosAvancado((v) => !v)}
-              >
-                {pesosAvancado ? '− Ocultar pesos' : '+ Ajustar pesos (avançado)'}
-              </button>
-
-              {pesosAvancado && (
-                <div style={{ marginTop: 12 }}>
-                  <p className="sub" style={{ fontSize: 13, marginBottom: 8 }}>
-                    Pontos por acerto de avançador em cada fase. Padrão dobra a cada fase; a chave
-                    cravada vale o dobro da flexível.
-                  </p>
-                  <div className="pesos-grid">
-                    <span className="pesos-head" />
-                    <span className="pesos-head">Cravada</span>
-                    <span className="pesos-head">Flexível</span>
-                    {FASE_KEYS.map((fase) => (
-                      <PesoRow
-                        key={fase}
-                        label={FASE_LABEL[fase]}
-                        cravada={regrasChave.pesos_cravada[fase]}
-                        flex={regrasChave.pesos_flex[fase]}
-                        onCravada={(v) => setPeso('pesos_cravada', fase, v)}
-                        onFlex={(v) => setPeso('pesos_flex', fase, v)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <RegrasChaveEditor value={regrasChave} onChange={setRegrasChave} />
           )}
 
           <button type="button" onClick={goToReview} className="btn btn-save full">
@@ -274,39 +220,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="field-label">{label}</span>
       {children}
     </label>
-  )
-}
-
-function PesoRow({
-  label,
-  cravada,
-  flex,
-  onCravada,
-  onFlex,
-}: {
-  label: string
-  cravada: number
-  flex: number
-  onCravada: (v: number) => void
-  onFlex: (v: number) => void
-}) {
-  return (
-    <>
-      <span className="pesos-label">{label}</span>
-      <input
-        type="number"
-        min={0}
-        className="input pesos-input"
-        value={cravada}
-        onChange={(e) => onCravada(Math.max(0, Number(e.target.value) || 0))}
-      />
-      <input
-        type="number"
-        min={0}
-        className="input pesos-input"
-        value={flex}
-        onChange={(e) => onFlex(Math.max(0, Number(e.target.value) || 0))}
-      />
-    </>
   )
 }

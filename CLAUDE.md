@@ -134,6 +134,9 @@ Badges no ranking (`StatTrio`): **Cravou** / **Acertou o resultado** / **Não ap
 - Combina WorldCup26 (`scripts/lib/worldcup26Api.ts`) e football-data.org
 - Se qualquer fonte reportar `FINISHED`/`AWARDED`, esse status vence `IN_PLAY`
 - Entre duas fontes ao vivo, prefere placar mais informativo
+- **Data UTC:** prefere a data terminada em `Z` (football-data) à do WorldCup26 (horário do estádio, naive) — jogos de madrugada BRT caíam no dia errado e quebravam o matching
+- **Etapa (`duration`):** propaga a mais avançada (`REGULAR` < `EXTRA_TIME` < `PENALTY_SHOOTOUT`); só a football-data informa
+- **Placar congelado no tempo regulamentar:** ao detectar `EXTRA_TIME`/`PENALTY_SHOOTOUT`, `buildPartidaPatch` mantém o placar dos 90 min e não grava gols da prorrogação (ainda grava `status_api`, `vencedor` e pênaltis)
 - Testes: `scripts/lib/mergeApiMatches.test.ts` (`npm test`)
 - Matching de partida: data + times, ou kickoff ±3h (fuso Brasília vs UTC)
 
@@ -150,7 +153,7 @@ Google Sign-In e e-mail/senha via Firebase Auth. Participantes legados vinculado
 ## Regras de negócio importantes
 
 - **Prazo para palpites:** 15 min antes do kickoff (BRT). Sem aposta = 0 pontos.
-- **Prorrogação:** vale placar ao final da prorrogação.
+- **Prorrogação/pênaltis:** a pontuação vale **apenas o tempo regulamentar (90 min)**. Gols na prorrogação e pênaltis **não** contam no placar (`gols_casa`/`gols_fora`). O sync congela o placar quando a API marca `EXTRA_TIME`/`PENALTY_SHOOTOUT`. Quem **avança** no mata-mata vem de `vencedor` (que considera prorrogação e pênaltis).
 - **Status de partida:** UI lê apenas `status_api` do Firestore; sync é responsável por gravar status correto das APIs.
 - **Scores:** inteiros 0–20.
 - **Cloud Functions** exigem plano Blaze.

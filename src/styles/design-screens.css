@@ -318,6 +318,7 @@
 
 /* ---------- Conta ---------- */
 .conta-screen .page,.conta-screen{ }
+.conta-cta{ margin:6px auto 16px; }
 .conta-card{ max-width:440px; margin:8px auto 0; padding:26px 26px 22px; }
 .conta-avatar{ display:flex; flex-direction:column; align-items:center; gap:12px; }
 .conta-photo{ width:108px; height:108px; border-radius:50%; object-fit:cover;
@@ -396,6 +397,7 @@
   .mt-name{ font-size:17px; }
   .mt-score{ font-size:26px; }
   .rank-row{ grid-template-columns:24px 34px 1fr auto; gap:10px; padding:11px 13px; }
+  .rank-row--exp{ grid-template-columns:24px 34px 1fr auto 18px; }
   .rank-row .stat-trio{ grid-column:2 / -1; justify-content:flex-start; margin-top:2px; gap:14px; }
   .rank-name{ font-size:15px; }
   .rank-pts{ font-size:18px; }
@@ -577,6 +579,42 @@ button.chave-slot.is-pickable:hover{
   letter-spacing:.01em;
 }
 
+/* Abas do ranking (Geral / Tradicional / Cravada) */
+.rank-tabs{
+  display:inline-flex; gap:4px; padding:4px; margin-bottom:10px;
+  background:var(--surface-2); border:1px solid var(--line-2); border-radius:12px;
+}
+.rank-tab{
+  border:none; background:transparent; cursor:pointer;
+  padding:7px 14px; border-radius:9px; font-size:13.5px; font-weight:700;
+  color:var(--t-mid); transition:background .15s, color .15s;
+}
+.rank-tab:hover{ color:var(--t-hi); }
+.rank-tab.active{ background:var(--gold-soft); color:var(--gold-2); }
+.rank-tab-hint{ color:var(--t-low); font-size:12.5px; margin:0 0 12px 2px; }
+
+/* Card colapsável do ranking */
+.rank-exp{ display:flex; flex-direction:column; }
+button.rank-row{ font:inherit; color:inherit; text-align:left; width:100%; }
+.rank-row--exp{ grid-template-columns:28px 40px 1fr auto 20px auto; cursor:pointer; }
+.rank-chev{ display:inline-flex; align-items:center; justify-content:center; color:var(--t-low); transition:transform .18s; }
+.rank-exp.open .rank-chev{ transform:rotate(180deg); }
+
+.rank-breakdown-panel{
+  margin-top:6px; padding:12px 16px;
+  background:var(--surface-2); border:1px solid var(--line-2); border-radius:14px;
+  display:flex; flex-direction:column; gap:2px;
+}
+.rb-row{ display:flex; align-items:center; justify-content:space-between; padding:6px 2px; font-size:14px; }
+.rb-row span{ color:var(--t-mid); }
+.rb-row b{ font-variant-numeric:tabular-nums; font-weight:700; }
+.rb-row.rb-dim{ opacity:.45; }
+.rb-total{ border-top:1px solid var(--line-2); margin-top:4px; padding-top:10px; }
+.rb-total span{ color:var(--t-hi); font-weight:700; }
+.rb-total b{ color:var(--gold-2); font-size:16px; }
+.rb-link{ margin-top:8px; align-self:flex-start; color:var(--gold); font-weight:700; font-size:13.5px; text-decoration:none; }
+.rb-link:hover{ color:var(--gold-2); }
+
 /* Toggle cravada/flex + status da chave */
 .chave-toggle{
   display:inline-flex;
@@ -613,6 +651,87 @@ button.chave-slot.is-pickable:hover{
 .chave-lock-actions{ display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
 .chave-lock-actions .btn:disabled{ opacity:.45; cursor:not-allowed; }
 .chave-lock-hint{ font-size:12px; color:var(--t-low); }
+
+.participante-cravada{ margin-bottom:22px; }
+.participante-cravada .section-head{ margin-bottom:8px; }
+.participante-cravada-hint{ margin:0 0 10px; font-size:12px; color:var(--t-low); }
+
+/* Barra de progresso dos picks da cravada */
+.cravada-progress{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.cravada-progress-track{
+  position:relative;
+  flex:1;
+  height:8px;
+  border-radius:99px;
+  background:rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.cravada-progress-fill{
+  position:absolute;
+  inset:0 auto 0 0;
+  border-radius:99px;
+  background:var(--gold, #f4c63d);
+  transition:width .25s ease;
+}
+.cravada-progress-label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--t-low);
+  white-space:nowrap;
+}
+.cravada-progress.is-complete .cravada-progress-label{ color:var(--gold, #f4c63d); }
+
+/* Seleção de campeão e vice */
+.cravada-final{
+  margin-bottom:16px;
+  padding:14px 16px;
+  border:1px solid rgba(244,198,61,.28);
+  border-radius:14px;
+  background:rgba(244,198,61,.05);
+}
+.cravada-final-title{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0 0 6px;
+  font-size:14px;
+}
+.cravada-final-title svg{ color:var(--gold, #f4c63d); }
+.cravada-final .sub{ margin:0 0 10px; }
+.cravada-final-opts{ display:flex; flex-wrap:wrap; gap:10px; }
+.cravada-final-opt{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:99px;
+  background:rgba(255,255,255,.03);
+  color:inherit;
+  cursor:pointer;
+  transition:border-color .15s ease, background .15s ease;
+}
+.cravada-final-opt:hover:not(:disabled){ border-color:rgba(244,198,61,.55); }
+.cravada-final-opt:disabled{ cursor:default; opacity:.7; }
+.cravada-final-name{ font-weight:600; font-size:14px; }
+.cravada-final-opt.is-champ{
+  border-color:var(--gold, #f4c63d);
+  background:rgba(244,198,61,.16);
+}
+.cravada-final-opt.is-vice{ border-color:rgba(244,198,61,.4); }
+.cravada-final-tag{
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color:var(--gold, #f4c63d);
+}
+.cravada-final-tag.is-vice{ color:var(--t-low); }
 
 /* Modal de confirmação para travar a cravada */
 .chave-modal-overlay{

@@ -9,12 +9,18 @@
  *   npx tsx scripts/check-chave-mata.ts
  */
 import { getCompeticaoTemplate } from '../src/lib/competicoes'
-import { buildEngine, engineToResultado } from '../src/lib/knockoutBracket'
+import {
+  CAMPEAO_PICK,
+  VICE_PICK,
+  buildEngine,
+  engineToResultado,
+} from '../src/lib/knockoutBracket'
 import { computeGroupStandings } from '../src/lib/standings'
+import { partidaEncerrada } from '../src/lib/scoring'
 import { BRACKET_TEMPLATE, FASE_ORDER } from '../src/data/chaveBracketTemplate'
 import { DEFAULT_REGRAS_CHAVE } from '../src/lib/regras'
 import type { KnockoutFase, SlotRef } from '../src/lib/chave'
-import type { Partida } from '../src/lib/types'
+import type { PesosChave, Partida } from '../src/lib/types'
 
 const FASE_LABEL_SYNC: Record<KnockoutFase, string> = {
   r32: '16 avos de final',
@@ -29,14 +35,22 @@ const FASE_LABEL_SYNC: Record<KnockoutFase, string> = {
 function scorePicks(
   picks: Record<string, string>,
   engine: ReturnType<typeof buildEngine>,
-  pesos: Record<KnockoutFase, number>,
+  pesos: PesosChave,
 ): number {
   let total = 0
   for (const node of BRACKET_TEMPLATE) {
+    if (node.fase === 'final') continue
     const pick = picks[node.id]
     if (!pick) continue
     const real = engine.realAdvancer.get(node.id) ?? null
     if (real && pick === real) total += pesos[node.fase]
+  }
+  const finalPartida = engine.realPartida.get('final')
+  if (finalPartida && partidaEncerrada(finalPartida)) {
+    const campeao = engine.realAdvancer.get('final') ?? null
+    const vice = engine.realPerdedor.get('final') ?? null
+    if (picks[CAMPEAO_PICK] && picks[CAMPEAO_PICK] === campeao) total += pesos.campeao
+    if (picks[VICE_PICK] && picks[VICE_PICK] === vice) total += pesos.vice
   }
   return total
 }
@@ -123,17 +137,27 @@ function main() {
   const campeao = engine.realAdvancer.get('final')
   console.log(`\nCampeão simulado: ${campeao ?? '(indefinido)'}`)
 
-  // Picks "perfeitos" = todos os avançadores reais.
+  // Picks "perfeitos" = todos os avançadores reais (final = campeão + vice).
   const perfeito: Record<string, string> = {}
   for (const node of BRACKET_TEMPLATE) {
+    if (node.fase === 'final') continue
     const adv = engine.realAdvancer.get(node.id)
     if (adv) perfeito[node.id] = adv
   }
+  const campeaoReal = engine.realAdvancer.get('final')
+  const viceReal = engine.realPerdedor.get('final')
+  if (campeaoReal) perfeito[CAMPEAO_PICK] = campeaoReal
+  if (viceReal) perfeito[VICE_PICK] = viceReal
 
   const pesosC = DEFAULT_REGRAS_CHAVE.pesos_cravada
   const pesosF = DEFAULT_REGRAS_CHAVE.pesos_flex
-  const esperadoC = BRACKET_TEMPLATE.reduce((s, n) => s + pesosC[n.fase], 0)
-  const esperadoF = BRACKET_TEMPLATE.reduce((s, n) => s + pesosF[n.fase], 0)
+  const somaPesos = (pesos: PesosChave): number =>
+    BRACKET_TEMPLATE.reduce(
+      (s, n) => (n.fase === 'final' ? s : s + pesos[n.fase]),
+      pesos.campeao + pesos.vice,
+    )
+  const esperadoC = somaPesos(pesosC)
+  const esperadoF = somaPesos(pesosF)
 
   const cravadaPerfeita = scorePicks(perfeito, engine, pesosC)
   const flexPerfeita = scorePicks(perfeito, engine, pesosF)

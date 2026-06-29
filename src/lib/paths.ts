@@ -37,6 +37,11 @@ export function palpiteChaveDoc(bolaoId: string, participanteId: string) {
   return doc(db, 'boloes', bolaoId, 'palpitesChave', participanteId)
 }
 
+/** Fonte pública de resultados oficiais (preenchida pelo sync) por competição. */
+export function resultadosOficiaisDoc(competicaoId: string) {
+  return doc(db, 'resultadosOficiais', competicaoId)
+}
+
 export function conviteDoc(code: string) {
   return doc(db, 'convites', code.toUpperCase())
 }

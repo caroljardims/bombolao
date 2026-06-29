@@ -1,25 +1,16 @@
 import { setDoc } from 'firebase/firestore'
 import { palpiteChaveDoc } from './paths'
 import type { KnockoutFase } from './chave'
-import type { ChaveFlexPicks, ChavePicks, KnockoutEngine } from './knockoutBracket'
+import type { ChavePicks, KnockoutEngine } from './knockoutBracket'
 import type { RegrasChave } from './types'
+import type { PalpiteChaveDoc } from './chavePalpiteModel'
 
-export interface CravadaPalpite {
-  picks: ChavePicks
-  travadoEm?: string | null
-}
-
-export interface FlexFasePalpite {
-  picks: ChavePicks
-  travadoEm?: string | null
-}
-
-export interface PalpiteChaveDoc {
-  participante_id: string
-  cravada?: CravadaPalpite
-  flex?: Partial<Record<KnockoutFase, FlexFasePalpite>>
-  atualizadoEm?: string
-}
+export type {
+  CravadaPalpite,
+  FlexFasePalpite,
+  PalpiteChaveDoc,
+} from './chavePalpiteModel'
+export { cravadaPicks, flexPicks } from './chavePalpiteModel'
 
 function nowIso(): string {
   return new Date().toISOString()
@@ -42,7 +33,7 @@ export async function saveCravada(
   )
 }
 
-/** Trava explicitamente a chave cravada (não impede a trava automática por prazo). */
+/** Trava explicitamente a chave cravada (ação definitiva, pode ocorrer a qualquer momento). */
 export async function lockCravada(bolaoId: string, participanteId: string): Promise<void> {
   await setDoc(
     palpiteChaveDoc(bolaoId, participanteId),
@@ -80,21 +71,13 @@ function deadlineFor(kickoff: Date | null, prazoMinutos: number): Date | null {
   return new Date(kickoff.getTime() - prazoMinutos * 60 * 1000)
 }
 
-/** Prazo da chave cravada: apito do 1º jogo dos 16-avos − prazo. */
-export function cravadaDeadline(engine: KnockoutEngine, regras: RegrasChave): Date | null {
-  return deadlineFor(engine.primeiroKickoff.get('r32') ?? null, regras.prazo_minutos)
-}
-
-export function cravadaAberta(
-  engine: KnockoutEngine,
-  regras: RegrasChave,
-  doc: PalpiteChaveDoc | null,
-  now: Date = new Date(),
-): boolean {
-  if (doc?.cravada?.travadoEm) return false
-  const deadline = cravadaDeadline(engine, regras)
-  if (!deadline) return true
-  return now < deadline
+/**
+ * A cravada fica aberta até o travamento manual. Não há prazo global: cada
+ * confronto tem seu próprio prazo (o apito do jogo) — ver `engineToCravada`.
+ * Quem não palpitar antes de um jogo começar apenas perde aqueles pontos.
+ */
+export function cravadaAberta(doc: PalpiteChaveDoc | null): boolean {
+  return !doc?.cravada?.travadoEm
 }
 
 /** Prazo de uma fase flexível: apito do 1º jogo da fase − prazo. */
@@ -117,20 +100,4 @@ export function flexFaseAberta(
   const deadline = flexFaseDeadline(engine, fase, regras)
   if (!deadline) return true
   return now < deadline
-}
-
-/** Picks atuais da cravada (vazio se não houver). */
-export function cravadaPicks(doc: PalpiteChaveDoc | null): ChavePicks {
-  return doc?.cravada?.picks ?? {}
-}
-
-/** Picks flexíveis por fase (vazio se não houver). */
-export function flexPicks(doc: PalpiteChaveDoc | null): ChaveFlexPicks {
-  const out: ChaveFlexPicks = {}
-  const flex = doc?.flex
-  if (!flex) return out
-  for (const fase of Object.keys(flex) as KnockoutFase[]) {
-    out[fase] = flex[fase]?.picks ?? {}
-  }
-  return out
 }

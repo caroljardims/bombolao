@@ -1,11 +1,13 @@
-import { getDoc, runTransaction, setDoc } from 'firebase/firestore'
+import { getDoc, getDocs, query, runTransaction, setDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from './firebase'
 import { generateInviteCode, normalizeInviteCode } from './inviteCode'
-import { claimLegacyParticipante } from './linkParticipante'
+import { claimLegacyParticipante, participanteDocsForUser } from './linkParticipante'
 import {
   bolaoDoc,
   conviteDoc,
   membrosiaDoc,
+  palpiteChaveDoc,
+  palpitesRef,
   participanteDoc,
 } from './paths'
 import type { Bolao, Convite } from './types'
@@ -175,6 +177,36 @@ export async function joinBolaoAberto(
       entrouEm: now,
     })
   })
+}
+
+/**
+ * Sai de um bolão: remove a membrosia (lobby), o(s) doc(s) de participante do
+ * usuário (uid + legados pelo e-mail), seus palpites de placar e o palpite de
+ * chave. A pontuação histórica do usuário é apagada — é uma saída definitiva.
+ */
+export async function leaveBolao(
+  bolaoId: string,
+  uid: string,
+  email: string | null | undefined,
+): Promise<void> {
+  const partRefs = await participanteDocsForUser(bolaoId, uid, email)
+  const ids = partRefs.map((r) => r.id)
+
+  const batch = writeBatch(db)
+
+  for (const id of ids) {
+    const palpitesSnap = await getDocs(
+      query(palpitesRef(bolaoId), where('participante_id', '==', id)),
+    )
+    for (const d of palpitesSnap.docs) batch.delete(d.ref)
+    batch.delete(participanteDoc(bolaoId, id))
+  }
+
+  // Palpite de chave fica sob o uid do dono (legados não têm cravada).
+  batch.delete(palpiteChaveDoc(bolaoId, uid))
+  batch.delete(membrosiaDoc(uid, bolaoId))
+
+  await batch.commit()
 }
 
 export async function criarConvite(

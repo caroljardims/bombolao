@@ -6,13 +6,32 @@ import { Icon } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useMembrosias } from '../hooks/useMembrosias'
 import { normalizeInviteCode } from '../lib/inviteCode'
+import { leaveBolao } from '../lib/joinBolao'
 import { bolaoPath } from '../lib/paths'
+import type { Membrosia } from '../lib/types'
 
 export function LobbyPage() {
   const { user, loading: authLoading } = useAuth()
   const { membrosias, loading: membrosiasLoading } = useMembrosias()
   const navigate = useNavigate()
   const [inviteInput, setInviteInput] = useState('')
+  const [menuFor, setMenuFor] = useState<string | null>(null)
+  const [confirmFor, setConfirmFor] = useState<Membrosia | null>(null)
+  const [leaving, setLeaving] = useState(false)
+
+  async function handleLeave(m: Membrosia) {
+    if (!user) return
+    setLeaving(true)
+    try {
+      await leaveBolao(m.bolaoId, user.uid, user.email)
+      toast.success(`Você saiu de ${m.nome}.`)
+      setConfirmFor(null)
+    } catch {
+      toast.error('Não foi possível sair do bolão. Tente novamente.')
+    } finally {
+      setLeaving(false)
+    }
+  }
 
   if (authLoading) return <LoadingState />
 
@@ -84,19 +103,89 @@ export function LobbyPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
             {membrosias.map((m) => (
-              <Link key={m.bolaoId} to={bolaoPath(m.bolaoId)} className="card lobby-card joined">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p className="lobby-card-title">{m.nome}</p>
-                    <p className="lobby-card-sub">{m.papel === 'admin' ? 'Administrador' : 'Membro'}</p>
+              <div key={m.bolaoId} className="lobby-card-wrap">
+                <Link to={bolaoPath(m.bolaoId)} className="card lobby-card joined">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <p className="lobby-card-title">{m.nome}</p>
+                      <p className="lobby-card-sub">{m.papel === 'admin' ? 'Administrador' : 'Membro'}</p>
+                    </div>
+                    <span className="lobby-card-arrow"><Icon.arrow s={18} /></span>
                   </div>
-                  <Icon.arrow s={18} />
-                </div>
-              </Link>
+                </Link>
+                <button
+                  type="button"
+                  className="lobby-card-menu-btn"
+                  aria-label="Opções do bolão"
+                  onClick={() => setMenuFor((cur) => (cur === m.bolaoId ? null : m.bolaoId))}
+                >
+                  <Icon.dots s={18} />
+                </button>
+                {menuFor === m.bolaoId && (
+                  <div className="lobby-menu" role="menu">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="lobby-menu-item danger"
+                      onClick={() => {
+                        setMenuFor(null)
+                        setConfirmFor(m)
+                      }}
+                    >
+                      <Icon.exit s={16} />
+                      Sair do bolão
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {menuFor && (
+        <div className="lobby-menu-backdrop" role="presentation" onClick={() => setMenuFor(null)} />
+      )}
+
+      {confirmFor && (
+        <div
+          className="chave-modal-overlay"
+          role="presentation"
+          onClick={() => !leaving && setConfirmFor(null)}
+        >
+          <div
+            className="chave-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leave-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="leave-title">Sair de {confirmFor.nome}?</h3>
+            <p className="sub">
+              Esta ação é <strong>definitiva</strong>: você perde seus palpites e sua pontuação neste
+              bolão. Para voltar, vai precisar de um novo convite.
+            </p>
+            <div className="chave-modal-actions">
+              <button
+                type="button"
+                className="btn btn-ghost-gold"
+                onClick={() => setConfirmFor(null)}
+                disabled={leaving}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => handleLeave(confirmFor)}
+                disabled={leaving}
+              >
+                {leaving ? 'Saindo…' : 'Sair do bolão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

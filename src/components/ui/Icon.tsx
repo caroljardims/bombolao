@@ -58,6 +58,24 @@ export const Icon = {
       <path d="M4 12.5 9 17.5 20 6.5" />
     </svg>
   ),
+  chevron: ({ s = 16, w = 2.2 }: IconProps) => (
+    <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  ),
+  dots: ({ s = 20 }: IconProps) => (
+    <svg viewBox="0 0 24 24" width={s} height={s} fill="currentColor" stroke="none">
+      <circle cx="12" cy="5" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="12" cy="19" r="1.6" />
+    </svg>
+  ),
+  exit: ({ s = 18, w = 2 }: IconProps) => (
+    <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" />
+      <path d="M10 12h10M16 7l5 5-5 5" />
+    </svg>
+  ),
   bracket: ({ s = 22, w = 1.9 }: IconProps) => (
     <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 5h4v5h3M3 14h4v5h3" />

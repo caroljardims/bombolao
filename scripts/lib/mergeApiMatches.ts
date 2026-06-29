@@ -149,6 +149,24 @@ function reliableUtcDate(a: ApiMatch, b: ApiMatch, fallback: string): string {
   return fallback
 }
 
+const DURATION_RANK: Record<string, number> = {
+  REGULAR: 1,
+  EXTRA_TIME: 2,
+  PENALTY_SHOOTOUT: 3,
+}
+
+/**
+ * Etapa mais avançada entre as fontes (REGULAR < EXTRA_TIME < PENALTY_SHOOTOUT).
+ * Se a football-data marca prorrogação/pênaltis, isso prevalece sobre o WorldCup26
+ * (que não informa etapa) — usado pelo sync para congelar o placar no tempo normal.
+ */
+function mergeDuration(a?: string, b?: string): string | undefined {
+  const ra = a ? (DURATION_RANK[a] ?? 0) : 0
+  const rb = b ? (DURATION_RANK[b] ?? 0) : 0
+  if (ra === 0 && rb === 0) return a ?? b
+  return ra >= rb ? a : b
+}
+
 /**
  * Entre duas fontes para o mesmo jogo, status finalizado (FINISHED/AWARDED) sempre vence.
  */
@@ -178,7 +196,11 @@ export function mergeApiMatchPair(a: ApiMatch, b: ApiMatch): ApiMatch {
         : withFallbackWinner(b, a)
   }
 
-  return { ...result, utcDate: reliableUtcDate(a, b, result.utcDate) }
+  return {
+    ...result,
+    utcDate: reliableUtcDate(a, b, result.utcDate),
+    score: { ...result.score, duration: mergeDuration(a.score.duration, b.score.duration) },
+  }
 }
 
 export function mergeApiMatches(...groups: ApiMatch[][]): ApiMatch[] {
