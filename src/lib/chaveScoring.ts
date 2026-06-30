@@ -85,12 +85,19 @@ export function scoreFlex(
   return total
 }
 
+/** A cravada só pontua depois de travada (sem `travadoEm`, vale 0). */
+export function cravadaTravada(doc: PalpiteChaveDoc | null): boolean {
+  return !!doc?.cravada?.travadoEm
+}
+
 export function scoreChave(
   doc: PalpiteChaveDoc | null,
   engine: KnockoutEngine,
   regras: RegrasChave,
 ): ChaveScoreBreakdown {
-  const cravada = scoreCravada(cravadaPicks(doc), engine, regras.pesos_cravada)
+  const cravada = cravadaTravada(doc)
+    ? scoreCravada(cravadaPicks(doc), engine, regras.pesos_cravada)
+    : 0
   const flex = scoreFlex(flexPicks(doc), engine, regras.pesos_flex)
   return { cravada, flex, total: cravada + flex }
 }

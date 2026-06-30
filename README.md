@@ -92,7 +92,7 @@ total = placar por jogo + cravada + flexível
 ```
 
 1. **Placar por jogo** — a mesma pontuação da tabela acima (opcional, ligável no Admin). Conta só o tempo normal.
-2. **Cravada** — o participante trava a chave inteira logo no começo (antes dos 16-avos). Pontua por **acertar quem avança** em cada confronto, com o peso da fase.
+2. **Cravada** — o participante trava a chave inteira logo no começo (antes dos 16-avos). Pontua por **acertar quem avança** em cada confronto, com o peso da fase. **A cravada só começa a pontuar depois de travada** — preencher sem travar não rende pontos.
 3. **Flexível** — palpita o avançador **fase a fase** (cada fase abre quando a anterior termina). Também pontua por acertar quem avança; como há mais informação, vale ~metade da cravada.
 
 As três frentes **somam** — no mesmo jogo dá pra pontuar por placar, cravada e flexível ao mesmo tempo. Cravada e flexível dependem só de **quem avança**, não do placar.
@@ -110,7 +110,7 @@ Pesos padrão por fase (ajustáveis no Admin → *Regras do mata-mata*):
 | Campeão | 40 | 20 |
 
 - **Campeão** e **vice** são picks separados (pontuam só com a final encerrada).
-- A **cravada** pode ser travada a qualquer momento; cada confronto também tem prazo próprio (o apito do jogo). Quem não palpitar antes de um jogo começar só perde os pontos daquele confronto — o resultado real flui adiante para destravar as fases seguintes.
+- A **cravada** pode ser travada a qualquer momento, mas **só pontua a partir do travamento**. Cada confronto também tem prazo próprio (o apito do jogo): quem não palpitar antes de um jogo começar só perde os pontos daquele confronto — o resultado real flui adiante para destravar as fases seguintes.
 
 ## Sync de placares
 
