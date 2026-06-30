@@ -56,6 +56,14 @@ export function extractRegularScore(match: ApiMatch): { home: number; away: numb
   return null
 }
 
+/** True quando a API traz o bloco `regularTime` (placar oficial dos 90 min). */
+export function hasRegularTimeScore(match: ApiMatch): boolean {
+  const rt = match.score.regularTime
+  return (
+    rt?.home !== null && rt?.home !== undefined && rt?.away !== null && rt?.away !== undefined
+  )
+}
+
 export function extractPenalties(match: ApiMatch): { home: number; away: number } | null {
   const pen = match.score.penalties
   if (pen?.home !== null && pen?.home !== undefined && pen?.away !== null && pen?.away !== undefined) {

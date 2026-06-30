@@ -16,6 +16,7 @@ import {
   extractPenalties,
   extractRegularScore,
   extractVencedor,
+  hasRegularTimeScore,
   isFinalApiStatus,
   mergeApiMatches,
 } from './lib/mergeApiMatches'
@@ -250,13 +251,18 @@ function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date(
   const score = extractRegularScore(apiMatch)
   const status_api = apiUpdatable ? apiMatch.status : 'IN_PLAY'
 
-  // Pontuação vale só o tempo regulamentar: quando a API marca prorrogação/pênaltis,
-  // congelamos o placar já gravado (dos 90 min) e não sobrescrevemos com gols da
-  // prorrogação. Quem avança na chave continua vindo de `vencedor` (que considera tudo).
+  // Pontuação vale só o tempo regulamentar. O placar dos 90 min é confiável quando a
+  // API separa o bloco `regularTime` OU quando o jogo já encerrou (aí o placar
+  // regulamentar/decisivo da API é definitivo — inclusive corrige um placar de
+  // prorrogação gravado ao vivo por engano). Só congelamos o placar já gravado
+  // enquanto o jogo está AO VIVO e não dá pra isolar o tempo normal, evitando
+  // sobrescrever com o fullTime (que inclui a prorrogação). Quem avança vem de
+  // `vencedor`, que considera prorrogação/pênaltis.
   const beyondRegular =
     apiMatch.score.duration === 'EXTRA_TIME' || apiMatch.score.duration === 'PENALTY_SHOOTOUT'
   const jaTemPlacar = partida.gols_casa !== null && partida.gols_fora !== null
-  const congelarPlacar = beyondRegular && jaTemPlacar
+  const podeUsarRegular = hasRegularTimeScore(apiMatch) || isFinalApiStatus(apiMatch.status)
+  const congelarPlacar = beyondRegular && jaTemPlacar && !podeUsarRegular
 
   if (score && !congelarPlacar) {
     const base: PartidaPatch = { gols_casa: score.home, gols_fora: score.away, status_api }
