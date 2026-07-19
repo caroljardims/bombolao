@@ -1,4 +1,4 @@
-import { normalizeTeam } from './teamMatch'
+import { canonicalTeamKey } from './teamMatch'
 import type { ApiMatch } from './worldcup26Api'
 
 const FINAL_API_STATUSES = new Set(['FINISHED', 'AWARDED'])
@@ -138,7 +138,7 @@ function liveMatchQuality(match: ApiMatch): number {
 }
 
 function apiMatchKey(match: ApiMatch): string {
-  const names = [normalizeTeam(match.homeTeam.name), normalizeTeam(match.awayTeam.name)].sort()
+  const names = [canonicalTeamKey(match.homeTeam.name), canonicalTeamKey(match.awayTeam.name)].sort()
   return names.join('|')
 }
 

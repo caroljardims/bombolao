@@ -15,6 +15,19 @@ export function normalizeTeam(name: string): string {
     .replace(/[^a-z0-9]/g, '')
 }
 
+/** Chave canônica p/ merge de APIs (ex.: "Cape Verde Islands" → caboverde). */
+export function canonicalTeamKey(name: string): string {
+  const n = normalizeTeam(name)
+  for (const [key, variants] of Object.entries(aliases)) {
+    const candidates = [key, ...variants.map(normalizeTeam)]
+    for (const c of candidates) {
+      if (c === n) return key
+      if (c.length >= 4 && n.length >= 4 && (n.includes(c) || c.includes(n))) return key
+    }
+  }
+  return n
+}
+
 function apiTeamNames(api: { name: string; shortName?: string; tla?: string }): string[] {
   return [api.name, api.shortName, api.tla].filter((n): n is string => Boolean(n))
 }

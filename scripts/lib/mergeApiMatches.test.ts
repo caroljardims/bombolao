@@ -102,6 +102,19 @@ describe('mergeApiMatchPair', () => {
     assert.deepEqual(extractRegularScore(merged), { home: 1, away: 1 })
   })
 
+  it('Cape Verde vs Cape Verde Islands mescla no mesmo jogo (90 min)', () => {
+    const wc26 = match('Argentina', 'Cape Verde', 'FINISHED', { home: 3, away: 2 })
+    const fd = match('Argentina', 'Cape Verde Islands', 'FINISHED', { home: 3, away: 2 })
+    fd.score.duration = 'EXTRA_TIME'
+    fd.score.regularTime = { home: 1, away: 1 }
+    fd.score.extraTime = { home: 2, away: 1 }
+    fd.score.winner = 'HOME_TEAM'
+
+    const merged = mergeApiMatches([wc26], [fd])
+    assert.equal(merged.length, 1)
+    assert.deepEqual(extractRegularScore(merged[0]), { home: 1, away: 1 })
+  })
+
   it('EXTRA_TIME sem regularTime: deriva 90 min via fullTime − extraTime', () => {
     const fd = match('Spain', 'Argentina', 'FINISHED', { home: 1, away: 0 })
     fd.score.duration = 'EXTRA_TIME'
