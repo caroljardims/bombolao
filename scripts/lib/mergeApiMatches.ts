@@ -37,31 +37,64 @@ export function extractApiScore(match: ApiMatch): { home: number; away: number }
   return null
 }
 
-/**
- * Placar do tempo normal (90min): prefere `regularTime`, cai pra `fullTime` (jogos de
- * grupo só trazem fullTime, que já é o 90min) e por fim `halfTime`.
- */
-export function extractRegularScore(match: ApiMatch): { home: number; away: number } | null {
-  const blocks = [match.score.regularTime, match.score.fullTime, match.score.halfTime]
-  for (const block of blocks) {
-    if (
-      block?.home !== null &&
-      block?.home !== undefined &&
-      block?.away !== null &&
-      block?.away !== undefined
-    ) {
-      return { home: block.home, away: block.away }
-    }
+function scoreBlock(
+  block: { home: number | null; away: number | null } | undefined,
+): { home: number; away: number } | null {
+  if (
+    block?.home !== null &&
+    block?.home !== undefined &&
+    block?.away !== null &&
+    block?.away !== undefined
+  ) {
+    return { home: block.home, away: block.away }
   }
   return null
 }
 
+/**
+ * Quando a football-data marca prorrogação mas deixa `regularTime` nulo, o placar
+ * dos 90 min é `fullTime − extraTime` (ex.: final 1×0 na PR com extraTime 1×0 → 0×0).
+ */
+function deriveRegularFromExtraTime(match: ApiMatch): { home: number; away: number } | null {
+  const full = scoreBlock(match.score.fullTime)
+  const et = scoreBlock(match.score.extraTime)
+  if (!full || !et) return null
+  const home = full.home - et.home
+  const away = full.away - et.away
+  if (home < 0 || away < 0) return null
+  return { home, away }
+}
+
+/** True se o jogo foi (ou está) além dos 90 min — inclusive quando a API erra o `duration`. */
+export function isBeyondRegularTime(match: ApiMatch): boolean {
+  if (match.score.duration === 'EXTRA_TIME' || match.score.duration === 'PENALTY_SHOOTOUT') {
+    return true
+  }
+  // football-data às vezes devolve duration=REGULAR com extraTime preenchido (ex.: final 2026).
+  return scoreBlock(match.score.extraTime) !== null
+}
+
+/**
+ * Placar do tempo normal (90min): prefere `regularTime`. Se a API só trouxer
+ * `extraTime` + `fullTime`, deriva os 90 min. Só usa `fullTime` direto quando o
+ * jogo não foi para prorrogação/pênaltis (aí fullTime inclui gols extras).
+ */
+export function extractRegularScore(match: ApiMatch): { home: number; away: number } | null {
+  const rt = scoreBlock(match.score.regularTime)
+  if (rt) return rt
+
+  // Mesmo com duration=REGULAR, se há bloco extraTime o fullTime inclui a PR.
+  const derived = deriveRegularFromExtraTime(match)
+  if (derived) return derived
+
+  if (isBeyondRegularTime(match)) return null
+
+  return scoreBlock(match.score.fullTime) ?? scoreBlock(match.score.halfTime)
+}
+
 /** True quando a API traz o bloco `regularTime` (placar oficial dos 90 min). */
 export function hasRegularTimeScore(match: ApiMatch): boolean {
-  const rt = match.score.regularTime
-  return (
-    rt?.home !== null && rt?.home !== undefined && rt?.away !== null && rt?.away !== undefined
-  )
+  return scoreBlock(match.score.regularTime) !== null
 }
 
 export function extractPenalties(match: ApiMatch): { home: number; away: number } | null {
@@ -113,33 +146,44 @@ function isValidApiMatch(match: ApiMatch): boolean {
   return Boolean(match.homeTeam?.name && match.awayTeam?.name)
 }
 
-/** Completa winner/pênaltis do `primary` a partir do `fallback` quando faltarem. */
-function withFallbackWinner(primary: ApiMatch, fallback: ApiMatch): ApiMatch {
-  const needsWinner = primary.score.winner === null || primary.score.winner === undefined
-  const needsPenalties = !extractPenalties(primary)
-  if (!needsWinner && !needsPenalties) return primary
-
+/** Completa winner/pênaltis/regularTime/extraTime do `fallback` quando faltarem no `primary`. */
+function enrichFromFallback(primary: ApiMatch, fallback: ApiMatch): ApiMatch {
   const score = { ...primary.score }
-  if (needsWinner && fallback.score.winner !== null && fallback.score.winner !== undefined) {
-    score.winner = fallback.score.winner
+
+  if (score.winner === null || score.winner === undefined) {
+    if (fallback.score.winner !== null && fallback.score.winner !== undefined) {
+      score.winner = fallback.score.winner
+    }
   }
-  if (needsPenalties) {
+
+  if (!extractPenalties({ ...primary, score })) {
     const pen = extractPenalties(fallback)
     if (pen) score.penalties = { home: pen.home, away: pen.away }
   }
+
+  if (!hasRegularTimeScore({ ...primary, score }) && hasRegularTimeScore(fallback)) {
+    score.regularTime = fallback.score.regularTime
+  }
+
+  if (!scoreBlock(score.extraTime) && scoreBlock(fallback.score.extraTime)) {
+    score.extraTime = fallback.score.extraTime
+  }
+
+  score.duration = mergeDuration(score.duration, fallback.score.duration)
+
   return { ...primary, score }
 }
 
 /** Mescla placar de `fallback` quando `primary` é final mas sem score na API. */
 function withFallbackScore(primary: ApiMatch, fallback: ApiMatch): ApiMatch {
-  const withWinner = withFallbackWinner(primary, fallback)
-  if (extractApiScore(withWinner)) return withWinner
+  const enriched = enrichFromFallback(primary, fallback)
+  if (extractApiScore(enriched)) return enriched
   const fallbackScore = extractApiScore(fallback)
-  if (!fallbackScore) return withWinner
+  if (!fallbackScore) return enriched
   return {
-    ...withWinner,
+    ...enriched,
     score: {
-      ...withWinner.score,
+      ...enriched.score,
       fullTime: { home: fallbackScore.home, away: fallbackScore.away },
     },
   }
@@ -190,18 +234,18 @@ export function mergeApiMatchPair(a: ApiMatch, b: ApiMatch): ApiMatch {
   } else if (aFinal && bFinal) {
     const scoreA = extractApiScore(a)
     const scoreB = extractApiScore(b)
-    if (scoreA && !scoreB) result = withFallbackWinner(a, b)
-    else if (scoreB && !scoreA) result = withFallbackWinner(b, a)
+    if (scoreA && !scoreB) result = enrichFromFallback(a, b)
+    else if (scoreB && !scoreA) result = enrichFromFallback(b, a)
     else
       result =
         liveMatchQuality(a) >= liveMatchQuality(b)
-          ? withFallbackWinner(a, b)
-          : withFallbackWinner(b, a)
+          ? enrichFromFallback(a, b)
+          : enrichFromFallback(b, a)
   } else {
     result =
       liveMatchQuality(a) >= liveMatchQuality(b)
-        ? withFallbackWinner(a, b)
-        : withFallbackWinner(b, a)
+        ? enrichFromFallback(a, b)
+        : enrichFromFallback(b, a)
   }
 
   return {

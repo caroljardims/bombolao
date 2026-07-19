@@ -18,6 +18,8 @@ export interface ApiMatch {
     fullTime?: { home: number | null; away: number | null }
     regularTime?: { home: number | null; away: number | null }
     halfTime?: { home: number | null; away: number | null }
+    /** Gols só na prorrogação (football-data). Usado para derivar o placar dos 90 min. */
+    extraTime?: { home: number | null; away: number | null }
     penalties?: { home: number | null; away: number | null }
   }
   lastUpdated?: string

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
   extractApiScore,
+  extractRegularScore,
   isFinalApiStatus,
   isLiveApiStatus,
   mergeApiMatchPair,
@@ -87,6 +88,45 @@ describe('mergeApiMatchPair', () => {
 
     assert.equal(mergeApiMatchPair(wc26, fd).score.duration, 'EXTRA_TIME')
     assert.equal(mergeApiMatchPair(fd, wc26).score.duration, 'EXTRA_TIME')
+  })
+
+  it('WorldCup26 com placar final + football-data com regularTime → 90 min corretos', () => {
+    const wc26 = match('Argentina', 'Cape Verde', 'FINISHED', { home: 3, away: 2 })
+    const fd = match('Argentina', 'Cape Verde', 'FINISHED', { home: 3, away: 2 })
+    fd.score.duration = 'EXTRA_TIME'
+    fd.score.regularTime = { home: 1, away: 1 }
+    fd.score.winner = 'HOME_TEAM'
+
+    const merged = mergeApiMatchPair(wc26, fd)
+    assert.equal(merged.score.duration, 'EXTRA_TIME')
+    assert.deepEqual(extractRegularScore(merged), { home: 1, away: 1 })
+  })
+
+  it('EXTRA_TIME sem regularTime: deriva 90 min via fullTime − extraTime', () => {
+    const fd = match('Spain', 'Argentina', 'FINISHED', { home: 1, away: 0 })
+    fd.score.duration = 'EXTRA_TIME'
+    fd.score.regularTime = { home: null, away: null }
+    fd.score.extraTime = { home: 1, away: 0 }
+    fd.score.winner = 'HOME_TEAM'
+
+    assert.deepEqual(extractRegularScore(fd), { home: 0, away: 0 })
+
+    const wc26 = match('Spain', 'Argentina', 'FINISHED', { home: 1, away: 0 })
+    const merged = mergeApiMatchPair(wc26, fd)
+    assert.equal(merged.score.duration, 'EXTRA_TIME')
+    assert.deepEqual(extractRegularScore(merged), { home: 0, away: 0 })
+  })
+
+  it('duration=REGULAR com extraTime preenchido ainda isola os 90 min', () => {
+    // football-data errou o duration na final 2026 (marcou REGULAR com gol na PR).
+    const fd = match('Spain', 'Argentina', 'FINISHED', { home: 1, away: 0 })
+    fd.score.duration = 'REGULAR'
+    fd.score.regularTime = { home: null, away: null }
+    fd.score.extraTime = { home: 1, away: 0 }
+    fd.score.halfTime = { home: 0, away: 0 }
+    fd.score.winner = 'HOME_TEAM'
+
+    assert.deepEqual(extractRegularScore(fd), { home: 0, away: 0 })
   })
 })
 

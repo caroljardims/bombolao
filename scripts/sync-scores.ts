@@ -16,11 +16,12 @@ import {
   extractPenalties,
   extractRegularScore,
   extractVencedor,
-  hasRegularTimeScore,
+  isBeyondRegularTime,
   isFinalApiStatus,
   mergeApiMatches,
 } from './lib/mergeApiMatches'
-import { teamsMatch } from './lib/teamMatch'
+import { findMatchingPartida } from './lib/partidaMatch'
+import { isPlaceholderTeam, resolveTeamDisplay } from './lib/footballData'
 import { fetchWorldCup26Matches, type ApiMatch } from './lib/worldcup26Api'
 import { wc2026MataPartidas } from '../src/data/competicoes/wc2026Mata'
 
@@ -53,6 +54,7 @@ interface ApiMatchFromFootballData {
     fullTime?: { home: number | null; away: number | null }
     regularTime?: { home: number | null; away: number | null }
     halfTime?: { home: number | null; away: number | null }
+    extraTime?: { home: number | null; away: number | null }
     penalties?: { home: number | null; away: number | null }
   }
 }
@@ -121,10 +123,6 @@ function initAdmin() {
   )
 }
 
-function parsePartidaDate(utcDate: string): string {
-  return utcDate.slice(0, 10)
-}
-
 async function fetchFootballDataMatches(): Promise<ApiMatch[]> {
   const token = process.env.FOOTBALL_DATA_TOKEN
   const competition = process.env.FOOTBALL_DATA_COMPETITION ?? 'WC'
@@ -167,29 +165,6 @@ async function fetchApiMatches(): Promise<ApiMatch[]> {
   return merged
 }
 
-function findMatchingPartida(partidas: Partida[], apiMatch: ApiMatch): Partida | undefined {
-  const apiDate = parsePartidaDate(apiMatch.utcDate)
-  const apiKickoff = new Date(apiMatch.utcDate).getTime()
-
-  const byDate = partidas.find(
-    (p) =>
-      p.data === apiDate &&
-      teamsMatch(p.time_casa, apiMatch.homeTeam) &&
-      teamsMatch(p.time_fora, apiMatch.awayTeam),
-  )
-  if (byDate) return byDate
-
-  // UTC pode cair no dia seguinte ao calendário em Brasília (ex.: 23h BRT → 02h UTC).
-  return partidas.find((p) => {
-    if (!teamsMatch(p.time_casa, apiMatch.homeTeam) || !teamsMatch(p.time_fora, apiMatch.awayTeam)) {
-      return false
-    }
-    if (!Number.isFinite(apiKickoff)) return false
-    const kickoff = getKickoffDate(p).getTime()
-    return Math.abs(kickoff - apiKickoff) <= 3 * 60 * 60 * 1000
-  })
-}
-
 function isWithinLiveWindow(partida: Partida, now = new Date()): boolean {
   const elapsed = now.getTime() - getKickoffDate(partida).getTime()
   return elapsed >= 0 && elapsed <= LIVE_WINDOW_MS
@@ -210,15 +185,36 @@ function resolveStatusApi(partida: Partida, apiStatus: string, now = new Date())
 type PartidaPatch = {
   gols_casa?: number
   gols_fora?: number
-  status_api: string
+  status_api?: string
+  time_casa?: string
+  time_fora?: string
   vencedor?: 'casa' | 'fora' | null
   penaltis_casa?: number | null
   penaltis_fora?: number | null
 }
 
+/** Preenche "A definir" quando a API já nomeou os finalistas. */
+function applyTeamNames(patch: PartidaPatch, partida: Partida, apiMatch: ApiMatch): PartidaPatch {
+  const home = resolveTeamDisplay(apiMatch.homeTeam)
+  const away = resolveTeamDisplay(apiMatch.awayTeam)
+  if (!home || !away) return patch
+
+  const next = { ...patch }
+  let changed = false
+  if (isPlaceholderTeam(partida.time_casa) && home !== partida.time_casa) {
+    next.time_casa = home
+    changed = true
+  }
+  if (isPlaceholderTeam(partida.time_fora) && away !== partida.time_fora) {
+    next.time_fora = away
+    changed = true
+  }
+  return changed ? next : patch
+}
+
 /** Acrescenta vencedor/pênaltis ao patch quando o jogo encerrou (mata-mata). */
 function applyKnockoutResult(patch: PartidaPatch, partida: Partida, apiMatch: ApiMatch): PartidaPatch {
-  if (!isFinalApiStatus(patch.status_api)) return patch
+  if (!patch.status_api || !isFinalApiStatus(patch.status_api)) return patch
 
   const vencedor = extractVencedor(apiMatch)
   const penalties = extractPenalties(apiMatch)
@@ -246,40 +242,60 @@ function buildPartidaPatch(partida: Partida, apiMatch: ApiMatch, now = new Date(
   const apiUpdatable = UPDATABLE_STATUS.has(apiMatch.status)
   const inferredLive = resolvedStatus === 'IN_PLAY' && PENDING_API_STATUS.has(apiMatch.status)
 
-  if (!apiUpdatable && !inferredLive) return null
+  let patch: PartidaPatch = {}
 
-  const score = extractRegularScore(apiMatch)
-  const status_api = apiUpdatable ? apiMatch.status : 'IN_PLAY'
+  if (apiUpdatable || inferredLive) {
+    const score = extractRegularScore(apiMatch)
+    const status_api = apiUpdatable ? apiMatch.status : 'IN_PLAY'
 
-  // Pontuação vale só o tempo regulamentar. O placar dos 90 min é confiável quando a
-  // API separa o bloco `regularTime` OU quando o jogo já encerrou (aí o placar
-  // regulamentar/decisivo da API é definitivo — inclusive corrige um placar de
-  // prorrogação gravado ao vivo por engano). Só congelamos o placar já gravado
-  // enquanto o jogo está AO VIVO e não dá pra isolar o tempo normal, evitando
-  // sobrescrever com o fullTime (que inclui a prorrogação). Quem avança vem de
-  // `vencedor`, que considera prorrogação/pênaltis.
-  const beyondRegular =
-    apiMatch.score.duration === 'EXTRA_TIME' || apiMatch.score.duration === 'PENALTY_SHOOTOUT'
-  const jaTemPlacar = partida.gols_casa !== null && partida.gols_fora !== null
-  const podeUsarRegular = hasRegularTimeScore(apiMatch) || isFinalApiStatus(apiMatch.status)
-  const congelarPlacar = beyondRegular && jaTemPlacar && !podeUsarRegular
+    // Pontuação vale só o tempo regulamentar. O placar dos 90 min vem de
+    // `regularTime` ou, na football-data, de `fullTime − extraTime`. Só
+    // congelamos o placar já gravado enquanto o jogo está AO VIVO e a API
+    // ainda não isola o tempo normal (evita gravar o fullTime com gols da PR).
+    // Quem avança vem de `vencedor`, que considera prorrogação/pênaltis.
+    const beyondRegular = isBeyondRegularTime(apiMatch)
+    const jaTemPlacar = partida.gols_casa !== null && partida.gols_fora !== null
+    const congelarPlacar = beyondRegular && jaTemPlacar && !score
 
-  if (score && !congelarPlacar) {
-    const base: PartidaPatch = { gols_casa: score.home, gols_fora: score.away, status_api }
-    const patch = applyKnockoutResult(base, partida, apiMatch)
+    if (score && !congelarPlacar) {
+      patch = { gols_casa: score.home, gols_fora: score.away, status_api }
+    } else {
+      patch = { status_api }
+    }
+    patch = applyKnockoutResult(patch, partida, apiMatch)
+  }
+
+  patch = applyTeamNames(patch, partida, apiMatch)
+
+  const beforeTeams = { ...patch }
+  delete beforeTeams.time_casa
+  delete beforeTeams.time_fora
+  const onlyTeams =
+    (patch.time_casa !== undefined || patch.time_fora !== undefined) &&
+    Object.keys(beforeTeams).length === 0
+
+  if (onlyTeams) return patch
+
+  if (!apiUpdatable && !inferredLive && !patch.time_casa && !patch.time_fora) return null
+
+  if (patch.gols_casa !== undefined && patch.gols_fora !== undefined) {
     const scoreUnchanged =
-      partida.gols_casa === score.home &&
-      partida.gols_fora === score.away &&
-      partida.status_api === status_api
-    const onlyScore = patch === base
-    if (scoreUnchanged && onlyScore) return null
+      partida.gols_casa === patch.gols_casa &&
+      partida.gols_fora === patch.gols_fora &&
+      partida.status_api === patch.status_api
+    const knockoutSame =
+      patch.vencedor === undefined &&
+      patch.penaltis_casa === undefined &&
+      patch.penaltis_fora === undefined
+    const teamsSame = patch.time_casa === undefined && patch.time_fora === undefined
+    if (scoreUnchanged && knockoutSame && teamsSame) return null
     return patch
   }
 
-  const base: PartidaPatch = { status_api }
-  const patch = applyKnockoutResult(base, partida, apiMatch)
-  if (partida.status_api === status_api && patch === base) return null
-  return patch
+  if (partida.status_api === patch.status_api && patch.vencedor === undefined && patch.penaltis_casa === undefined && patch.time_casa === undefined && patch.time_fora === undefined) {
+    return null
+  }
+  return Object.keys(patch).length > 0 ? patch : null
 }
 
 /**
